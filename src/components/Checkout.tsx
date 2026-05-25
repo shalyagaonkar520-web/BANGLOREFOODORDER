@@ -8,8 +8,6 @@ import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldChec
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge, shouldWaiveDelivery } from '../types';
-import { db } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -23,33 +21,6 @@ const DECORATION_PRICES = {
 
 import DeliveryAnimation from './DeliveryAnimation';
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-const getApiUrl = (path: string) => {
-  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
-  if (envUrl) {
-    const cleanBase = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return `${cleanBase}${cleanPath}`;
-  }
-
-  if (window.location.protocol === 'file:' || window.location.origin === 'null') {
-    if (import.meta.env.DEV) {
-      return `http://localhost:3000${path}`;
-    }
-    return `https://momsmagic.shop${path}`;
-  }
-
-  return path;
-};
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -74,9 +45,7 @@ export default function Checkout() {
   const [decorSetupVenue, setDecorSetupVenue] = useState<'home' | 'party_hall' | 'none'>('none');
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
   
-  // Robust Razorpay States
-  const [isInitializingPayment, setIsInitializingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  // Removed Razorpay States
 
   // Determine active data
   const activeItems = isBulkOrder ? bulkItems : cartItems;
@@ -219,25 +188,6 @@ export default function Checkout() {
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`;
       setWaLink(waUrl);
 
-      // ═══ SAVE TO FIRESTORE ═══
-      // This ensures orders appear in the Admin Panel
-      await addDoc(collection(db, 'orders'), {
-        userName: formData.name.trim(),
-        userPhone: formData.phone.trim(),
-        address: deliveryLocation.address,
-        distance: distanceKm,
-        decorSetupVenue: decorSetupVenue,
-        items: activeItems,
-        subtotal: subtotal,
-        deliveryCharge: deliveryCharge,
-        total: grandTotal,
-        paymentId: paymentId || null,
-        paymentStatus: paymentId ? 'paid' : 'cod',
-        status: 'pending',
-        type: isBulkOrder ? 'bulk' : 'food',
-        hotelId: activeItems[0]?.hotelId || 'default', // Using first item's hotelId or default
-        createdAt: Date.now()
-      });
 
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
@@ -262,146 +212,7 @@ export default function Checkout() {
       }
     };
 
-    if (paymentMethod === 'cod') {
-      await completeOrderProcess(undefined);
-      return;
-    }
-
-    // Initialize Razorpay
-    try {
-      setIsInitializingPayment(true);
-      setPaymentError(null);
-      
-      const res = await loadRazorpayScript();
-      if (!res) {
-        setIsInitializingPayment(false);
-        setPaymentError('Razorpay SDK failed to load. Check your connection.');
-        toast.error('Razorpay SDK failed to load. Check your connection.');
-        return;
-      }
-
-      console.log("[Checkout] Requesting order creation from backend...");
-      const orderPromise = fetch(getApiUrl("/api/create-order"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: grandTotal * 100 })
-      }).then(async (r) => {
-        const contentType = r.headers.get("content-type");
-        if (!r.ok) {
-          let errMsg = `Server returned HTTP ${r.status}`;
-          if (contentType && contentType.includes("application/json")) {
-            try {
-              const errJson = await r.json();
-              errMsg = errJson.details || errJson.error || errMsg;
-            } catch (e) {}
-          } else {
-            try {
-              const text = await r.text();
-              errMsg = text.slice(0, 100) || errMsg;
-            } catch (e) {}
-          }
-          throw new Error(errMsg);
-        }
-        
-        if (!contentType || !contentType.includes("application/json")) {
-          const text = await r.text();
-          console.error("[Checkout] Expected JSON but received HTML/text:", text);
-          throw new Error("Invalid server response format. The backend server might be offline or misconfigured.");
-        }
-        
-        const data = await r.json();
-        if (data.error) {
-          throw new Error(data.details || data.error);
-        }
-        return data;
-      });
-
-      toast.promise(orderPromise, {
-        loading: 'Initializing Secure Payment Gateway...',
-        success: 'Secure gateway initialized! Please complete your payment.',
-        error: (err: any) => `Failed to load gateway: ${err.message || 'Unknown error'}`
-      });
-
-      const orderData = await orderPromise;
-      console.log("[Checkout] Order created successfully. Initializing Razorpay Checkout UI...", orderData);
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Moms Magic",
-        description: "Order Payment",
-        order_id: orderData.id,
-        handler: async function (response: any) {
-          try {
-            console.log("[Checkout] Payment authorized by Razorpay, verifying signature...", response);
-            toast.loading("Verifying payment...", { id: 'verify-payment' });
-            
-            const verifyRes = await fetch(getApiUrl('/api/verify-payment'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(response)
-            });
-            
-            const contentType = verifyRes.headers.get("content-type");
-            if (!verifyRes.ok) {
-              let errMsg = `Verification failed (HTTP ${verifyRes.status})`;
-              if (contentType && contentType.includes("application/json")) {
-                try {
-                  const errJson = await verifyRes.json();
-                  errMsg = errJson.details || errJson.error || errMsg;
-                } catch (e) {}
-              }
-              throw new Error(errMsg);
-            }
-
-            if (!contentType || !contentType.includes("application/json")) {
-              throw new Error("Invalid response verification format from server.");
-            }
-
-            const verifyData = await verifyRes.json();
-            if (verifyData.success) {
-              console.log("[Checkout] Payment verified successfully!");
-              toast.success("Payment verified successfully!", { id: 'verify-payment' });
-              await completeOrderProcess(response.razorpay_payment_id);
-            } else {
-              throw new Error("Payment signature verification failed.");
-            }
-          } catch (err: any) {
-            console.error("[Checkout] Signature verification error:", err);
-            const errMsg = err.message || "Network error during signature verification.";
-            setPaymentError(errMsg);
-            toast.error(errMsg, { id: 'verify-payment' });
-            setIsInitializingPayment(false);
-          }
-        },
-        modal: {
-          ondismiss: function() {
-            console.log("[Checkout] Razorpay modal dismissed by user.");
-            setIsInitializingPayment(false);
-            setPaymentError("Payment was cancelled. You can retry anytime.");
-            toast.error("Payment cancelled.");
-          }
-        },
-        prefill: {
-          name: formData.name.trim(),
-          contact: formData.phone.trim(),
-        },
-        theme: {
-          color: "#F4B400",
-        },
-      };
-
-      console.log("[Checkout] Opening Razorpay standard checkout overlay...");
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
-      // Keep loading spinner true until modal is closed or success
-    } catch (error: any) {
-      console.error("[Checkout] Razorpay init error:", error);
-      setIsInitializingPayment(false);
-      setPaymentError(error.message || 'Error opening payment gateway.');
-      toast.error(error.message || 'Error opening payment gateway.');
-    }
+    await completeOrderProcess(undefined);
   };
 
   if (orderSent) {
@@ -587,36 +398,6 @@ export default function Checkout() {
           </div>
         )}
 
-        {/* Payment Method Section */}
-        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-6">
-          <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1 block">
-            Select Payment Method
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('online')}
-              className={`py-6 rounded-3xl border-2 font-black uppercase tracking-widest transition-all ${
-                paymentMethod === 'online'
-                  ? 'border-gold bg-gold/10 text-gold shadow-[0_0_30px_rgba(244,180,0,0.2)]'
-                  : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
-              }`}
-            >
-              Pay Online (UPI / Cards / Netbanking)
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('cod')}
-              className={`py-6 rounded-3xl border-2 font-black uppercase tracking-widest transition-all ${
-                paymentMethod === 'cod'
-                  ? 'border-gold bg-gold/10 text-gold shadow-[0_0_30px_rgba(244,180,0,0.2)]'
-                  : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
-              }`}
-            >
-              Cash on Delivery (COD)
-            </button>
-          </div>
-        </div>
 
         {/* Total Summary */}
         <div className="luxury-card p-12 md:p-16 rounded-[60px] border-gold/5 relative overflow-hidden">
@@ -641,29 +422,12 @@ export default function Checkout() {
             </div>
           </div>
 
-          {paymentError && (
-            <div className="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-2xl flex flex-col gap-4">
-              <p className="text-red-400 font-bold text-sm">{paymentError}</p>
-              <button 
-                type="button" 
-                onClick={() => setPaymentError(null)} 
-                className="self-start px-6 py-2 bg-red-500/20 text-red-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500/30 transition-colors"
-              >
-                Dismiss Error
-              </button>
-            </div>
-          )}
 
           <button 
             type="submit" 
-            disabled={isInitializingPayment}
-            className="w-full btn-luxury-gold h-24 rounded-[30px] text-2xl tracking-[8px] flex items-center justify-center gap-5 group disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full btn-luxury-gold h-24 rounded-[30px] text-2xl tracking-[8px] flex items-center justify-center gap-5 group"
           >
-            {isInitializingPayment ? (
-              <><Loader2 className="w-8 h-8 animate-spin" /> SECURING PAYMENT...</>
-            ) : (
-              <>CONFIRM ORDER <Send className="w-7 h-7 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /></>
-            )}
+            CONFIRM ORDER <Send className="w-7 h-7 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
           </button>
           
           <div className="flex items-center justify-center gap-3 mt-10 text-text-muted font-black uppercase tracking-[4px] text-[10px] opacity-20">

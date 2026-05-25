@@ -9,7 +9,6 @@ import CartPage from './components/CartPage';
 import Checkout from './components/Checkout';
 import OffersPage from './components/OffersPage';
 import BulkOrderPage from './components/BulkOrderPage';
-import AdminPortal from './components/AdminPortal';
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
 import OperatingHoursGate from './components/OperatingHoursGate';
@@ -18,7 +17,6 @@ import LocationPicker from './components/LocationPicker';
 import UndoManager from './components/UndoManager';
 import FeedbackPage from './components/FeedbackPage';
 import AboutFounder from './components/AboutFounder';
-import ProfitSimulatorPage from './components/ProfitSimulatorPage';
 import CelebrationHub from './components/CelebrationHub';
 import CelebrationDesign from './components/CelebrationDesign';
 
@@ -110,8 +108,6 @@ export default function App() {
                   <Route path="/celebration/design" element={<CelebrationDesign />} />
                   <Route path="/feedback" element={<FeedbackPage />} />
                   <Route path="/about" element={<AboutFounder />} />
-                  <Route path="/profit-simulator" element={<ProfitSimulatorPage />} />
-                  <Route path="/admin/*" element={<AdminPortal />} />
                 </Routes>
               </PageTransition>
             </main>
