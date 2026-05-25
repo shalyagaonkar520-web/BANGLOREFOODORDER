@@ -602,7 +602,7 @@ export default function Checkout() {
                   : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
               }`}
             >
-              Pay Online (Cards/Netbanking)
+              Pay Online (UPI / Cards / Netbanking)
             </button>
             <button
               type="button"
