@@ -52,7 +52,7 @@ export const hotelData: Record<string, { hotel: number, app: number }> = {
   "Veg Kolhapuri": { hotel: 170, app: 200 },
   "Veg Kadai": { hotel: 170, app: 229 },
   "Dal Tadka": { hotel: 120, app: 150 },
-  "Shawarma": { hotel: 70, app: 108 },
+  "Shawarma": { hotel: 70, app: 99 },
   "Burger": { hotel: 50, app: 94 },
   "Keema Pav": { hotel: 25, app: 40 },
   "Chicken Samosa (2 pcs)": { hotel: 25, app: 39 },

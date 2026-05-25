@@ -30,7 +30,7 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'ff-2',
     name: 'Shawarma',
-    price: 108,
+    price: 99,
     category: 'Fast Food',
     type: 'food',
     image: '/shawarma_new.png',
