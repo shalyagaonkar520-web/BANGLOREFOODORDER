@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Products: Anyone can read, only admin can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true; // In a real app, this should be restricted to admin. 
+      // For this demo, we'll allow write for project members/anyone to manage products.
+    }
+
+    // Orders: Anyone can read and write (for demo/development)
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+  }
+}

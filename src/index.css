@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&family=Poppins:wght@400;600;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Poppins", "Outfit", sans-serif;
+  
+  /* Luxury Color Palette */
+  --color-brand: #D62828; /* Deep Luxury Red */
+  --color-brand-hover: #F03A3A;
+  --color-brand-glow: rgba(214, 40, 40, 0.45);
+  
+  --color-gold: #F4B400;
+  --color-gold-soft: #FFD95A;
+  
+  --color-matte-black: #0B0B0B;
+  --color-dark-surface: #1E1E1E;
+  
+  --color-text-main: #FAFAFA;
+  --color-text-muted: #B8B8B8;
+}
+
+@layer base {
+  body {
+    @apply bg-matte-black text-text-main antialiased selection:bg-brand/30 overflow-x-hidden;
+    font-family: var(--font-sans);
+    background: linear-gradient(180deg, #0B0B0B 0%, #111111 50%, #1A1A1A 100%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  .luxury-card {
+    @apply bg-dark-surface/65 backdrop-blur-2xl border border-white/10 relative overflow-hidden transition-all duration-500;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+  }
+
+  .luxury-card:hover {
+    @apply border-gold/30 -translate-y-2;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(244, 180, 0, 0.15);
+  }
+
+  .btn-luxury-gold {
+    @apply bg-gold text-matte-black font-black uppercase tracking-[2px] px-8 py-4 rounded-xl transition-all duration-300
+           shadow-[0_10px_30px_rgba(244,180,0,0.25)]
+           hover:brightness-110 hover:scale-[1.02] active:scale-95;
+    background: linear-gradient(135deg, #F4B400, #FFD95A, #FFEEA9);
+  }
+
+  /* Updating the old red button class to gold as requested */
+  .btn-luxury-red {
+    @apply bg-gold text-matte-black font-black uppercase tracking-[2px] px-8 py-4 rounded-xl transition-all duration-300 shadow-[0_10px_30px_rgba(244,180,0,0.25)] hover:brightness-110 hover:scale-[1.02] active:scale-95;
+    background: linear-gradient(135deg, #F4B400, #FFD95A, #FFEEA9);
+  }
+
+  .text-luxury-gold {
+    @apply bg-gradient-to-br from-[#F4B400] via-[#FFD95A] to-[#FFEEA9] bg-clip-text text-transparent;
+  }
+
+  .glass-nav {
+    @apply bg-[#0F0F0F]/92 backdrop-blur-[25px] border-t border-white/5;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Shimmer effect for gold highlights */
+@keyframes gold-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,217,90,0.2), transparent);
+  background-size: 200% 100%;
+  animation: gold-shimmer 3s infinite;
+}
+
+/* iOS Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Prevent Safari from zooming in on inputs if text is smaller than 16px */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Fix momentum scrolling */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}

@@ -1,0 +1,677 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCartStore } from '../store/cartStore';
+import { useBulkOrderStore } from '../store/bulkOrderStore';
+import { useLocationStore } from '../store/locationStore';
+import { motion } from 'framer-motion';
+import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldCheck, Truck, ChevronLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useCityStore } from '../store/cityStore';
+import { calculateDeliveryCharge, shouldWaiveDelivery } from '../types';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
+const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
+const TELEGRAM_CHAT_ID = '-1003803637741';
+const WHATSAPP_NUMBER = '919606001790';
+
+const DECORATION_PRICES = {
+  balloons: 150,
+  spray: 50,
+  candles: 30,
+};
+
+import DeliveryAnimation from './DeliveryAnimation';
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const getApiUrl = (path: string) => {
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+  if (envUrl) {
+    const cleanBase = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBase}${cleanPath}`;
+  }
+
+  if (window.location.protocol === 'file:' || window.location.origin === 'null') {
+    if (import.meta.env.DEV) {
+      return `http://localhost:3000${path}`;
+    }
+    return `https://momsmagic.shop${path}`;
+  }
+
+  return path;
+};
+
+export default function Checkout() {
+  const navigate = useNavigate();
+  const isBulkOrder = localStorage.getItem('moms_magic_order_type') === 'bulk';
+  
+  // Regular Cart
+  const { items: cartItems, total: cartTotal, clearCart } = useCartStore();
+  
+  // Bulk Order
+  const bulkStore = useBulkOrderStore();
+  const { bulkItems, getGrandTotal: getBulkTotal, eventDate, peopleCount, cake, decoration, additionalServices, resetBulkOrder } = bulkStore;
+
+  const { selectedCity } = useCityStore();
+  const { deliveryLocation, openLocationPicker, detectLocation, isLoading } = useLocationStore();
+  const [formData, setFormData] = useState({ name: '', phone: '', additionalMessage: '' });
+  const [orderSent, setOrderSent] = useState(false);
+  const [waLink, setWaLink] = useState('');
+  
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [selectedDrink, setSelectedDrink] = useState<'Coca-Cola' | 'Sprite'>('Coca-Cola');
+  const [decorSetupVenue, setDecorSetupVenue] = useState<'home' | 'party_hall' | 'none'>('none');
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
+  
+  // Robust Razorpay States
+  const [isInitializingPayment, setIsInitializingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // Determine active data
+  const activeItems = isBulkOrder ? bulkItems : cartItems;
+  const subtotal = isBulkOrder ? getBulkTotal() : cartTotal;
+
+  // Handle Coupon Apply
+  const handleApplyCoupon = () => {
+    if (couponInput.toUpperCase() === 'TEJA') {
+      setCouponApplied(true);
+      toast.success('VIP Coupon Applied: FREE DELIVERY UNLOCKED! 🚚✨', {
+        style: {
+          background: '#161A22',
+          color: '#F4B400',
+          border: '1px solid #F4B400',
+        }
+      });
+    } else {
+      toast.error('Invalid Elite Coupon Code');
+    }
+  };
+
+  // Load saved user data
+  React.useEffect(() => {
+    const savedName = localStorage.getItem('moms_magic_user_name');
+    const savedPhone = localStorage.getItem('moms_magic_user_phone');
+    if (savedName || savedPhone) {
+      setFormData(prev => ({
+        ...prev,
+        name: savedName || '',
+        phone: savedPhone || ''
+      }));
+    }
+  }, []);
+
+  // ═══ DELIVERY CHARGE LOGIC ═══
+  const distanceKm = deliveryLocation?.distance ?? 0;
+  const isFreeDelivery = shouldWaiveDelivery(activeItems as any, subtotal, distanceKm) || couponApplied; 
+  const rawDeliveryCharge = calculateDeliveryCharge(distanceKm);
+  const deliveryCharge = isFreeDelivery ? 0 : rawDeliveryCharge;
+  const grandTotal = subtotal + deliveryCharge;
+
+  const handleFinishAnimation = () => {
+    if (isBulkOrder) {
+      resetBulkOrder();
+      localStorage.removeItem('moms_magic_order_type');
+    } else {
+      clearCart();
+    }
+    window.location.href = waLink;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) { toast.error('Please enter your name'); return; }
+    if (!formData.phone.trim() || formData.phone.length < 10) { toast.error('Please enter a valid phone number'); return; }
+    if (!deliveryLocation) { toast.error('Please select a delivery location'); openLocationPicker(); return; }
+    if (deliveryLocation.distance > 5) { toast.error('Sorry, not deliverable (location is >5km)'); return; }
+
+    if (isBulkOrder) {
+      if (!eventDate) {
+        toast.error('Please select your Event Date first!');
+        return;
+      }
+      const tomorrowStr = (() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+      })();
+      if (eventDate < tomorrowStr) {
+        toast.error('Event Date must be a future date (tomorrow onwards)');
+        return;
+      }
+    }
+
+    localStorage.setItem('moms_magic_user_name', formData.name.trim());
+    localStorage.setItem('moms_magic_user_phone', formData.phone.trim());
+
+    const completeOrderProcess = async (paymentId?: string) => {
+      try {
+        const mapsViewLink = `https://www.google.com/maps?q=${deliveryLocation.lat},${deliveryLocation.lng}`;
+        const mapsNavLink = `https://www.google.com/maps/dir/?api=1&destination=${deliveryLocation.lat},${deliveryLocation.lng}`;
+
+      let orderDetails = '';
+      if (isBulkOrder) {
+        const selectedDecos = [
+          decoration.balloons > 0 && `${decoration.balloons}x Balloons`,
+          decoration.spray > 0 && `${decoration.spray}x Spray`,
+          decoration.candles > 0 && `${decoration.candles}x Candles`
+        ].filter(Boolean).join(', ');
+
+        orderDetails = [
+          `📅 *Event Date:* ${eventDate}`,
+          `👥 *People:* ${peopleCount}`,
+          ``,
+          `🛒 *FOOD ITEMS:*`,
+          bulkItems.map(i => `• ${i.name} (${i.finalQuantity} units)`).join('\n'),
+          ``,
+          cake.required ? `🎂 *Cake:* ${cake.size} - "${cake.text}"` : '',
+          selectedDecos ? `🎈 *Decorations:* ${selectedDecos}` : '',
+          additionalServices.disposablePlates ? `🍽️ Disposable plates added` : '',
+          additionalServices.setupServing ? `👨‍🍳 Setup & Serving team added` : '',
+        ].filter(Boolean).join('\n');
+      } else {
+        orderDetails = `🛒 *ITEMS:*\n` + cartItems.map(item => `• ${item.quantity}x ${item.name}`).join('\n');
+      }
+
+      const venueLabel = decorSetupVenue === 'home' ? '🏡 Setup & Decor in Home' : decorSetupVenue === 'party_hall' ? '🏛️ Setup in Party Hall Yellapur' : '❌ No Decor Setup';
+
+      const noteSection = formData.additionalMessage.trim() ? `📝 *Note:* ${formData.additionalMessage.trim()}` : '';
+
+      const waMessage = [
+        isBulkOrder ? `🎉 *NEW BULK / PARTY ORDER!* 🎉` : `📦 *NEW ORDER!* 📦`,
+        ``,
+        `👤 *Name:* ${formData.name.trim()}`,
+        `📞 *Phone:* ${formData.phone.trim()}`,
+        `📍 *City:* ${selectedCity?.name || 'Unknown'}`,
+        `🏠 *Address:* ${deliveryLocation.address}`,
+        `📏 *Distance:* ${distanceKm}km`,
+        isBulkOrder ? `✨ *Decor Setup:* ${venueLabel}` : '',
+        ``,
+        orderDetails,
+        ``,
+        `💰 *Subtotal:* ₹${subtotal}`,
+        `🚚 *Delivery:* ${isFreeDelivery ? 'FREE' : `₹${deliveryCharge}`}`,
+        `💵 *GRAND TOTAL:* ₹${grandTotal}`,
+        paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
+        ``,
+        activeItems.some(item => item.name.toLowerCase().includes('combo')) ? `🥤 *Beverage:* ${selectedDrink}` : '',
+        ``,
+        `🗺️ *View Map:* ${mapsViewLink}`,
+        `🚗 *Navigate:* ${mapsNavLink}`,
+        noteSection,
+        ``,
+        `━━━━━━━━━━━━━━━━`,
+        `🚀 *WANT TO ORDER AGAIN?*`,
+        `👉 https://momsmagic.shop`,
+        `━━━━━━━━━━━━━━━━`
+      ].filter(line => line !== '').join('\n');
+
+      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`;
+      setWaLink(waUrl);
+
+      // ═══ SAVE TO FIRESTORE ═══
+      // This ensures orders appear in the Admin Panel
+      await addDoc(collection(db, 'orders'), {
+        userName: formData.name.trim(),
+        userPhone: formData.phone.trim(),
+        address: deliveryLocation.address,
+        distance: distanceKm,
+        decorSetupVenue: decorSetupVenue,
+        items: activeItems,
+        subtotal: subtotal,
+        deliveryCharge: deliveryCharge,
+        total: grandTotal,
+        paymentId: paymentId || null,
+        paymentStatus: paymentId ? 'paid' : 'cod',
+        status: 'pending',
+        type: isBulkOrder ? 'bulk' : 'food',
+        hotelId: activeItems[0]?.hotelId || 'default', // Using first item's hotelId or default
+        createdAt: Date.now()
+      });
+
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: waMessage, parse_mode: 'Markdown' })
+      });
+
+      if (isBulkOrder) {
+        resetBulkOrder();
+        localStorage.removeItem('moms_magic_order_type');
+      } else {
+        clearCart();
+      }
+      toast.success('VIP Order placed! Redirecting to WhatsApp...');
+      setTimeout(() => {
+        window.location.href = waUrl;
+      }, 1000);
+      
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to place order. Please try again.');
+      }
+    };
+
+    if (paymentMethod === 'cod') {
+      await completeOrderProcess(undefined);
+      return;
+    }
+
+    // Initialize Razorpay
+    try {
+      setIsInitializingPayment(true);
+      setPaymentError(null);
+      
+      const res = await loadRazorpayScript();
+      if (!res) {
+        setIsInitializingPayment(false);
+        setPaymentError('Razorpay SDK failed to load. Check your connection.');
+        toast.error('Razorpay SDK failed to load. Check your connection.');
+        return;
+      }
+
+      console.log("[Checkout] Requesting order creation from backend...");
+      const orderPromise = fetch(getApiUrl("/api/create-order"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: grandTotal * 100 })
+      }).then(async (r) => {
+        const contentType = r.headers.get("content-type");
+        if (!r.ok) {
+          let errMsg = `Server returned HTTP ${r.status}`;
+          if (contentType && contentType.includes("application/json")) {
+            try {
+              const errJson = await r.json();
+              errMsg = errJson.details || errJson.error || errMsg;
+            } catch (e) {}
+          } else {
+            try {
+              const text = await r.text();
+              errMsg = text.slice(0, 100) || errMsg;
+            } catch (e) {}
+          }
+          throw new Error(errMsg);
+        }
+        
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await r.text();
+          console.error("[Checkout] Expected JSON but received HTML/text:", text);
+          throw new Error("Invalid server response format. The backend server might be offline or misconfigured.");
+        }
+        
+        const data = await r.json();
+        if (data.error) {
+          throw new Error(data.details || data.error);
+        }
+        return data;
+      });
+
+      toast.promise(orderPromise, {
+        loading: 'Initializing Secure Payment Gateway...',
+        success: 'Secure gateway initialized! Please complete your payment.',
+        error: (err: any) => `Failed to load gateway: ${err.message || 'Unknown error'}`
+      });
+
+      const orderData = await orderPromise;
+      console.log("[Checkout] Order created successfully. Initializing Razorpay Checkout UI...", orderData);
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Moms Magic",
+        description: "Order Payment",
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          try {
+            console.log("[Checkout] Payment authorized by Razorpay, verifying signature...", response);
+            toast.loading("Verifying payment...", { id: 'verify-payment' });
+            
+            const verifyRes = await fetch(getApiUrl('/api/verify-payment'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response)
+            });
+            
+            const contentType = verifyRes.headers.get("content-type");
+            if (!verifyRes.ok) {
+              let errMsg = `Verification failed (HTTP ${verifyRes.status})`;
+              if (contentType && contentType.includes("application/json")) {
+                try {
+                  const errJson = await verifyRes.json();
+                  errMsg = errJson.details || errJson.error || errMsg;
+                } catch (e) {}
+              }
+              throw new Error(errMsg);
+            }
+
+            if (!contentType || !contentType.includes("application/json")) {
+              throw new Error("Invalid response verification format from server.");
+            }
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              console.log("[Checkout] Payment verified successfully!");
+              toast.success("Payment verified successfully!", { id: 'verify-payment' });
+              await completeOrderProcess(response.razorpay_payment_id);
+            } else {
+              throw new Error("Payment signature verification failed.");
+            }
+          } catch (err: any) {
+            console.error("[Checkout] Signature verification error:", err);
+            const errMsg = err.message || "Network error during signature verification.";
+            setPaymentError(errMsg);
+            toast.error(errMsg, { id: 'verify-payment' });
+            setIsInitializingPayment(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            console.log("[Checkout] Razorpay modal dismissed by user.");
+            setIsInitializingPayment(false);
+            setPaymentError("Payment was cancelled. You can retry anytime.");
+            toast.error("Payment cancelled.");
+          }
+        },
+        prefill: {
+          name: formData.name.trim(),
+          contact: formData.phone.trim(),
+        },
+        theme: {
+          color: "#F4B400",
+        },
+      };
+
+      console.log("[Checkout] Opening Razorpay standard checkout overlay...");
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+      // Keep loading spinner true until modal is closed or success
+    } catch (error: any) {
+      console.error("[Checkout] Razorpay init error:", error);
+      setIsInitializingPayment(false);
+      setPaymentError(error.message || 'Error opening payment gateway.');
+      toast.error(error.message || 'Error opening payment gateway.');
+    }
+  };
+
+  if (orderSent) {
+    // Fallback if needed
+    window.location.href = waLink;
+    return null;
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-6 py-20 space-y-16">
+      <div className="space-y-6">
+        <motion.button 
+          whileHover={{ x: -5 }}
+          onClick={() => navigate('/cart')}
+          className="flex items-center gap-3 text-text-muted font-black uppercase tracking-[3px] text-[10px] hover:text-gold transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" /> Back to Review
+        </motion.button>
+        <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter italic uppercase leading-none">
+          {isBulkOrder ? 'Grand ' : 'Final '} 
+          <span className="text-luxury-gold drop-shadow-xl">{isBulkOrder ? 'Booking' : 'Details'}</span>
+        </h1>
+        <p className="text-text-muted font-bold uppercase tracking-[6px] text-[10px] opacity-40">
+          {isBulkOrder ? 'Confirm your exclusive event logistics' : 'Finalize your elite culinary delivery'}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-12">
+        {/* User Info */}
+        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Guest Name</label>
+              <input required type="text" className="w-full px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all placeholder:text-white/5" placeholder="Your Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">WhatsApp No.</label>
+              <input required type="tel" className="w-full px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all placeholder:text-white/5" placeholder="+91..." value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Delivery Destination</label>
+            {deliveryLocation ? (
+              <div className="bg-matte-black/50 rounded-3xl border border-white/10 p-6 space-y-6">
+                <div className="flex items-start gap-4">
+                  <MapPin className="w-6 h-6 text-gold shrink-0" />
+                  <p className="text-white font-bold text-sm leading-relaxed">{deliveryLocation.address}</p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <div className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black uppercase text-text-muted border border-white/5">{distanceKm} KM DISTANCE</div>
+                  <div className="px-4 py-2 bg-gold/10 rounded-xl text-[10px] font-black uppercase text-gold border border-gold/20">₹{deliveryCharge} LOGISTICS</div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={detectLocation} 
+                  disabled={isLoading}
+                  className="w-full py-4 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gold/10 hover:text-gold transition-all flex items-center justify-center gap-2 text-text-muted"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Locate className="w-4 h-4" />}
+                  {isLoading ? 'Detecting...' : 'Detect My Location'}
+                </button>
+              </div>
+            ) : (
+              <button 
+                type="button" 
+                onClick={detectLocation} 
+                className="w-full py-12 bg-matte-black/50 rounded-[35px] border-2 border-dashed border-gold/10 hover:border-gold/30 transition-all flex flex-col items-center gap-4"
+              >
+                {isLoading ? <Loader2 className="w-10 h-10 text-gold animate-spin" /> : <Locate className="w-10 h-10 text-gold" />}
+                <span className="text-[10px] font-black uppercase tracking-[4px] text-gold">{isLoading ? 'Tracing Location...' : 'Auto Trace Location'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* 🥤 DRINK PREFERENCE (For Combos) */}
+          {activeItems.some(item => item.name.toLowerCase().includes('combo')) && (
+            <div className="space-y-3 mb-6">
+              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Combo Beverage Selection</label>
+              <div className="grid grid-cols-2 gap-4">
+                {(['Coca-Cola', 'Sprite'] as const).map((drink) => (
+                  <button
+                    key={drink}
+                    type="button"
+                    onClick={() => setSelectedDrink(drink)}
+                    className={`py-5 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
+                      selectedDrink === drink
+                        ? 'border-gold bg-gold/10 text-gold shadow-[0_0_20px_rgba(244,180,0,0.2)]'
+                        : 'border-white/5 bg-white/5 text-text-muted hover:border-white/10'
+                    }`}
+                  >
+                    {drink}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Special Instructions</label>
+            <textarea rows={2} className="w-full px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all placeholder:text-white/5" placeholder="E.g., Extra hot, gate code, ring the bell..." value={formData.additionalMessage} onChange={e => setFormData({ ...formData, additionalMessage: e.target.value })} />
+          </div>
+
+          {/* Decor Location Setup Choice */}
+          {isBulkOrder && (
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1 block">
+                ✨ Setup & Decor Venue Selection
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(
+                  [
+                    { id: 'none', label: 'No Decor Setup ❌' },
+                    { id: 'home', label: 'Setup in Home 🏡' },
+                    { id: 'party_hall', label: 'Party Hall Yellapur 🏛️' },
+                  ] as const
+                ).map((venue) => (
+                  <button
+                    key={venue.id}
+                    type="button"
+                    onClick={() => setDecorSetupVenue(venue.id)}
+                    className={`py-5 px-4 rounded-2xl border font-black text-[11px] uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-2 ${
+                      decorSetupVenue === venue.id
+                        ? 'border-gold bg-gold/10 text-gold shadow-[0_0_20px_rgba(244,180,0,0.15)]'
+                        : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
+                    }`}
+                  >
+                    <span>{venue.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Order Details */}
+        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">
+          <div className="flex items-center justify-between">
+             <h2 className="text-2xl font-black italic uppercase flex items-center gap-4"><Ticket className="w-6 h-6 text-gold" /> {isBulkOrder ? 'Event' : 'Selection'} Content</h2>
+             {isBulkOrder && <div className="flex items-center gap-3 px-4 py-2 bg-gold/10 rounded-full text-[10px] font-black uppercase text-gold border border-gold/20"><Calendar className="w-4 h-4" /> {eventDate}</div>}
+          </div>
+          
+          <div className="space-y-6">
+            {activeItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between gap-6 p-6 bg-matte-black/30 rounded-[30px] border border-white/5">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 shrink-0">
+                    <img src={item.image} className="w-full h-full object-cover opacity-80" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-base text-white italic uppercase tracking-tighter">{item.name}</h4>
+                    <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">{isBulkOrder ? (item as any).finalQuantity : (item as any).quantity} Unit(s)</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-black text-gold italic">₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Coupon Code Section */}
+        {!isFreeDelivery && (
+          <div className="luxury-card p-8 md:p-10 rounded-[40px] border-white/5 space-y-6">
+            <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Elite Promo Code</label>
+            <div className="flex gap-4">
+              <input 
+                type="text" 
+                placeholder="Enter Code" 
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value)}
+                className="flex-1 px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all uppercase placeholder:normal-case"
+              />
+              <button 
+                type="button"
+                onClick={handleApplyCoupon}
+                className="px-8 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/20 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Method Section */}
+        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-6">
+          <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1 block">
+            Select Payment Method
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('online')}
+              className={`py-6 rounded-3xl border-2 font-black uppercase tracking-widest transition-all ${
+                paymentMethod === 'online'
+                  ? 'border-gold bg-gold/10 text-gold shadow-[0_0_30px_rgba(244,180,0,0.2)]'
+                  : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
+              }`}
+            >
+              Pay Online (Cards/Netbanking)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('cod')}
+              className={`py-6 rounded-3xl border-2 font-black uppercase tracking-widest transition-all ${
+                paymentMethod === 'cod'
+                  ? 'border-gold bg-gold/10 text-gold shadow-[0_0_30px_rgba(244,180,0,0.2)]'
+                  : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
+              }`}
+            >
+              Cash on Delivery (COD)
+            </button>
+          </div>
+        </div>
+
+        {/* Total Summary */}
+        <div className="luxury-card p-12 md:p-16 rounded-[60px] border-gold/5 relative overflow-hidden">
+          <div className="space-y-6 mb-10 border-b border-white/5 pb-8">
+            <div className="flex justify-between items-center text-text-muted font-bold text-[11px] uppercase tracking-[4px]">
+              <span>Subtotal</span>
+              <span className="text-white text-xl font-black">₹{subtotal}</span>
+            </div>
+            <div className="flex justify-between items-center text-text-muted font-bold text-[11px] uppercase tracking-[4px]">
+              <div className="flex items-center gap-2">
+                 <Truck className="w-4 h-4 text-gold" />
+                 <span>Delivery Fee</span>
+              </div>
+              <span className="text-white text-xl font-black">{isFreeDelivery ? 'COMPLIMENTARY' : `₹${deliveryCharge}`}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-end mb-12">
+            <div className="space-y-2">
+              <p className="text-gold/40 text-[11px] font-black uppercase tracking-[6px]">Investment Grand Total</p>
+              <p className="text-6xl md:text-8xl font-black italic tracking-tighter text-white drop-shadow-2xl">₹{grandTotal}</p>
+            </div>
+          </div>
+
+          {paymentError && (
+            <div className="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-2xl flex flex-col gap-4">
+              <p className="text-red-400 font-bold text-sm">{paymentError}</p>
+              <button 
+                type="button" 
+                onClick={() => setPaymentError(null)} 
+                className="self-start px-6 py-2 bg-red-500/20 text-red-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500/30 transition-colors"
+              >
+                Dismiss Error
+              </button>
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={isInitializingPayment}
+            className="w-full btn-luxury-gold h-24 rounded-[30px] text-2xl tracking-[8px] flex items-center justify-center gap-5 group disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isInitializingPayment ? (
+              <><Loader2 className="w-8 h-8 animate-spin" /> SECURING PAYMENT...</>
+            ) : (
+              <>CONFIRM ORDER <Send className="w-7 h-7 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /></>
+            )}
+          </button>
+          
+          <div className="flex items-center justify-center gap-3 mt-10 text-text-muted font-black uppercase tracking-[4px] text-[10px] opacity-20">
+            <ShieldCheck className="w-4 h-4 text-gold" />
+            Elite End-to-End Encryption
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
