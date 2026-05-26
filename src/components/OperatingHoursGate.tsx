@@ -5,7 +5,7 @@ import { Clock, Moon, Sun, AlertCircle, ShoppingBag, Sparkles } from 'lucide-rea
 
 export default function OperatingHoursGate({ children }: { children: React.ReactNode }) {
   // Set to true to temporarily bypass time restriction for testing
-  const BYPASS_TIME_CHECK = false;
+  const BYPASS_TIME_CHECK = true;
   
   const [isOpen, setIsOpen] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldCheck, Truck, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
-import { calculateDeliveryCharge, shouldWaiveDelivery } from '../types';
+import { calculateDeliveryCharge, shouldWaiveDelivery, isGlobalFreeDeliveryActive } from '../types';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -82,7 +82,7 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const isFreeDelivery = shouldWaiveDelivery(activeItems as any, subtotal, distanceKm) || couponApplied; 
+  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(activeItems as any, subtotal, distanceKm) || couponApplied; 
   const rawDeliveryCharge = calculateDeliveryCharge(distanceKm);
   const deliveryCharge = isFreeDelivery ? 0 : rawDeliveryCharge;
   const grandTotal = subtotal + deliveryCharge;

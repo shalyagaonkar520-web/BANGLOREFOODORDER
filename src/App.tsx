@@ -19,6 +19,7 @@ import FeedbackPage from './components/FeedbackPage';
 import AboutFounder from './components/AboutFounder';
 import CelebrationHub from './components/CelebrationHub';
 import CelebrationDesign from './components/CelebrationDesign';
+import FreeDeliveryBanner from './components/FreeDeliveryBanner';
 
 function GoldenParticles() {
   return (
@@ -94,6 +95,8 @@ export default function App() {
           <div className="min-h-screen bg-matte-black text-text-main font-sans relative flex flex-col selection:bg-brand/30">
             <GoldenParticles />
             
+            <FreeDeliveryBanner />
+
             <main className="flex-1 relative z-10">
               <PageTransition>
                 <Routes>

@@ -78,3 +78,14 @@ export function calculateDeliveryCharge(distanceKm: number): number {
 export function shouldWaiveDelivery(_items: CartItem[], _cartTotal: number, _distanceKm: number): boolean {
   return false;
 }
+
+export function isGlobalFreeDeliveryActive(): boolean {
+  try {
+    const endTimeStr = localStorage.getItem('deliveryTimerEnd');
+    if (!endTimeStr) return false;
+    const endTime = parseInt(endTimeStr, 10);
+    return Date.now() < endTime;
+  } catch (e) {
+    return false;
+  }
+}

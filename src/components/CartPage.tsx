@@ -4,7 +4,7 @@ import { Minus, Plus, Trash2, ShoppingBag, Truck, Sparkles, Zap, ShieldCheck, Ch
 import { useNavigate } from 'react-router-dom';
 import { getFakeOriginalPrice } from '../data/menuItems';
 import { useLocationStore } from '../store/locationStore';
-import { calculateDeliveryCharge, shouldWaiveDelivery } from '../types';
+import { shouldWaiveDelivery, calculateDeliveryCharge, isGlobalFreeDeliveryActive } from '../types';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, total } = useCartStore();
@@ -12,7 +12,7 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const isFreeDelivery = shouldWaiveDelivery(items, total, distanceKm);
+  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(items, total, distanceKm);
   const rawDeliveryCharge = calculateDeliveryCharge(distanceKm);
   const deliveryCharge = isFreeDelivery ? 0 : rawDeliveryCharge;
   const grandTotal = total + deliveryCharge;

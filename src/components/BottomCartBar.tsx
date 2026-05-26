@@ -3,7 +3,7 @@ import { useCartStore } from '../store/cartStore';
 import { useLocationStore } from '../store/locationStore';
 import { ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { shouldWaiveDelivery } from '../types';
+import { shouldWaiveDelivery, isGlobalFreeDeliveryActive } from '../types';
 
 export default function BottomCartBar() {
   const { items, total } = useCartStore();
@@ -13,7 +13,7 @@ export default function BottomCartBar() {
   
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const distanceKm = deliveryLocation?.distance ?? 999;
-  const isFreeDelivery = shouldWaiveDelivery(items, total, distanceKm);
+  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(items, total, distanceKm);
   
   if (itemCount === 0 || location.pathname === '/cart' || location.pathname === '/checkout') return null;
 
