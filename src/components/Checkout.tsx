@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldCheck, Truck, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
-import { calculateDeliveryCharge, shouldWaiveDelivery, isGlobalFreeDeliveryActive } from '../types';
+import { calculateDeliveryCharge } from '../types';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -39,8 +39,7 @@ export default function Checkout() {
   const [orderSent, setOrderSent] = useState(false);
   const [waLink, setWaLink] = useState('');
   
-  const [couponInput, setCouponInput] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
+
   const [selectedDrink, setSelectedDrink] = useState<'Coca-Cola' | 'Sprite'>('Coca-Cola');
   const [decorSetupVenue, setDecorSetupVenue] = useState<'home' | 'party_hall' | 'none'>('none');
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
@@ -51,21 +50,7 @@ export default function Checkout() {
   const activeItems = isBulkOrder ? bulkItems : cartItems;
   const subtotal = isBulkOrder ? getBulkTotal() : cartTotal;
 
-  // Handle Coupon Apply
-  const handleApplyCoupon = () => {
-    if (couponInput.toUpperCase() === 'TEJA') {
-      setCouponApplied(true);
-      toast.success('VIP Coupon Applied: FREE DELIVERY UNLOCKED! 🚚✨', {
-        style: {
-          background: '#161A22',
-          color: '#F4B400',
-          border: '1px solid #F4B400',
-        }
-      });
-    } else {
-      toast.error('Invalid Elite Coupon Code');
-    }
-  };
+
 
   // Load saved user data
   React.useEffect(() => {
@@ -82,9 +67,7 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(activeItems as any, subtotal, distanceKm) || couponApplied; 
-  const rawDeliveryCharge = calculateDeliveryCharge(distanceKm);
-  const deliveryCharge = isFreeDelivery ? 0 : rawDeliveryCharge;
+  const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -169,7 +152,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ${isFreeDelivery ? 'FREE' : `₹${deliveryCharge}`}`,
+        `🚚 *Delivery:* ₹${deliveryCharge}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -375,28 +358,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        {/* Coupon Code Section */}
-        {!isFreeDelivery && (
-          <div className="luxury-card p-8 md:p-10 rounded-[40px] border-white/5 space-y-6">
-            <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Elite Promo Code</label>
-            <div className="flex gap-4">
-              <input 
-                type="text" 
-                placeholder="Enter Code" 
-                value={couponInput}
-                onChange={(e) => setCouponInput(e.target.value)}
-                className="flex-1 px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all uppercase placeholder:normal-case"
-              />
-              <button 
-                type="button"
-                onClick={handleApplyCoupon}
-                className="px-8 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/20 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        )}
+
 
 
         {/* Total Summary */}
@@ -411,7 +373,7 @@ export default function Checkout() {
                  <Truck className="w-4 h-4 text-gold" />
                  <span>Delivery Fee</span>
               </div>
-              <span className="text-white text-xl font-black">{isFreeDelivery ? 'COMPLIMENTARY' : `₹${deliveryCharge}`}</span>
+              <span className="text-white text-xl font-black">₹{deliveryCharge}</span>
             </div>
           </div>
 

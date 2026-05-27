@@ -19,8 +19,6 @@ import FeedbackPage from './components/FeedbackPage';
 import AboutFounder from './components/AboutFounder';
 import CelebrationHub from './components/CelebrationHub';
 import CelebrationDesign from './components/CelebrationDesign';
-import FreeDeliveryBanner from './components/FreeDeliveryBanner';
-
 function GoldenParticles() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -92,11 +90,9 @@ export default function App() {
       
       <OperatingHoursGate>
         <CityGateway>
-          <div className="min-h-screen bg-matte-black text-text-main font-sans relative flex flex-col selection:bg-brand/30">
-            <GoldenParticles />
-            
-            <FreeDeliveryBanner />
-
+            <div className="min-h-screen bg-matte-black text-text-main font-sans relative flex flex-col selection:bg-brand/30">
+              <GoldenParticles />
+  
             <main className="flex-1 relative z-10">
               <PageTransition>
                 <Routes>

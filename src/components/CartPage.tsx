@@ -4,7 +4,7 @@ import { Minus, Plus, Trash2, ShoppingBag, Truck, Sparkles, Zap, ShieldCheck, Ch
 import { useNavigate } from 'react-router-dom';
 import { getFakeOriginalPrice } from '../data/menuItems';
 import { useLocationStore } from '../store/locationStore';
-import { shouldWaiveDelivery, calculateDeliveryCharge, isGlobalFreeDeliveryActive } from '../types';
+import { calculateDeliveryCharge } from '../types';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, total } = useCartStore();
@@ -12,9 +12,7 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(items, total, distanceKm);
-  const rawDeliveryCharge = calculateDeliveryCharge(distanceKm);
-  const deliveryCharge = isFreeDelivery ? 0 : rawDeliveryCharge;
+  const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = total + deliveryCharge;
 
   if (items.length === 0) {
@@ -167,8 +165,8 @@ export default function CartPage() {
                     <Truck className="w-4 h-4 text-gold" />
                     <span>Delivery</span>
                   </div>
-                  <span className={`${isFreeDelivery ? 'text-gold' : 'text-white'} text-2xl font-black italic tracking-tighter`}>
-                    {isFreeDelivery ? 'COMPLIMENTARY' : `₹${deliveryCharge}`}
+                  <span className={`text-white text-2xl font-black italic tracking-tighter`}>
+                    ₹{deliveryCharge}
                   </span>
                 </div>
                 <div className="h-[1px] bg-white/5 shadow-inner" />

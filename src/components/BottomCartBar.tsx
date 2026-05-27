@@ -3,7 +3,7 @@ import { useCartStore } from '../store/cartStore';
 import { useLocationStore } from '../store/locationStore';
 import { ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { shouldWaiveDelivery, isGlobalFreeDeliveryActive } from '../types';
+
 
 export default function BottomCartBar() {
   const { items, total } = useCartStore();
@@ -13,7 +13,7 @@ export default function BottomCartBar() {
   
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const distanceKm = deliveryLocation?.distance ?? 999;
-  const isFreeDelivery = isGlobalFreeDeliveryActive() || shouldWaiveDelivery(items, total, distanceKm);
+
   
   if (itemCount === 0 || location.pathname === '/cart' || location.pathname === '/checkout') return null;
 
@@ -58,9 +58,7 @@ export default function BottomCartBar() {
                 </div>
                 <div className="flex items-baseline gap-1 md:gap-2">
                   <span className="text-white text-xl md:text-3xl font-black italic tracking-tighter">₹{total}</span>
-                  {isFreeDelivery && (
-                    <span className="hidden sm:inline-block text-gold text-[8px] font-black uppercase tracking-[3px] bg-gold/10 px-3 py-1 rounded-full border border-gold/20">VIP Delivery Free</span>
-                  )}
+
                 </div>
               </div>
             </div>
