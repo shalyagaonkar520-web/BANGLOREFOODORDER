@@ -156,8 +156,6 @@ export default function Checkout() {
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
-        activeItems.some(item => item.name.toLowerCase().includes('combo')) ? `🥤 *Beverage:* ${selectedDrink}` : '',
-        ``,
         `🗺️ *View Map:* ${mapsViewLink}`,
         `🚗 *Navigate:* ${mapsNavLink}`,
         noteSection,
@@ -271,28 +269,7 @@ export default function Checkout() {
             )}
           </div>
 
-          {/* 🥤 DRINK PREFERENCE (For Combos) */}
-          {activeItems.some(item => item.name.toLowerCase().includes('combo')) && (
-            <div className="space-y-3 mb-6">
-              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Combo Beverage Selection</label>
-              <div className="grid grid-cols-2 gap-4">
-                {(['Coca-Cola', 'Sprite'] as const).map((drink) => (
-                  <button
-                    key={drink}
-                    type="button"
-                    onClick={() => setSelectedDrink(drink)}
-                    className={`py-5 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
-                      selectedDrink === drink
-                        ? 'border-gold bg-gold/10 text-gold shadow-[0_0_20px_rgba(244,180,0,0.2)]'
-                        : 'border-white/5 bg-white/5 text-text-muted hover:border-white/10'
-                    }`}
-                  >
-                    {drink}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           <div className="space-y-3">
             <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Special Instructions</label>

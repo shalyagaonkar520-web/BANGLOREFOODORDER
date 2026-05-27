@@ -9,7 +9,7 @@ export default function OffersPage() {
   const offers = [
     {
       id: 1,
-      title: "CHICKEN CRISPY COMBO",
+      title: "CHICKEN CRISPY MEAL",
       description: "Our signature high-conversion crispy chicken at an unbeatable price!",
       oldPrice: 320,
       newPrice: 220,
@@ -20,7 +20,7 @@ export default function OffersPage() {
     },
     {
       id: 3,
-      title: "REFRESHMENT COMBO",
+      title: "REFRESHMENT DEAL",
       description: "Add a chilled Coca-Cola or Sprite to any main dish order for just ₹25.",
       badge: "BEST SELLER",
       icon: Sparkles,

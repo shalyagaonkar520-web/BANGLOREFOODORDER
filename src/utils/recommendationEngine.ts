@@ -153,7 +153,7 @@ export function getRecommendations(product: Product, cartTotal: number): Recomme
     return {
       type: 'drinks',
       title: 'Goes Great Together',
-      subtitle: 'Popular veg combos our customers love',
+      subtitle: 'Popular veg pairings our customers love',
       emoji: '🥦',
       triggerMessage: cartMsg,
       items: getLearnedTopPicks(product.id!, combined),
