@@ -12,6 +12,7 @@ import BulkOrderPage from './components/BulkOrderPage';
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
 import OperatingHoursGate from './components/OperatingHoursGate';
+import MaintenanceGate from './components/MaintenanceGate';
 import CityGateway from './components/CityGateway';
 import LocationPicker from './components/LocationPicker';
 import UndoManager from './components/UndoManager';
@@ -88,34 +89,36 @@ export default function App() {
       <LocationPicker />
       <UndoManager />
       
-      <OperatingHoursGate>
-        <CityGateway>
-            <div className="min-h-screen bg-matte-black text-text-main font-sans relative flex flex-col selection:bg-brand/30">
-              <GoldenParticles />
+      <MaintenanceGate>
+        <OperatingHoursGate>
+          <CityGateway>
+              <div className="min-h-screen bg-matte-black text-text-main font-sans relative flex flex-col selection:bg-brand/30">
+                <GoldenParticles />
+    
+              <main className="flex-1 relative z-10">
+                <PageTransition>
+                  <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/food" element={<CategoryPage type="food" />} />
+                    <Route path="/grocery" element={<CategoryPage type="grocery" />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/offers" element={<OffersPage />} />
+                    <Route path="/bulk" element={<BulkOrderPage />} />
+                    <Route path="/celebration" element={<CelebrationHub />} />
+                    <Route path="/celebration/design" element={<CelebrationDesign />} />
+                    <Route path="/feedback" element={<FeedbackPage />} />
+                    <Route path="/about" element={<AboutFounder />} />
+                  </Routes>
+                </PageTransition>
+              </main>
   
-            <main className="flex-1 relative z-10">
-              <PageTransition>
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/food" element={<CategoryPage type="food" />} />
-                  <Route path="/grocery" element={<CategoryPage type="grocery" />} />
-                  <Route path="/cart" element={<CartPage />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/offers" element={<OffersPage />} />
-                  <Route path="/bulk" element={<BulkOrderPage />} />
-                  <Route path="/celebration" element={<CelebrationHub />} />
-                  <Route path="/celebration/design" element={<CelebrationDesign />} />
-                  <Route path="/feedback" element={<FeedbackPage />} />
-                  <Route path="/about" element={<AboutFounder />} />
-                </Routes>
-              </PageTransition>
-            </main>
-
-            <BottomCartBar />
-            <BottomNav />
-          </div>
-        </CityGateway>
-      </OperatingHoursGate>
+              <BottomCartBar />
+              <BottomNav />
+            </div>
+          </CityGateway>
+        </OperatingHoursGate>
+      </MaintenanceGate>
     </Router>
   );
 }
