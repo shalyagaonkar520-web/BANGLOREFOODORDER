@@ -770,51 +770,7 @@ export const MENU_ITEMS: Product[] = [
     isVeg: true
   },
 
-  // 🍱 COMBOS
-  {
-    id: 'combo-1',
-    name: 'Fried Chicken Combo',
-    price: 343,
-    category: 'Combos',
-    type: 'food',
-    image: '/fried_chicken_combo.jpg',
-    description: 'Crispy chicken served with fries and drink.',
-    fires: 2
-,  
-    isVeg: false},
-  {
-    id: 'combo-2',
-    name: 'Happy Meal Combo',
-    price: 153,
-    category: 'Combos',
-    type: 'food',
-    image: '/happy_meal_combo.jpg',
-    fires: 1
-,  
-    isVeg: true},
-  {
-    id: 'combo-4',
-    name: 'Chicken Crispy Combo',
-    price: 234,
-    originalPrice: 320,
-    category: 'Combos',
-    type: 'food',
-    image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=800&q=80',
-    description: 'Our signature crispy chicken with fries and drink.',
-    fires: 3
-,  
-    isVeg: false},
-  {
-    id: 'combo-3',
-    name: 'Family Feast Combo',
-    price: 613,
-    category: 'Combos',
-    type: 'food',
-    image: '/happy_meal_combo.jpg',
-    description: 'Large Biryani + Starters + 2L Coke.',
-    fires: 3
-,  
-    isVeg: false},
+
   {
     id: 'special-today',
     name: 'Mutton Fried Rice Special',
@@ -830,7 +786,7 @@ export const MENU_ITEMS: Product[] = [
   }
 ];
 
-export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks', 'Combos'];
+export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
 
 export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
   'Fast Food': { icon: '🍟', bg: 'from-orange-500/20 to-amber-600/20' },
@@ -843,8 +799,7 @@ export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
   'Burgers & Rolls': { icon: '🍔', bg: 'from-orange-400/20 to-red-500/20' },
   'Pizzas & Momos': { icon: '🍕', bg: 'from-yellow-500/20 to-orange-600/20' },
   'Maggie': { icon: '🍜', bg: 'from-yellow-300/20 to-amber-400/20' },
-  'Drinks': { icon: '🥤', bg: 'from-blue-400/20 to-indigo-500/20' },
-  'Combos': { icon: '🍱', bg: 'from-purple-500/20 to-indigo-600/20' }
+  'Drinks': { icon: '🥤', bg: 'from-blue-400/20 to-indigo-500/20' }
 };
 
 export const COMING_SOON_CATEGORIES = [
