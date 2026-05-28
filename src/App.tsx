@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
 
 // Components
 import LandingPage from './components/LandingPage';
@@ -20,6 +21,11 @@ import FeedbackPage from './components/FeedbackPage';
 import AboutFounder from './components/AboutFounder';
 import CelebrationHub from './components/CelebrationHub';
 import CelebrationDesign from './components/CelebrationDesign';
+import AdminPage from './components/AdminPage';
+
+// Store
+import { useSystemStore } from './store/systemStore';
+
 function GoldenParticles() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -70,6 +76,13 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const loadSettings = useSystemStore(state => state.loadSettings);
+
+  // Synchronize dynamic admin settings on app initialization
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
   return (
     <Router>
       <Toaster 
@@ -109,6 +122,7 @@ export default function App() {
                     <Route path="/celebration/design" element={<CelebrationDesign />} />
                     <Route path="/feedback" element={<FeedbackPage />} />
                     <Route path="/about" element={<AboutFounder />} />
+                    <Route path="/admin" element={<AdminPage />} />
                   </Routes>
                 </PageTransition>
               </main>

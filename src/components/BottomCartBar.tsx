@@ -3,6 +3,7 @@ import { useCartStore } from '../store/cartStore';
 import { useLocationStore } from '../store/locationStore';
 import { ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSystemStore } from '../store/systemStore';
 
 
 export default function BottomCartBar() {
@@ -10,12 +11,14 @@ export default function BottomCartBar() {
   const { deliveryLocation } = useLocationStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const settings = useSystemStore(state => state.settings);
   
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const distanceKm = deliveryLocation?.distance ?? 999;
+  const isOrderingPaused = settings.websiteStatus === 'OFF' || settings.emergencyStop;
 
   
-  if (itemCount === 0 || location.pathname === '/cart' || location.pathname === '/checkout') return null;
+  if (itemCount === 0 || location.pathname === '/cart' || location.pathname === '/checkout' || isOrderingPaused) return null;
 
   return (
     <AnimatePresence>

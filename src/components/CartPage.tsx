@@ -5,15 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import { getFakeOriginalPrice } from '../data/menuItems';
 import { useLocationStore } from '../store/locationStore';
 import { calculateDeliveryCharge } from '../types';
+import { useSystemStore } from '../store/systemStore';
+import toast from 'react-hot-toast';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, total } = useCartStore();
   const navigate = useNavigate();
   const { deliveryLocation } = useLocationStore();
+  const settings = useSystemStore(state => state.settings);
   
   const distanceKm = deliveryLocation?.distance ?? 0;
   const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = total + deliveryCharge;
+  
+  const isOrderingPaused = settings.websiteStatus === 'OFF' || settings.emergencyStop;
 
   if (items.length === 0) {
     return (
@@ -180,12 +185,25 @@ export default function CartPage() {
 
               <div className="space-y-6">
                 <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate('/checkout')}
-                  className="w-full h-24 btn-luxury-gold rounded-[30px] text-xl tracking-[6px]"
+                  whileHover={!isOrderingPaused ? { scale: 1.02 } : {}}
+                  whileTap={!isOrderingPaused ? { scale: 0.98 } : {}}
+                  onClick={() => {
+                    if (isOrderingPaused) {
+                      toast.error("Ordering is temporarily closed! Please check operating hours.", {
+                        style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
+                      });
+                      return;
+                    }
+                    navigate('/checkout');
+                  }}
+                  className={`w-full h-24 rounded-[30px] text-xl tracking-[6px] flex items-center justify-center gap-3 transition-all ${
+                    isOrderingPaused 
+                      ? 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
+                      : 'btn-luxury-gold'
+                  }`}
                 >
-                  ORDER NOW <Zap className="w-7 h-7 fill-matte-black ml-3" />
+                  {isOrderingPaused ? 'ORDERING PAUSED' : 'ORDER NOW'}
+                  {!isOrderingPaused && <Zap className="w-7 h-7 fill-matte-black" />}
                 </motion.button>
                 <div className="flex items-center justify-center gap-3 text-text-muted font-black uppercase tracking-[4px] text-[9px] opacity-30">
                   <ShieldCheck className="w-4 h-4 text-gold" />

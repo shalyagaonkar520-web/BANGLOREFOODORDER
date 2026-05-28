@@ -8,6 +8,7 @@ import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldChec
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
+import { useSystemStore } from '../store/systemStore';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -38,6 +39,7 @@ export default function Checkout() {
   const [formData, setFormData] = useState({ name: '', phone: '', additionalMessage: '' });
   const [orderSent, setOrderSent] = useState(false);
   const [waLink, setWaLink] = useState('');
+  const settings = useSystemStore(state => state.settings);
   
 
   const [selectedDrink, setSelectedDrink] = useState<'Coca-Cola' | 'Sprite'>('Coca-Cola');
@@ -82,6 +84,15 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check system status
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+      toast.error('Ordering is temporarily closed! Please try again during open hours.', {
+        style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
+      });
+      return;
+    }
+
     if (!formData.name.trim()) { toast.error('Please enter your name'); return; }
     if (!formData.phone.trim() || formData.phone.length < 10) { toast.error('Please enter a valid phone number'); return; }
     if (!deliveryLocation) { toast.error('Please select a delivery location'); openLocationPicker(); return; }
