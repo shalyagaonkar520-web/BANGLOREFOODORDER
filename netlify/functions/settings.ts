@@ -23,6 +23,7 @@ export const handler: Handler = async (event) => {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Content-Type': 'application/json'
   };
 

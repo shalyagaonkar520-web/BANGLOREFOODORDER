@@ -36,7 +36,13 @@ export class DbService {
    */
   static async fetchSettings(): Promise<AdminSettings> {
     try {
-      const response = await fetch('/api/settings');
+      const response = await fetch(`/api/settings?t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         // Save copy in localStorage for immediate offline access/hydration
