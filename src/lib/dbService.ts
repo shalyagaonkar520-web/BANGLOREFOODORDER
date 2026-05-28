@@ -36,7 +36,7 @@ export class DbService {
    */
   static async fetchSettings(): Promise<AdminSettings> {
     try {
-      const response = await fetch('/api/admin/settings');
+      const response = await fetch('/api/settings');
       if (response.ok) {
         const data = await response.json();
         // Save copy in localStorage for immediate offline access/hydration
@@ -71,7 +71,7 @@ export class DbService {
 
     // 2. Perform backend secure push
     try {
-      const response = await fetch('/api/admin/settings', {
+      const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

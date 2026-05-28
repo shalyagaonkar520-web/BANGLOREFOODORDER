@@ -18,7 +18,7 @@ export default defineConfig(({mode}) => {
             const settingsPath = path.resolve(__dirname, 'src/data/adminSettings.json');
 
             // Handle Admin Login
-            if (req.url && req.url.startsWith('/api/admin/login') && req.method === 'POST') {
+            if (req.url && req.url.includes('/api/login') && req.method === 'POST') {
               let body = '';
               req.on('data', chunk => { body += chunk.toString(); });
               req.on('end', () => {
@@ -50,7 +50,7 @@ export default defineConfig(({mode}) => {
             }
 
             // Handle GET Admin Settings
-            if (req.url && req.url.startsWith('/api/admin/settings') && req.method === 'GET') {
+            if (req.url && req.url.includes('/api/settings') && req.method === 'GET') {
               try {
                 const settingsData = fs.readFileSync(settingsPath, 'utf8');
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -63,7 +63,7 @@ export default defineConfig(({mode}) => {
             }
 
             // Handle POST Admin Settings
-            if (req.url && req.url.startsWith('/api/admin/settings') && req.method === 'POST') {
+            if (req.url && req.url.includes('/api/settings') && req.method === 'POST') {
               const authHeader = req.headers['authorization'];
               if (!authHeader || !authHeader.includes('mock-jwt-admin-token-123456')) {
                 res.writeHead(401, { 'Content-Type': 'application/json' });
