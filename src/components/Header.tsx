@@ -51,13 +51,18 @@ export default function Header() {
 
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex items-center gap-8">
-            {['food', 'offers', 'milk'].map(path => (
+            {[
+              { label: 'Food', path: '/food' },
+              { label: 'Offers', path: '/offers' },
+              { label: 'Milk', path: '/milk' },
+              { label: 'Admin', path: '/admin' }
+            ].map(item => (
               <Link
-                key={path}
-                to={`/${path}`}
-                className={`text-[10px] font-black uppercase tracking-[3px] transition-all hover:text-brand ${location.pathname === '/' + path ? 'text-brand' : 'text-white/40'}`}
+                key={item.path}
+                to={item.path}
+                className={`text-[10px] font-black uppercase tracking-[3px] transition-all hover:text-brand ${location.pathname === item.path ? 'text-brand' : 'text-white/40'}`}
               >
-                {path}
+                {item.label}
               </Link>
             ))}
           </div>
