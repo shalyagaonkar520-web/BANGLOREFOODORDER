@@ -78,9 +78,13 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 export default function App() {
   const loadSettings = useSystemStore(state => state.loadSettings);
 
-  // Synchronize dynamic admin settings on app initialization
+  // Synchronize dynamic admin settings on app initialization and poll every 3s for real-time reflection
   useEffect(() => {
     loadSettings();
+    const interval = setInterval(() => {
+      loadSettings();
+    }, 3000); // Poll every 3 seconds for instant reflection
+    return () => clearInterval(interval);
   }, [loadSettings]);
 
   return (
