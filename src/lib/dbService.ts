@@ -11,6 +11,7 @@ export interface AdminSettings {
   lastUpdated: string;
   whatsappNumber: string;
   whatsappAlertsEnabled: boolean;
+  timeRestrictionEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -25,7 +26,8 @@ const DEFAULT_SETTINGS: AdminSettings = {
   orderLimit: 50,
   lastUpdated: new Date().toISOString(),
   whatsappNumber: '+919606001790',
-  whatsappAlertsEnabled: true
+  whatsappAlertsEnabled: true,
+  timeRestrictionEnabled: true
 };
 
 export class DbService {

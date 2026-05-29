@@ -25,7 +25,8 @@ const DEFAULT_SETTINGS: AdminSettings = {
   orderLimit: 50,
   lastUpdated: new Date().toISOString(),
   whatsappNumber: '+919606001790',
-  whatsappAlertsEnabled: true
+  whatsappAlertsEnabled: true,
+  timeRestrictionEnabled: true
 };
 
 export const useSystemStore = create<SystemState>((set, get) => ({

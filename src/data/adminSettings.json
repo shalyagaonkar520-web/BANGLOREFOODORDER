@@ -10,5 +10,6 @@
   "orderLimit": 50,
   "lastUpdated": "2026-05-28T17:49:21.056Z",
   "whatsappNumber": "+919606001790",
-  "whatsappAlertsEnabled": true
+  "whatsappAlertsEnabled": true,
+  "timeRestrictionEnabled": false
 }

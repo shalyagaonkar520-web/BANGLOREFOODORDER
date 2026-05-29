@@ -33,6 +33,12 @@ export default function OperatingHoursGate({ children }: { children: React.React
         return;
       }
 
+      // Bypass operating hours validation if time restriction is disabled
+      if (settings.timeRestrictionEnabled === false) {
+        setIsOpen(true);
+        return;
+      }
+
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const totalMinutes = hours * 60 + minutes;

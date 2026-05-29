@@ -371,7 +371,9 @@ export default function AdminPage() {
               <Clock className="w-5 h-5 text-amber-400" />
               <div>
                 <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Schedule Window</p>
-                <p className="text-base font-black italic tracking-tighter mt-1 text-white uppercase">{settings.openTime} - {settings.closeTime}</p>
+                <p className="text-base font-black italic tracking-tighter mt-1 text-white uppercase">
+                  {settings.timeRestrictionEnabled === false ? 'UNRESTRICTED' : `${settings.openTime} - ${settings.closeTime}`}
+                </p>
               </div>
             </div>
 
@@ -507,6 +509,37 @@ export default function AdminPage() {
                       layout
                       className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
                       animate={{ x: settings.whatsappAlertsEnabled ? 28 : 0 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* TOGGLE 5: Time Restriction Bypass */}
+              <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04] md:col-span-2">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold text-white tracking-tight">Time Restriction Bypass</h4>
+                    <p className="text-white/40 text-[10px] font-semibold max-w-md">Unlock ordering pipelines 24/7. When disabled, customers can order at any time, ignoring the scheduled bounds.</p>
+                  </div>
+                  <div className={`p-3 rounded-2xl bg-white/5 ${settings.timeRestrictionEnabled === false ? 'text-amber-400 bg-amber-500/10' : 'text-white/30'}`}>
+                    <Clock className="w-6 h-6" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/5">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.timeRestrictionEnabled === false ? 'text-amber-400' : 'text-white/30'}`}>
+                    Status: {settings.timeRestrictionEnabled === false ? 'Time Gate Unlocked (Always Open)' : 'Time Gate Locked (Enforce Schedule)'}
+                  </span>
+                  
+                  {/* Toggle */}
+                  <button 
+                    onClick={() => handleToggleState('timeRestrictionEnabled', !settings.timeRestrictionEnabled)}
+                    className={`w-16 h-9 rounded-full p-1 transition-colors duration-300 outline-none shrink-0 ${settings.timeRestrictionEnabled === false ? 'bg-amber-500' : 'bg-white/10'}`}
+                  >
+                    <motion.div 
+                      layout
+                      className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
+                      animate={{ x: settings.timeRestrictionEnabled === false ? 28 : 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                   </button>
