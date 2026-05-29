@@ -13,8 +13,7 @@ let memorySettings = {
   orderLimit: 50,
   lastUpdated: new Date().toISOString(),
   whatsappNumber: "+919606001790",
-  whatsappAlertsEnabled: true,
-  timeRestrictionEnabled: true
+  whatsappAlertsEnabled: true
 };
 
 export default function handler(req, res) {

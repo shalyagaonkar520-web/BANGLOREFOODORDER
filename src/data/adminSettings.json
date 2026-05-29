@@ -1,5 +1,5 @@
 {
-  "websiteStatus": "OFF",
+  "websiteStatus": "ON",
   "maintenanceMessage": "Mom's Magic is temporarily closed. We'll reopen soon ❤️",
   "openTime": "12:30",
   "closeTime": "22:30",
@@ -10,6 +10,5 @@
   "orderLimit": 50,
   "lastUpdated": "2026-05-28T17:49:21.056Z",
   "whatsappNumber": "+919606001790",
-  "whatsappAlertsEnabled": true,
-  "timeRestrictionEnabled": false
+  "whatsappAlertsEnabled": true
 }
