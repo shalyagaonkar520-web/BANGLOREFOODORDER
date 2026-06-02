@@ -194,10 +194,15 @@ export default function LandingPage() {
                 🍃
               </motion.div>
 
-              <div className="max-w-[60%] space-y-2 relative z-10 text-left">
-                <span className="text-[9px] font-extrabold bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider">
-                  Feast Mode ⚡
-                </span>
+              <div className="max-w-[66%] space-y-2.5 relative z-10 text-left">
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[9px] font-extrabold bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#4CD964]/20">
+                    Feast Mode ⚡
+                  </span>
+                  <span className="text-[9px] font-extrabold bg-amber-500/10 text-[#FFD166] px-2 py-0.5 rounded-md uppercase tracking-wider border border-amber-500/20 animate-pulse">
+                    Moms Magic 2.0
+                  </span>
+                </div>
                 <h1 className="text-4xl font-extrabold italic uppercase tracking-tighter text-white leading-none drop-shadow-sm">
                   Delicious <br/> <span className="text-[#4CD964]">Lunch & Dinner</span>
                 </h1>
