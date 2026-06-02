@@ -61,36 +61,27 @@ export default function BarMenuPage() {
   const fetchDrinks = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/drinks?t=${Date.now()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDrinks(data);
-      } else {
-        console.warn('Backend drinks fetch failed, pulling local mock.');
-        // Fallback mock
-        const fallback = await import('../data/barDrinks.json');
-        setDrinks(fallback.default || []);
-      }
+      // Always load directly from local data – no backend required
+      const fallback = await import('../data/barDrinks.json');
+      setDrinks((fallback.default as any) || []);
     } catch (error) {
-      console.error('Fetch error:', error);
-      try {
-        const fallback = await import('../data/barDrinks.json');
-        setDrinks(fallback.default || []);
-      } catch {
-        // No local file
-      }
+      console.error('Failed to load bar drinks:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Ensure lock state is reset on component mount for development/debugging
+    // Reset lock state on every fresh mount
     sessionStorage.removeItem('moms_magic_bar_unlocked');
+  }, []);
+
+  // Re-fetch drinks whenever the bar is unlocked
+  useEffect(() => {
     if (isUnlocked) {
       fetchDrinks();
     }
-  }, []);
+  }, [isUnlocked]);
 
   // Handle Password Unlock
   const handleUnlockCellar = (e: React.FormEvent) => {
