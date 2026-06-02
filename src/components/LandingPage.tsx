@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, Star, Plus, Minus, X, ArrowRight, Sparkles, Zap, Heart, UtensilsCrossed 
-} from 'lucide-react';
+import { Search, Star, Plus, Minus, X, Sparkles, ShoppingBag } from 'lucide-react';
 import { MENU_ITEMS } from '../data/menuItems';
 import { useCartStore } from '../store/cartStore';
+import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 import Header from './Header';
-import ComboOffersSection from './ComboOffersSection';
+import { playSound, SOUNDS } from '../utils/audio';
 
 // Swish realistic category metadata (uses photographic food assets)
 const CATEGORIES_DATA = [
+  { id: 'Combos', name: 'Combo Offers', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80', count: 5 },
   { id: 'Fast Food', name: 'Fast Food', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', count: 15 },
   { id: 'Rice & Noodles', name: 'Rice & Noodles', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=200&q=80', count: 18 },
   { id: 'Biryani', name: 'Biryani', image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=200&q=80', count: 18 },
@@ -36,58 +36,14 @@ const ROTATING_SEARCH_PLACEHOLDERS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const { addItem, items: cartItems, updateQuantity } = useCartStore();
+  const settings = useSystemStore(state => state.settings);
   
   // States
-  const [searchIndex, setSearchIndex] = useState(0);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentWeather, setCurrentWeather] = useState<'sunny' | 'rainy' | 'cloudy'>('sunny');
-  const [liveTemp, setLiveTemp] = useState<number | null>(null);
-
-  // Fetch real-time weather in Yellapur (Karnataka, India)
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const res = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=14.9643&longitude=74.7121&current=weather_code,temperature_2m'
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const code = data?.current?.weather_code;
-        const temp = data?.current?.temperature_2m;
-
-        if (typeof code === 'number') {
-          let mapped: 'sunny' | 'rainy' | 'cloudy' = 'sunny';
-          if (code === 0 || code === 1) {
-            mapped = 'sunny';
-          } else if ([2, 3, 45, 48].includes(code)) {
-            mapped = 'cloudy';
-          } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code)) {
-            mapped = 'rainy';
-          } else {
-            mapped = 'cloudy';
-          }
-          setCurrentWeather(mapped);
-        }
-        if (typeof temp === 'number') {
-          setLiveTemp(Math.round(temp));
-        }
-      } catch (err) {
-        console.error('Error fetching live weather in Yellapur:', err);
-      }
-    };
-
-    fetchWeather();
-    
-    // Auto refresh weather every 10 minutes
-    const interval = setInterval(fetchWeather, 600000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  const heroTranslateY = useTransform(scrollY, [0, 300], [0, 80]);
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [recommendationOpen, setRecommendationOpen] = useState(false);
+  const [lastAddedProduct, setLastAddedProduct] = useState<any>(null);
 
   // Rotating Search Placeholders
   useEffect(() => {
@@ -97,48 +53,11 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Hero section slider
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveHeroSlide((prev) => (prev + 1) % 3);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Filter items based on query
-  const filteredProducts = MENU_ITEMS.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Curated premium favorites: exactly 3 veg at the starting, then exactly 3 non-veg
-  const favVegIds = ['br-4', 'br-7', 'rn-3'];
-  const favNonVegIds = ['br-5-full', 'st-1', 'st-3'];
-
-  let favVeg = favVegIds.map(id => MENU_ITEMS.find(item => item.id === id)).filter(Boolean) as any[];
-  if (favVeg.length < 3) {
-    const existingIds = new Set(favVeg.map(i => i.id));
-    favVeg = [...favVeg, ...MENU_ITEMS.filter(item => item.isVeg && !existingIds.has(item.id))].slice(0, 3);
-  }
-
-  let favNonVeg = favNonVegIds.map(id => MENU_ITEMS.find(item => item.id === id)).filter(Boolean) as any[];
-  if (favNonVeg.length < 3) {
-    const existingIds = new Set(favNonVeg.map(i => i.id));
-    favNonVeg = [...favNonVeg, ...MENU_ITEMS.filter(item => !item.isVeg && !existingIds.has(item.id))].slice(0, 3);
-  }
-
-  const favouriteItems = [...favVeg, ...favNonVeg];
-
-  const bestSalesItems = MENU_ITEMS.filter(item => 
-    item.name.toLowerCase().includes('biryani') || 
-    item.name.toLowerCase().includes('kadai') || 
-    item.name.toLowerCase().includes('paneer') || 
-    item.name.toLowerCase().includes('shawarma') || 
-    item.name.toLowerCase().includes('kabab') ||
-    item.name.toLowerCase().includes('noodle')
-  ).slice(0, 8);
-
   const handledAddWithToast = (product: any) => {
+    playSound(SOUNDS.ADD_TO_CART);
     addItem(product);
+    setLastAddedProduct(product);
+    setRecommendationOpen(true); // Automatically slide open sideways drawer when added!
     toast.success(`${product.name} added to cravings plate! 🍳`, {
       style: {
         background: '#FFFFFF',
@@ -152,11 +71,88 @@ export default function LandingPage() {
     });
   };
 
+  // Map Combo Offers to standard food format
+  const combos = settings?.comboOffers || [];
+  const activeCombos = combos.filter(combo => {
+    if (!combo.isActive) return false;
+    if (combo.expiryDate) {
+      const now = new Date();
+      const expiry = new Date(combo.expiryDate);
+      expiry.setHours(23, 59, 59, 999);
+      if (now > expiry) return false;
+    }
+    return true;
+  });
 
+  const mappedCombos = activeCombos.map((combo): any => ({
+    id: combo.id,
+    name: combo.name,
+    price: combo.offerPrice,
+    originalPrice: combo.regularPrice,
+    category: 'Combos',
+    type: 'food',
+    image: combo.image || '/chicken_biryani_new.png',
+    description: combo.items.join(' + '),
+    isVeg: combo.name.toLowerCase().includes('veg'),
+    isCombo: true
+  }));
+
+  // Combine Combos with MENU_ITEMS - putting combos at the top
+  const allProducts = [...mappedCombos, ...MENU_ITEMS];
+
+  // Filter items based on selected category and search query
+  const filteredProducts = allProducts.filter(item => {
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Separate combos and standard products, sorting both by price low to high
+  const comboProducts = filteredProducts.filter(item => item.isCombo).sort((a, b) => a.price - b.price);
+  const standardProducts = filteredProducts.filter(item => !item.isCombo).sort((a, b) => a.price - b.price);
+
+  // Combine so combos always appear at the starting/beginning of all page filters
+  const displayedProducts = [...comboProducts, ...standardProducts];
+
+  const categoriesWithAll = [
+    { id: 'All', name: 'All Dishes', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80' },
+    ...CATEGORIES_DATA
+  ];
+
+  // Get companion recommendations
+  const getRecommendations = () => {
+    const baseProduct = lastAddedProduct || MENU_ITEMS[0];
+    if (!baseProduct) return [];
+    
+    const drinks = MENU_ITEMS.filter(item => item.category === 'Drinks' && item.id !== baseProduct.id);
+    const starters = MENU_ITEMS.filter(item => item.category === 'Starters' && item.id !== baseProduct.id);
+    const fastfood = MENU_ITEMS.filter(item => item.category === 'Fast Food' && item.id !== baseProduct.id);
+    
+    const recs: any[] = [];
+    if (drinks.length > 0) recs.push(drinks[0]);
+    if (starters.length > 0) recs.push(starters[0]);
+    else if (fastfood.length > 0) recs.push(fastfood[0]);
+    if (fastfood.length > 1) recs.push(fastfood[1]);
+    else if (MENU_ITEMS.length > 0) {
+      const fallback = MENU_ITEMS.filter(item => item.id !== baseProduct.id && !recs.some(r => r.id === item.id));
+      if (fallback.length > 0) recs.push(fallback[0]);
+    }
+    return recs.slice(0, 3);
+  };
 
   return (
-    <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32" ref={containerRef}>
+    <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32">
       <Header />
+
+      {/* BRANDING HEADER BANNER */}
+      <div className="px-4 pt-5 pb-2 text-left">
+        <h1 className="text-3.5xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none animate-shining-blink">
+          Moms Magic 2.0
+        </h1>
+        <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1.5">
+          Taste the magic of home • Delivered in 10 mins
+        </p>
+      </div>
 
       {/* SEARCH BAR AREA */}
       <div className="px-4 pt-4 sticky top-[72px] z-[40] bg-[#050505]/95 backdrop-blur-md pb-2">
@@ -181,490 +177,315 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {searchQuery ? (
-        // Search Results Screen
-        <div className="px-4 py-6 space-y-6">
-          <h2 className="text-xl font-bold uppercase tracking-tight text-white/60">Search Results</h2>
-          <div className="grid grid-cols-2 gap-3.5">
-            {filteredProducts.map((product) => {
+      {/* CATEGORY SECTION (CIRCULAR PHOTOGRAPHY LIST) */}
+      <section className="py-4 space-y-3">
+        <div className="px-4 text-left flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">Browse <span className="text-[#4CD964]">Categories</span></h2>
+            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Select to filter your cravings</p>
+          </div>
+          {selectedCategory !== 'All' && (
+            <button 
+              onClick={() => setSelectedCategory('All')} 
+              className="text-[10px] font-extrabold text-[#4CD964] uppercase tracking-wider bg-[#4CD964]/10 px-3 py-1 rounded-full border border-[#4CD964]/20 active:scale-95 transition-all"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-5 overflow-x-auto no-scrollbar px-4 py-3">
+          {categoriesWithAll.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <div 
+                key={cat.id} 
+                onClick={() => setSelectedCategory(cat.id)}
+                className="flex flex-col items-center gap-3 cursor-pointer shrink-0 group/cat"
+              >
+                <div className="relative shrink-0">
+                  {/* Glowing outer aura that rotates and cycles colors for active category */}
+                  {isActive ? (
+                    <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#4CD964] via-[#FFD166] via-[#FF4D00] via-[#FF007F] to-[#00F0FF] opacity-100 blur-[4px] animate-spin-slow" />
+                  ) : (
+                    <div className="absolute -inset-0.5 rounded-full bg-white/10 opacity-0 group-hover/cat:opacity-100 group-hover/cat:blur-[3px] transition-all duration-300" />
+                  )}
+                  
+                  {/* Main circular frame */}
+                  <div className={`w-[74px] h-[74px] rounded-full p-[3px] relative z-10 flex items-center justify-center overflow-hidden border transition-all duration-300 active:scale-95 ${
+                    isActive ? 'bg-[#050505] border-white/20 scale-105 shadow-[0_0_15px_rgba(76,217,100,0.3)]' : 'bg-[#050505] border-white/10 group-hover/cat:border-white/20'
+                  }`}>
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      <img 
+                        src={cat.image} 
+                        className="w-full h-full object-cover group-hover/cat:scale-110 transition-transform duration-500" 
+                        alt={cat.name} 
+                      />
+                      {/* Soft bottom shading overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${
+                  isActive ? 'text-[#4CD964]' : 'text-white/80 group-hover/cat:text-[#4CD964]'
+                }`}>
+                  {cat.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ALL FOOD GRID SECTION */}
+      <section className="py-4 space-y-4 px-4">
+        <div className="text-left flex justify-between items-center border-b border-white/5 pb-2">
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">
+              {selectedCategory === 'All' ? 'All' : selectedCategory} <span className="text-[#4CD964]">Dishes</span>
+            </h2>
+            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
+              {displayedProducts.length} {displayedProducts.length === 1 ? 'item' : 'items'} available
+            </p>
+          </div>
+        </div>
+
+        {displayedProducts.length === 0 ? (
+          <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
+            <div className="text-4xl">🔍</div>
+            <h3 className="text-md font-bold text-white">No food items found</h3>
+            <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try checking other categories or adjust your search.</p>
+            <button 
+              onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
+              className="text-xs font-black bg-[#4CD964] text-black px-4 py-2 rounded-full uppercase tracking-wider active:scale-95 transition-all mt-2"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {displayedProducts.map((product) => {
               const inCart = cartItems.find(i => i.id === product.id);
+              const isCombo = product.isCombo;
+              
               return (
-                <div key={product.id} className="bg-[#0B0E14] border border-white/5 rounded-[20px] p-2.5 flex flex-col relative shadow-[0_8px_30px_rgba(0,0,0,0.5)] group transition-all hover:scale-[1.01]">
-                  <div className="relative aspect-[16/10] rounded-[16px] overflow-hidden mb-2 bg-black/5 shrink-0">
-                    <img src={product.image} className="w-full h-full object-cover" alt="" />
-                    <button 
-                      onClick={() => handledAddWithToast(product)}
-                      className="absolute bottom-1 right-1 bg-[#4CD964] hover:bg-[#3AC152] text-white w-7 h-7 rounded-full flex items-center justify-center shadow-md border-2 border-white transition-transform active:scale-95"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+                <div 
+                  key={product.id} 
+                  className={`border rounded-[20px] p-2 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
+                    isCombo 
+                      ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
+                      : 'bg-[#0B0E14] border-white/5'
+                  }`}
+                >
+                  {/* Badges / Indicators */}
+                  <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+                    {isCombo ? (
+                      <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[5.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-1 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
+                        ⭐ Combo
+                      </span>
+                    ) : product.fires && product.fires >= 2 ? (
+                      <span className="bg-red-500 text-white text-[5.5px] sm:text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded shadow-md self-start shrink-0">
+                        🔥 Hot
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="flex items-center gap-1.5 mb-1 text-left">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${product.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                    <span className="text-[8px] font-bold text-white/40 uppercase tracking-wider">Serves 1</span>
+
+                  {/* Product Image */}
+                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-1.5 bg-black/40 shrink-0">
+                    <img 
+                      src={product.image} 
+                      className="w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-500" 
+                      alt={product.name} 
+                    />
                   </div>
-                  <h4 className="text-[12px] font-black text-white truncate mb-0.5">{product.name}</h4>
-                  <p className="text-[12px] font-black text-white mt-auto">₹{product.price}</p>
+
+                  {/* Title & Description */}
+                  <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
+                    <div>
+                      <h4 className={`text-[10px] sm:text-[12px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
+                        isCombo ? 'text-amber-300' : 'text-white'
+                      }`}>
+                        {product.name}
+                      </h4>
+                      {product.description && (
+                        <p className="text-[8px] sm:text-[9px] text-white/40 line-clamp-1 leading-tight mb-1">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Price and Ratings */}
+                    <div className="flex items-center justify-between pt-1">
+                      <p className={`text-[10px] sm:text-[12px] font-black ${
+                        isCombo ? 'text-amber-400' : 'text-white'
+                      }`}>₹{product.price}</p>
+                      <div className={`flex items-center gap-0.5 ${
+                        isCombo ? 'text-amber-400' : 'text-amber-500'
+                      }`}>
+                        <Star className="w-2 h-2 sm:w-2.5 sm:h-2.5 fill-current" />
+                        <span className="text-[7.5px] sm:text-[8px] font-extrabold">4.9</span>
+                      </div>
+                    </div>
+
+                    {/* Full-width Order Button at the very bottom of card content */}
+                    <div className="mt-2.5">
+                      {inCart ? (
+                        <div className="w-full bg-[#4CD964] text-black rounded-xl flex items-center justify-between px-2 py-1.5 shadow-md border border-white">
+                          <button 
+                            onClick={() => {
+                              playSound(SOUNDS.QUANTITY_TICK);
+                              updateQuantity(product.id, inCart.quantity - 1);
+                            }}
+                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-[9px] sm:text-[10px] font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
+                          <button 
+                            onClick={() => {
+                              playSound(SOUNDS.QUANTITY_TICK);
+                              updateQuantity(product.id, inCart.quantity + 1);
+                            }}
+                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => handledAddWithToast(product)}
+                          className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[9px] sm:text-[10px] uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
+                        >
+                          Order Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      ) : (
-        // Main Home Content
-        <>
-          {/* HERO THEME SECTION SLIDER WITH PARALLAX & ANIMATED LEAVES */}
-          <motion.div 
-            style={{ y: heroTranslateY }}
-            className="px-4 py-4 relative z-0"
-          >
-            <div className={`h-[260px] rounded-[24px] border border-[#4CD964]/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden relative p-6 flex flex-col justify-between transition-all duration-700 ${
-              currentWeather === 'sunny' 
-                ? 'bg-gradient-to-br from-[#12281A] via-[#0B140E] to-[#050505]' 
-                : currentWeather === 'rainy'
-                  ? 'bg-gradient-to-br from-[#0D1821] via-[#080E14] to-[#050505]'
-                  : 'bg-gradient-to-br from-[#1B2430] via-[#0F141C] to-[#050505]'
-            }`}>
-              
-              {/* Floating Leaves */}
-              <motion.div 
-                animate={{ y: [0, -10, 0], rotate: [0, 10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute top-8 right-[40%] text-emerald-500/10 pointer-events-none text-xl font-bold"
-              >
-                🍃
-              </motion.div>
-              <motion.div 
-                animate={{ y: [0, 15, 0], rotate: [0, -15, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                className="absolute bottom-8 left-1/3 text-emerald-500/10 pointer-events-none text-2xl font-bold"
-              >
-                🍃
-              </motion.div>
+        )}
+      </section>
 
-              {/* Dynamic Weather System Overlay */}
-              {currentWeather === 'rainy' && (
-                <>
-                  {/* Rain cloud visual in top-right */}
-                  <motion.div 
-                    animate={{ y: [0, -4, 0], scale: [1, 1.05, 1] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-6 right-8 text-4xl pointer-events-none select-none z-[15] opacity-50 filter drop-shadow-[0_0_12px_rgba(76,217,100,0.4)]"
-                  >
-                    🌧️
-                  </motion.div>
-                  {/* Full-card falling rain curtain (placed at z-20 to fall in front of content) */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-[20]">
-                    {/* Dark storm backdrop */}
-                    <div className="absolute inset-0 bg-[#0B141D]/45 backdrop-blur-[0.5px]" />
-                    {/* Rain drops */}
-                    {[...Array(25)].map((_, i) => {
-                      const left = `${(i * 4) + Math.random() * 2}%`;
-                      const delay = Math.random() * 2;
-                      const duration = 0.5 + Math.random() * 0.3;
-                      return (
-                        <motion.div
-                          key={i}
-                          initial={{ y: -55, opacity: 0 }}
-                          animate={{ y: 300, opacity: [0, 0.8, 0.8, 0] }}
-                          transition={{
-                            duration: duration,
-                            repeat: Infinity,
-                            delay: delay,
-                            ease: "linear"
-                          }}
-                          style={{
-                            position: 'absolute',
-                            left: left,
-                            top: 0,
-                            width: '1px',
-                            height: '25px',
-                            background: 'linear-gradient(to bottom, rgba(255,255,255,0.0), rgba(76,217,100,0.6))'
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+      {/* OPTIONAL SLIDING SIDE RECS TAB - ALWAYS VISIBLE */}
+      <motion.button 
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        whileHover={{ scale: 1.05 }}
+        onClick={() => setRecommendationOpen(true)}
+        className="fixed right-0 top-[40%] -translate-y-1/2 z-[80] bg-gradient-to-l from-amber-500 to-yellow-400 text-black font-black text-[9px] uppercase tracking-widest pl-3.5 pr-2 py-3.5 rounded-l-2xl shadow-[0_4px_20px_rgba(255,209,102,0.3)] border border-yellow-300/30 flex flex-col items-center gap-1.5 cursor-pointer animate-pulse"
+      >
+        <Sparkles className="w-3.5 h-3.5 fill-black text-black" />
+        <span className="writing-mode-vertical uppercase tracking-wider text-[8px]">Pairings</span>
+      </motion.button>
 
-              {currentWeather === 'sunny' && (
-                <>
-                  {/* Spinning glowing sun visual in top-right */}
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                    className="absolute top-4 right-8 w-16 h-16 pointer-events-none select-none z-[15] flex items-center justify-center"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-[#FFD166] shadow-[0_0_20px_#FFD166,0_0_35px_#FF9F1C] relative flex items-center justify-center">
-                      {/* Sun rays */}
-                      {[...Array(8)].map((_, idx) => (
-                        <div 
-                          key={idx}
-                          className="absolute w-1 h-10 bg-gradient-to-t from-[#FFD166] to-[#FF9F1C] rounded-full opacity-60"
-                          style={{ transform: `rotate(${idx * 45}deg)` }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                  {/* Warm solar environment */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-0">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,209,102,0.15)_0%,transparent_60%)]" />
-                    {/* Solar ray beams */}
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                      className="absolute top-[-10px] right-[-10px] w-48 h-48 bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,209,102,0.05)_30deg,transparent_60deg)] rounded-full origin-center"
-                    />
-                    {/* Floating heat sparkles */}
-                    {[...Array(8)].map((_, i) => {
-                      const left = `${20 + Math.random() * 60}%`;
-                      const top = `${20 + Math.random() * 60}%`;
-                      const delay = Math.random() * 3;
-                      return (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: [0, 0.4, 0], scale: [0.5, 1.2, 0.5] }}
-                          transition={{
-                            duration: 4,
-                            repeat: Infinity,
-                            delay: delay,
-                            ease: "easeInOut"
-                          }}
-                          className="absolute w-2 h-2 rounded-full bg-[#FFD166]/20 blur-[1px]"
-                          style={{ left: left, top: top }}
-                        />
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {currentWeather === 'cloudy' && (
-                <>
-                  {/* Volumetric cloud system layered inside the card */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-[20]">
-                    {/* Misty grey-blue glow */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-                    
-                    {/* Drifting Clouds */}
-                    <motion.div 
-                      animate={{ x: [-80, 280], y: [10, 15, 10] }}
-                      transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-                      className="absolute text-5xl opacity-35 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]"
-                      style={{ top: '10%' }}
-                    >
-                      ☁️
-                    </motion.div>
-                    <motion.div 
-                      animate={{ x: [280, -80], y: [75, 70, 75] }}
-                      transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
-                      className="absolute text-6xl opacity-25 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]"
-                      style={{ top: '30%' }}
-                    >
-                      ☁️
-                    </motion.div>
-                    <motion.div 
-                      animate={{ x: [-50, 250], y: [130, 135, 130] }}
-                      transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-                      className="absolute text-4xl opacity-30 filter blur-[0.5px]"
-                      style={{ top: '50%' }}
-                    >
-                      ☁️
-                    </motion.div>
-                  </div>
-                </>
-              )}
-
-              <div className="max-w-[66%] space-y-2.5 relative z-10 text-left">
-                <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-[9px] font-extrabold bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#4CD964]/20 shrink-0">
-                    Feast Mode ⚡
-                  </span>
-                  <span className="text-[9px] font-extrabold bg-amber-500/10 text-[#FFD166] px-2 py-0.5 rounded-md uppercase tracking-wider border border-amber-500/20 animate-pulse shrink-0">
-                    Moms Magic 2.0
-                  </span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentWeather(prev => prev === 'sunny' ? 'rainy' : prev === 'rainy' ? 'cloudy' : 'sunny');
-                    }}
-                    className="text-[9px] font-extrabold bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-blue-500/20 hover:bg-blue-500/20 transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
-                  >
-                    {currentWeather === 'sunny' && '☀️ Yellapur: Sunny'}
-                    {currentWeather === 'rainy' && '🌧️ Yellapur: Rainy'}
-                    {currentWeather === 'cloudy' && '☁️ Yellapur: Cloudy'}
-                    {liveTemp !== null && ` (${liveTemp}°C)`}
-                  </button>
-                </div>
-                <h1 className="text-4xl font-extrabold italic uppercase tracking-tighter text-white leading-none drop-shadow-sm">
-                  Delicious <br/> <span className="text-[#4CD964]">Lunch & Dinner</span>
-                </h1>
-                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest leading-relaxed">
-                  Fresh and sizzling hot • delivered in 10 mins
-                </p>
-              </div>
-
-
-            </div>
-          </motion.div>
-
-          {/* Special Combo Offers (At the starting) */}
-          <ComboOffersSection />
-
-          {/* CATEGORY SECTION (CIRCULAR PHOTOGRAPHY LIST) */}
-          <section className="py-6 space-y-4">
-            <div className="px-4 text-left">
-              <h2 className="text-lg font-black uppercase tracking-tight italic text-white">Browse <span className="text-[#4CD964]">Categories</span></h2>
-              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Realistic visual culinary strips</p>
-            </div>
-
-            <div className="flex gap-5 overflow-x-auto no-scrollbar px-4 py-3">
-              {CATEGORIES_DATA.map((cat) => (
-                <div 
-                  key={cat.id} 
-                  onClick={() => navigate('/food', { state: { category: cat.id } })}
-                  className="flex flex-col items-center gap-3 cursor-pointer shrink-0"
-                >
-                  <div className="relative group/cat shrink-0">
-                    {/* Glowing outer aura that rotates and cycles colors */}
-                    <div className="absolute -inset-0.5 rounded-full bg-gradient-to-tr from-[#4CD964] via-[#FFD166] via-[#FF4D00] via-[#FF007F] to-[#00F0FF] opacity-75 blur-[3px] group-hover/cat:opacity-100 group-hover/cat:blur-[5px] transition-all duration-500 animate-spin-slow" />
-                    
-                    {/* Main circular frame */}
-                    <div className="w-[74px] h-[74px] rounded-full bg-[#050505] p-[3px] relative z-10 flex items-center justify-center overflow-hidden border border-white/10 transition-transform active:scale-95 group-hover/cat:scale-105 duration-300">
-                      <div className="w-full h-full rounded-full overflow-hidden relative">
-                        <img 
-                          src={cat.image} 
-                          className="w-full h-full object-cover group-hover/cat:scale-110 transition-transform duration-500" 
-                          alt={cat.name} 
-                        />
-                        {/* Soft bottom shading overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-extrabold uppercase text-white/80 tracking-wider group-hover/cat:text-[#4CD964] transition-colors">
-                    {cat.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* YOUR FAVOURITES SECTION */}
-          <section className="py-6 space-y-4">
-            <div className="px-4 text-left">
-              <h2 className="text-lg font-black uppercase tracking-tight italic text-white">⭐ Your <span className="text-[#4CD964]">Favourites</span></h2>
-              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Curated specifically by you</p>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto no-scrollbar px-4 py-2">
-              {favouriteItems.map((product) => {
-                return (
-                  <div key={product.id} className="w-[160px] h-[230px] shrink-0 bg-[#0B0E14] border border-white/5 rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col p-2.5 relative snap-start">
-                    
-                    {/* Bestseller Badge */}
-                    <div className="absolute top-4 left-4 bg-[#FF7A00] text-white text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm z-10 flex items-center gap-0.5">
-                      ★ Bestseller
-                    </div>
-
-                    <div className="relative aspect-[16/10] rounded-[16px] overflow-hidden mb-2 bg-black/5 shrink-0">
-                      <img src={product.image} className="w-full h-full object-cover" alt="" />
-                      <button 
-                        onClick={() => handledAddWithToast(product)}
-                        className="absolute bottom-[-8px] right-2 bg-[#4CD964] hover:bg-[#3AC152] text-white w-6.5 h-6.5 rounded-full flex items-center justify-center shadow-md border-2 border-white transition-transform active:scale-95"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-white" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 mb-1 mt-1 text-left">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${product.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                      <span className="text-[8px] font-black text-white/40 uppercase tracking-wider">Serves 1</span>
-                    </div>
-
-                    <div className="text-left flex-1 flex flex-col justify-between">
-                      <h4 className="text-[12px] font-extrabold text-white truncate tracking-tight">{product.name}</h4>
-                      <p className="text-[12px] font-black text-white mt-auto">₹{product.price}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* BEST SALES SECTION (SWISH-THEMED GREEN CONTAINER) */}
-          <section className="px-4 py-4">
-            <div className="bg-gradient-to-br from-[#0B0E14] via-[#10141D] to-[#050505] rounded-[28px] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] space-y-4 overflow-hidden relative border border-[#4CD964]/10">
-              
-              {/* Subtle visual glow */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(76,217,100,0.02)_0%,transparent_50%)] pointer-events-none" />
-
-              <div className="flex items-center justify-between relative z-10">
-                <div className="text-left">
-                  <span className="text-[8px] font-black bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#4CD964]/20">
-                    Hot Sellers 🔥
-                  </span>
-                  <h2 className="text-lg font-black uppercase tracking-tight italic text-white mt-1">⚡ Best <span className="text-[#4CD964]">Sales</span></h2>
-                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Top rated favorite plates</p>
-                </div>
-                <button onClick={() => navigate('/food')} className="text-[9px] font-black bg-[#4CD964] text-[#050505] px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm hover:bg-[#3AC152]">
-                  View All
-                </button>
-              </div>
-
-              <div className="flex gap-4 overflow-x-auto no-scrollbar py-2 relative z-10">
-                {bestSalesItems.map((product) => {
-                  return (
-                    <div key={product.id} className="w-[150px] shrink-0 bg-white/5 backdrop-blur rounded-[20px] p-2.5 relative border border-white/10 shadow-sm flex flex-col">
-                      <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-2 bg-black/5 shrink-0">
-                        <img src={product.image} className="w-full h-full object-cover" alt="" />
-                        <button 
-                          onClick={() => handledAddWithToast(product)}
-                          className="absolute bottom-[-8px] right-2 bg-[#4CD964] hover:bg-[#3AC152] text-[#050505] w-6 h-6 rounded-full flex items-center justify-center shadow-md border-2 border-[#0B0E14] transition-transform active:scale-95"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-1.5 mb-1 mt-1 text-left">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#4CD964] shrink-0 animate-pulse" />
-                        <span className="text-[8px] font-bold text-[#4CD964]/80 uppercase tracking-wider">Popular</span>
-                      </div>
-                      <div className="text-left flex-1 flex flex-col justify-between">
-                        <h4 className="text-[11px] font-extrabold text-white truncate tracking-tight">{product.name}</h4>
-                        <p className="text-[11px] font-black text-white mt-auto">₹{product.price}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          {/* DENSE 2-COLUMN GRID SECTION WITH SCARCITY TRIGGERS */}
-          <section className="py-6 space-y-4 px-4">
-            <div className="text-left">
-              <h2 className="text-lg font-black uppercase tracking-tight italic text-white">🔥 Highly <span className="text-[#4CD964]">Recommended</span></h2>
-              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Impulse favorites based on Zepto trends</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 sm:gap-3.5">
-              {MENU_ITEMS.slice(10, 16).map((product) => {
-                const badges = ["Trending", "Bestseller", "Hot Deal", "Limited Offer", "Most Loved", "Recently Ordered"];
-                const badge = badges[product.name.length % badges.length];
-
-                return (
-                  <div key={product.id} className="bg-[#0B0E14] border border-white/5 rounded-[16px] p-2 flex flex-col relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all hover:scale-[1.01]">
-                    
-                    {/* Scarcity / Triggers Badge */}
-                    <div className="absolute top-3.5 left-3.5 bg-emerald-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm z-10 flex items-center gap-0.5 animate-pulse">
-                      🔥 {badge}
-                    </div>
-
-                    <div className="relative aspect-[16/10] rounded-[12px] overflow-hidden mb-1.5 bg-black/5 shrink-0">
-                      <img src={product.image} className="w-full h-full object-cover" alt="" />
-                      <button 
-                        onClick={() => handledAddWithToast(product)}
-                        className="absolute bottom-[-6px] right-1.5 bg-[#4CD964] hover:bg-[#3AC152] text-white w-5.5 h-5.5 rounded-full flex items-center justify-center shadow-md border border-white transition-transform active:scale-95"
-                      >
-                        <Plus className="w-3 h-3 text-white" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 mb-1 text-left">
-                      <span className={`w-1 h-1 rounded-full shrink-0 ${product.isVeg ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                      <span className="text-[7px] sm:text-[8px] font-black text-white/40 uppercase tracking-wider">Serves 1</span>
-                    </div>
-
-                    <div className="text-left flex-1 flex flex-col justify-between">
-                      <h4 className="text-[10px] sm:text-[12px] font-extrabold text-white truncate tracking-tight">{product.name}</h4>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-[10px] sm:text-[12px] font-black text-white">₹{product.price}</p>
-                        <div className="flex items-center gap-0.5 text-[#FF7A00]">
-                          <Star className="w-2 h-2 fill-current" />
-                          <span className="text-[7px] sm:text-[8px] font-black">4.8</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* FLOATING CENTER MENU BUTTON */}
-      <div className="fixed bottom-20 left-0 right-0 flex justify-center z-[90] pointer-events-none md:hidden">
-        <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsMenuOpen(true)}
-          className="bg-[#4CD964] text-white rounded-full px-6 py-3.5 shadow-[0_8px_30px_rgba(76,217,100,0.35)] flex items-center gap-2 pointer-events-auto hover:scale-105 active:scale-95 transition-all text-xs font-black uppercase tracking-widest border border-white/10"
-        >
-          <UtensilsCrossed className="w-4 h-4 text-white" />
-          <span>Menu</span>
-        </motion.button>
-      </div>
-
-
-
-      {/* CATEGORY BOTTOM SHEET MODAL (Inspired by Screenshot 1) */}
+      {/* SIDEWAYS SLIDING RECOMMENDATION PANEL */}
       <AnimatePresence>
-        {isMenuOpen && (
-          <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}>
+        {recommendationOpen && (
+          <div className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-xs" onClick={() => setRecommendationOpen(false)}>
             <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-[#0B0E14] border-t border-[#4CD964]/20 rounded-t-[32px] p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-[0_-15px_40px_rgba(0,0,0,0.5)] flex flex-col justify-between"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              className="bg-[#0B0E14] border-l border-[#4CD964]/20 w-[80%] max-w-sm h-full shadow-[-10px_0_40px_rgba(0,0,0,0.6)] flex flex-col justify-between p-5 text-left overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Bottom Sheet Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
-                <div className="text-left">
-                  <h3 className="text-lg font-black uppercase italic tracking-tight leading-none text-white">⚡ Select Category</h3>
-                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Jump to your favorite meals instantly</p>
-                </div>
-                <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-8 h-8 rounded-full bg-[#4CD964]/10 text-[#4CD964] flex items-center justify-center hover:bg-[#4CD964]/20 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Categories list */}
-              <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-1 max-h-[50vh]">
-                <div 
-                  onClick={() => { setIsMenuOpen(false); navigate('/food', { state: { category: 'Top Picks' } }); }}
-                  className="flex items-center justify-between py-3.5 px-4 rounded-2xl bg-[#4CD964]/10 border border-[#4CD964]/20 text-[#4CD964] cursor-pointer"
-                >
-                  <span className="font-extrabold text-sm tracking-tight">Curated Combos 🍲</span>
-                  <span className="text-[10px] font-black bg-[#4CD964] text-white px-2 py-0.5 rounded-full">NEW</span>
-                </div>
-                
-                {CATEGORIES_DATA.map((cat) => (
-                  <div 
-                    key={cat.id} 
-                    onClick={() => { setIsMenuOpen(false); navigate('/food', { state: { category: cat.id } }); }}
-                    className="flex items-center justify-between py-3.5 px-4 rounded-2xl bg-white/5 border border-white/5 hover:border-[#4CD964]/20 transition-colors cursor-pointer text-left group"
-                  >
-                    <span className="font-bold text-sm text-white group-hover:text-[#4CD964] transition-colors">{cat.name}</span>
-                    <span className="text-xs font-bold text-white/40">{cat.count} Items</span>
+              {/* Panel content */}
+              <div className="space-y-6">
+                <div className="flex justify-between items-start border-b border-white/5 pb-4">
+                  <div>
+                    <div className="flex items-center gap-1 text-[8px] font-black uppercase text-amber-400 tracking-widest">
+                      <Sparkles className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      Perfect Pairings
+                    </div>
+                    <h3 className="text-sm font-extrabold text-white mt-1">
+                      {lastAddedProduct ? (
+                        <>Pairs well with <span className="text-[#4CD964]">{lastAddedProduct.name}</span></>
+                      ) : (
+                        <>Signature Cravings for You</>
+                      )}
+                    </h3>
                   </div>
-                ))}
+                  <button 
+                    onClick={() => setRecommendationOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/5 text-white/60 flex items-center justify-center hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Recommended items list */}
+                <div className="space-y-4">
+                  {getRecommendations().map((item) => {
+                    const inCart = cartItems.find(i => i.id === item.id);
+                    return (
+                      <div 
+                        key={item.id}
+                        className="bg-white/5 border border-white/5 hover:border-[#4CD964]/20 rounded-2xl p-3 flex flex-col gap-3 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/40 border border-white/5 shrink-0">
+                            <img src={item.image} className="w-full h-full object-cover" alt="" />
+                          </div>
+                          <div>
+                            <h4 className="text-[11px] font-black text-white leading-tight">{item.name}</h4>
+                            <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider block mt-0.5">{item.category}</span>
+                            <p className="text-[10px] font-black text-[#4CD964] mt-1">₹{item.price}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {inCart ? (
+                            <div className="w-full bg-[#4CD964] text-black rounded-lg flex items-center justify-between px-2 py-1 shadow-md border border-white">
+                              <button 
+                                onClick={() => {
+                                  playSound(SOUNDS.QUANTITY_TICK);
+                                  updateQuantity(item.id, inCart.quantity - 1);
+                                }}
+                                className="text-black hover:text-black/80 active:scale-75 transition-all w-4.5 h-4.5 flex items-center justify-center font-bold text-xs"
+                              >
+                                <Minus className="w-2.5 h-2.5" />
+                              </button>
+                              <span className="text-[9px] font-black text-center">{inCart.quantity} Added</span>
+                              <button 
+                                onClick={() => {
+                                  playSound(SOUNDS.QUANTITY_TICK);
+                                  updateQuantity(item.id, inCart.quantity + 1);
+                                }}
+                                className="text-black hover:text-black/80 active:scale-75 transition-all w-4.5 h-4.5 flex items-center justify-center font-bold text-xs"
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={() => {
+                                playSound(SOUNDS.ADD_TO_CART);
+                                addItem(item);
+                                toast.success(`${item.name} added! 🍯`, { duration: 1500 });
+                              }}
+                              className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[9px] uppercase tracking-widest py-2 rounded-xl transition-all active:scale-95"
+                            >
+                              Order It
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Sheet Floating close button */}
-              <div className="pt-6 flex justify-center">
+              {/* Close Button / Bottom Area */}
+              <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
                 <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="bg-[#4CD964] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform"
+                  onClick={() => setRecommendationOpen(false)}
+                  className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] uppercase tracking-widest py-3.5 rounded-[18px] text-center shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <X className="w-6 h-6" />
+                  <ShoppingBag className="w-4 h-4 text-black" />
+                  <span>Continue To Plate</span>
                 </button>
               </div>
             </motion.div>

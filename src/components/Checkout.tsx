@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
+import { playSound, SOUNDS } from '../utils/audio';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -199,6 +200,7 @@ export default function Checkout() {
       } else {
         clearCart();
       }
+      playSound(SOUNDS.ORDER_SUCCESS);
       toast.success('VIP Order placed! Redirecting to WhatsApp...');
       setTimeout(() => {
         window.location.href = waUrl;
