@@ -135,10 +135,115 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   // Combine so combos always appear at the starting/beginning of all page filters
   const displayedProducts = [...comboProducts, ...standardProducts];
 
+  // Split into Veg and Non-Veg columns so all products are organized cleanly
+  const vegProducts = displayedProducts.filter(product => product.isVeg);
+  const nonVegProducts = displayedProducts.filter(product => !product.isVeg);
+
   const categoriesWithAll = [
     { id: 'All', name: 'All Dishes', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80' },
     ...CATEGORIES_DATA
   ];
+
+  const renderProductCard = (product: any) => {
+    const inCart = cartItems.find(i => i.id === product.id);
+    const isCombo = product.isCombo;
+    
+    return (
+      <div 
+        key={product.id} 
+        className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
+          isCombo 
+            ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
+            : 'bg-[#0B0E14] border-white/5'
+        }`}
+      >
+        {/* Badges / Indicators */}
+        <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1">
+          {isCombo ? (
+            <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
+              ⭐ Combo
+            </span>
+          ) : product.fires && product.fires >= 2 ? (
+            <span className="bg-red-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md self-start shrink-0">
+              🔥 Hot
+            </span>
+          ) : null}
+        </div>
+
+        {/* Product Image */}
+        <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-2 bg-black/40 shrink-0">
+          <img 
+            src={product.image} 
+            className="w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-500" 
+            alt={product.name} 
+          />
+        </div>
+
+        {/* Title & Description */}
+        <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
+          <div>
+            <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
+              isCombo ? 'text-amber-300' : 'text-white'
+            }`}>
+              {product.name}
+            </h4>
+            {product.description && (
+              <p className="text-[9px] sm:text-[10px] text-white/40 line-clamp-1 leading-tight mb-1">
+                {product.description}
+              </p>
+            )}
+          </div>
+          
+          {/* Price and Ratings */}
+          <div className="flex items-center justify-between pt-1">
+            <p className={`text-[12px] sm:text-[13px] font-black ${
+              isCombo ? 'text-amber-400' : 'text-white'
+            }`}>₹{product.price}</p>
+            <div className={`flex items-center gap-0.5 ${
+              isCombo ? 'text-amber-400' : 'text-amber-500'
+            }`}>
+              <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
+              <span className="text-[9px] sm:text-[10px] font-extrabold">{getStableRating(product.id)}</span>
+            </div>
+          </div>
+
+          {/* Full-width Order Button at the very bottom of card content */}
+          <div className="mt-2.5">
+            {inCart ? (
+              <div className="w-full bg-[#4CD964] text-black rounded-xl flex items-center justify-between px-2 py-1.5 shadow-md border border-white">
+                <button 
+                  onClick={() => {
+                    playSound(SOUNDS.QUANTITY_TICK);
+                    updateQuantity(product.id, inCart.quantity - 1);
+                  }}
+                  className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className="text-[10px] sm:text-xs font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
+                <button 
+                  onClick={() => {
+                    playSound(SOUNDS.QUANTITY_TICK);
+                    updateQuantity(product.id, inCart.quantity + 1);
+                  }}
+                  className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => handledAddWithToast(product)}
+                className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
+              >
+                Order Now
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32">
@@ -263,107 +368,46 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {displayedProducts.map((product) => {
-              const inCart = cartItems.find(i => i.id === product.id);
-              const isCombo = product.isCombo;
-              
-              return (
-                <div 
-                  key={product.id} 
-                  className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
-                    isCombo 
-                      ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
-                      : 'bg-[#0B0E14] border-white/5'
-                  }`}
-                >
-                  {/* Badges / Indicators */}
-                  <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1">
-                    {isCombo ? (
-                      <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
-                        ⭐ Combo
-                      </span>
-                    ) : product.fires && product.fires >= 2 ? (
-                      <span className="bg-red-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md self-start shrink-0">
-                        🔥 Hot
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* Product Image */}
-                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-2 bg-black/40 shrink-0">
-                    <img 
-                      src={product.image} 
-                      className="w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-500" 
-                      alt={product.name} 
-                    />
-                  </div>
-
-                  {/* Title & Description */}
-                  <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
-                    <div>
-                      <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
-                        isCombo ? 'text-amber-300' : 'text-white'
-                      }`}>
-                        {product.name}
-                      </h4>
-                      {product.description && (
-                        <p className="text-[9px] sm:text-[10px] text-white/40 line-clamp-1 leading-tight mb-1">
-                          {product.description}
-                        </p>
-                      )}
-                    </div>
-                    
-                    {/* Price and Ratings */}
-                    <div className="flex items-center justify-between pt-1">
-                      <p className={`text-[12px] sm:text-[13px] font-black ${
-                        isCombo ? 'text-amber-400' : 'text-white'
-                      }`}>₹{product.price}</p>
-                      <div className={`flex items-center gap-0.5 ${
-                        isCombo ? 'text-amber-400' : 'text-amber-500'
-                      }`}>
-                        <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
-                        <span className="text-[9px] sm:text-[10px] font-extrabold">{getStableRating(product.id)}</span>
-                      </div>
-                    </div>
-
-                    {/* Full-width Order Button at the very bottom of card content */}
-                    <div className="mt-2.5">
-                      {inCart ? (
-                        <div className="w-full bg-[#4CD964] text-black rounded-xl flex items-center justify-between px-2 py-1.5 shadow-md border border-white">
-                          <button 
-                            onClick={() => {
-                              playSound(SOUNDS.QUANTITY_TICK);
-                              updateQuantity(product.id, inCart.quantity - 1);
-                            }}
-                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="text-[10px] sm:text-xs font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
-                          <button 
-                            onClick={() => {
-                              playSound(SOUNDS.QUANTITY_TICK);
-                              updateQuantity(product.id, inCart.quantity + 1);
-                            }}
-                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => handledAddWithToast(product)}
-                          className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
-                        >
-                          Order Now
-                        </button>
-                      )}
-                    </div>
-                  </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* VEG COLUMN */}
+            <div className="space-y-4">
+              <div className="px-3 py-2.5 rounded-2xl bg-[#4CD964]/10 border border-[#4CD964]/20 flex items-center justify-between">
+                <span className="text-xs font-black text-[#4CD964] uppercase tracking-wider flex items-center gap-1.5">
+                  🥦 Veg Delights
+                </span>
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{vegProducts.length} items</span>
+              </div>
+              {vegProducts.length === 0 ? (
+                <div className="py-8 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider">No Veg Dishes</p>
+                  <p className="text-[8px] text-white/20">in this filter selection</p>
                 </div>
-              );
-            })}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {vegProducts.map((product) => renderProductCard(product))}
+                </div>
+              )}
+            </div>
+
+            {/* NON-VEG COLUMN */}
+            <div className="space-y-4">
+              <div className="px-3 py-2.5 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between">
+                <span className="text-xs font-black text-red-500 uppercase tracking-wider flex items-center gap-1.5">
+                  🍗 Non-Veg Cravings
+                </span>
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{nonVegProducts.length} items</span>
+              </div>
+              {nonVegProducts.length === 0 ? (
+                <div className="py-8 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider">No Non-Veg Dishes</p>
+                  <p className="text-[8px] text-white/20">in this filter selection</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {nonVegProducts.map((product) => renderProductCard(product))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
