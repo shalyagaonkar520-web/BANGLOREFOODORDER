@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, User, Bell, Menu, X, Wine, Compass, PartyPopper, Utensils } from 'lucide-react';
+import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -40,16 +40,12 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Middle: Navigation links for Desktop */}
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/food" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
             <Utensils className="w-3.5 h-3.5 text-[#4CD964]" /> Food Order
           </Link>
           <Link to="/bulk" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
             <PartyPopper className="w-3.5 h-3.5 text-[#4CD964]" /> Party Specials
-          </Link>
-          <Link to="/bar-menu" className="text-xs font-black uppercase tracking-widest text-[#FFB700] hover:text-[#FFD166] transition-all bg-[#FFB700]/10 border border-[#FFB700]/20 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,183,0,0.15)] animate-gold-blink">
-            <Wine className="w-3.5 h-3.5 text-[#FFB700]" /> Locked 🔒
           </Link>
         </nav>
 
@@ -122,7 +118,6 @@ export default function Header() {
                   </button>
                 </div>
 
-                {/* Nav Links */}
                 <div className="flex flex-col gap-4">
                   <Link 
                     to="/food" 
@@ -137,13 +132,6 @@ export default function Header() {
                     className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#4CD964] transition-colors flex items-center gap-3"
                   >
                     <PartyPopper className="w-4 h-4 text-[#4CD964]" /> Party Specials
-                  </Link>
-                  <Link 
-                    to="/bar-menu" 
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="p-3.5 bg-[#FFB700]/5 border border-[#FFB700]/20 rounded-2xl text-xs font-black uppercase tracking-wider text-[#FFB700] hover:text-[#FFD166] transition-all flex items-center gap-3 shadow-[0_0_15px_rgba(255,183,0,0.05)] animate-gold-blink"
-                  >
-                    <Wine className="w-4 h-4 text-[#FFB700]" /> Locked 🔒
                   </Link>
                 </div>
               </div>
