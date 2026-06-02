@@ -42,6 +42,48 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentWeather, setCurrentWeather] = useState<'sunny' | 'rainy' | 'cloudy'>('sunny');
+  const [liveTemp, setLiveTemp] = useState<number | null>(null);
+
+  // Fetch real-time weather in Yellapur (Karnataka, India)
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch(
+          'https://api.open-meteo.com/v1/forecast?latitude=14.9643&longitude=74.7121&current=weather_code,temperature_2m'
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const code = data?.current?.weather_code;
+        const temp = data?.current?.temperature_2m;
+
+        if (typeof code === 'number') {
+          let mapped: 'sunny' | 'rainy' | 'cloudy' = 'sunny';
+          if (code === 0 || code === 1) {
+            mapped = 'sunny';
+          } else if ([2, 3, 45, 48].includes(code)) {
+            mapped = 'cloudy';
+          } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code)) {
+            mapped = 'rainy';
+          } else {
+            mapped = 'cloudy';
+          }
+          setCurrentWeather(mapped);
+        }
+        if (typeof temp === 'number') {
+          setLiveTemp(Math.round(temp));
+        }
+      } catch (err) {
+        console.error('Error fetching live weather in Yellapur:', err);
+      }
+    };
+
+    fetchWeather();
+    
+    // Auto refresh weather every 10 minutes
+    const interval = setInterval(fetchWeather, 600000);
+    return () => clearInterval(interval);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
@@ -176,7 +218,13 @@ export default function LandingPage() {
             style={{ y: heroTranslateY }}
             className="px-4 py-4 relative z-0"
           >
-            <div className="h-[260px] rounded-[24px] bg-gradient-to-br from-[#12281A] via-[#0B140E] to-[#050505] border border-[#4CD964]/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden relative p-6 flex flex-col justify-between">
+            <div className={`h-[260px] rounded-[24px] border border-[#4CD964]/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)] overflow-hidden relative p-6 flex flex-col justify-between transition-all duration-700 ${
+              currentWeather === 'sunny' 
+                ? 'bg-gradient-to-br from-[#12281A] via-[#0B140E] to-[#050505]' 
+                : currentWeather === 'rainy'
+                  ? 'bg-gradient-to-br from-[#0D1821] via-[#080E14] to-[#050505]'
+                  : 'bg-gradient-to-br from-[#1B2430] via-[#0F141C] to-[#050505]'
+            }`}>
               
               {/* Floating Leaves */}
               <motion.div 
@@ -194,14 +242,161 @@ export default function LandingPage() {
                 🍃
               </motion.div>
 
+              {/* Dynamic Weather System Overlay */}
+              {currentWeather === 'rainy' && (
+                <>
+                  {/* Rain cloud visual in top-right */}
+                  <motion.div 
+                    animate={{ y: [0, -4, 0], scale: [1, 1.05, 1] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute top-6 right-8 text-4xl pointer-events-none select-none z-[15] opacity-50 filter drop-shadow-[0_0_12px_rgba(76,217,100,0.4)]"
+                  >
+                    🌧️
+                  </motion.div>
+                  {/* Full-card falling rain curtain (placed at z-20 to fall in front of content) */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-[20]">
+                    {/* Dark storm backdrop */}
+                    <div className="absolute inset-0 bg-[#0B141D]/45 backdrop-blur-[0.5px]" />
+                    {/* Rain drops */}
+                    {[...Array(25)].map((_, i) => {
+                      const left = `${(i * 4) + Math.random() * 2}%`;
+                      const delay = Math.random() * 2;
+                      const duration = 0.5 + Math.random() * 0.3;
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ y: -55, opacity: 0 }}
+                          animate={{ y: 300, opacity: [0, 0.8, 0.8, 0] }}
+                          transition={{
+                            duration: duration,
+                            repeat: Infinity,
+                            delay: delay,
+                            ease: "linear"
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: left,
+                            top: 0,
+                            width: '1px',
+                            height: '25px',
+                            background: 'linear-gradient(to bottom, rgba(255,255,255,0.0), rgba(76,217,100,0.6))'
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {currentWeather === 'sunny' && (
+                <>
+                  {/* Spinning glowing sun visual in top-right */}
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                    className="absolute top-4 right-8 w-16 h-16 pointer-events-none select-none z-[15] flex items-center justify-center"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-[#FFD166] shadow-[0_0_20px_#FFD166,0_0_35px_#FF9F1C] relative flex items-center justify-center">
+                      {/* Sun rays */}
+                      {[...Array(8)].map((_, idx) => (
+                        <div 
+                          key={idx}
+                          className="absolute w-1 h-10 bg-gradient-to-t from-[#FFD166] to-[#FF9F1C] rounded-full opacity-60"
+                          style={{ transform: `rotate(${idx * 45}deg)` }}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                  {/* Warm solar environment */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-0">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,209,102,0.15)_0%,transparent_60%)]" />
+                    {/* Solar ray beams */}
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                      className="absolute top-[-10px] right-[-10px] w-48 h-48 bg-[conic-gradient(from_0deg,transparent_0deg,rgba(255,209,102,0.05)_30deg,transparent_60deg)] rounded-full origin-center"
+                    />
+                    {/* Floating heat sparkles */}
+                    {[...Array(8)].map((_, i) => {
+                      const left = `${20 + Math.random() * 60}%`;
+                      const top = `${20 + Math.random() * 60}%`;
+                      const delay = Math.random() * 3;
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: [0, 0.4, 0], scale: [0.5, 1.2, 0.5] }}
+                          transition={{
+                            duration: 4,
+                            repeat: Infinity,
+                            delay: delay,
+                            ease: "easeInOut"
+                          }}
+                          className="absolute w-2 h-2 rounded-full bg-[#FFD166]/20 blur-[1px]"
+                          style={{ left: left, top: top }}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {currentWeather === 'cloudy' && (
+                <>
+                  {/* Volumetric cloud system layered inside the card */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px] z-[20]">
+                    {/* Misty grey-blue glow */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
+                    
+                    {/* Drifting Clouds */}
+                    <motion.div 
+                      animate={{ x: [-80, 280], y: [10, 15, 10] }}
+                      transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+                      className="absolute text-5xl opacity-35 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+                      style={{ top: '10%' }}
+                    >
+                      ☁️
+                    </motion.div>
+                    <motion.div 
+                      animate={{ x: [280, -80], y: [75, 70, 75] }}
+                      transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+                      className="absolute text-6xl opacity-25 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]"
+                      style={{ top: '30%' }}
+                    >
+                      ☁️
+                    </motion.div>
+                    <motion.div 
+                      animate={{ x: [-50, 250], y: [130, 135, 130] }}
+                      transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
+                      className="absolute text-4xl opacity-30 filter blur-[0.5px]"
+                      style={{ top: '50%' }}
+                    >
+                      ☁️
+                    </motion.div>
+                  </div>
+                </>
+              )}
+
               <div className="max-w-[66%] space-y-2.5 relative z-10 text-left">
                 <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-[9px] font-extrabold bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#4CD964]/20">
+                  <span className="text-[9px] font-extrabold bg-[#4CD964]/10 text-[#4CD964] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#4CD964]/20 shrink-0">
                     Feast Mode ⚡
                   </span>
-                  <span className="text-[9px] font-extrabold bg-amber-500/10 text-[#FFD166] px-2 py-0.5 rounded-md uppercase tracking-wider border border-amber-500/20 animate-pulse">
+                  <span className="text-[9px] font-extrabold bg-amber-500/10 text-[#FFD166] px-2 py-0.5 rounded-md uppercase tracking-wider border border-amber-500/20 animate-pulse shrink-0">
                     Moms Magic 2.0
                   </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentWeather(prev => prev === 'sunny' ? 'rainy' : prev === 'rainy' ? 'cloudy' : 'sunny');
+                    }}
+                    className="text-[9px] font-extrabold bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-md uppercase tracking-wider border border-blue-500/20 hover:bg-blue-500/20 transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+                  >
+                    {currentWeather === 'sunny' && '☀️ Yellapur: Sunny'}
+                    {currentWeather === 'rainy' && '🌧️ Yellapur: Rainy'}
+                    {currentWeather === 'cloudy' && '☁️ Yellapur: Cloudy'}
+                    {liveTemp !== null && ` (${liveTemp}°C)`}
+                  </button>
                 </div>
                 <h1 className="text-4xl font-extrabold italic uppercase tracking-tighter text-white leading-none drop-shadow-sm">
                   Delicious <br/> <span className="text-[#4CD964]">Lunch & Dinner</span>
@@ -211,15 +406,7 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="absolute right-0 bottom-0 top-0 w-[45%] overflow-hidden flex items-center justify-end pr-3">
-                <motion.div 
-                  animate={{ scale: [1, 1.02, 1], rotate: [0, 2, 0] }}
-                  transition={{ duration: 10, repeat: Infinity }}
-                  className="w-40 h-40 rounded-full overflow-hidden shadow-2xl border-4 border-white/10 bg-black/40 relative shrink-0"
-                >
-                  <img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=300&q=80" className="w-full h-full object-cover" alt="" />
-                </motion.div>
-              </div>
+
             </div>
           </motion.div>
 
