@@ -263,7 +263,7 @@ export default function LandingPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {displayedProducts.map((product) => {
               const inCart = cartItems.find(i => i.id === product.id);
               const isCombo = product.isCombo;
@@ -271,27 +271,27 @@ export default function LandingPage() {
               return (
                 <div 
                   key={product.id} 
-                  className={`border rounded-[20px] p-2 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
+                  className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
                     isCombo 
                       ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
                       : 'bg-[#0B0E14] border-white/5'
                   }`}
                 >
                   {/* Badges / Indicators */}
-                  <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+                  <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1">
                     {isCombo ? (
-                      <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[5.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-1 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
+                      <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
                         ⭐ Combo
                       </span>
                     ) : product.fires && product.fires >= 2 ? (
-                      <span className="bg-red-500 text-white text-[5.5px] sm:text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded shadow-md self-start shrink-0">
+                      <span className="bg-red-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md self-start shrink-0">
                         🔥 Hot
                       </span>
                     ) : null}
                   </div>
 
                   {/* Product Image */}
-                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-1.5 bg-black/40 shrink-0">
+                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-2 bg-black/40 shrink-0">
                     <img 
                       src={product.image} 
                       className="w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-500" 
@@ -302,13 +302,13 @@ export default function LandingPage() {
                   {/* Title & Description */}
                   <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
                     <div>
-                      <h4 className={`text-[10px] sm:text-[12px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
+                      <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
                         isCombo ? 'text-amber-300' : 'text-white'
                       }`}>
                         {product.name}
                       </h4>
                       {product.description && (
-                        <p className="text-[8px] sm:text-[9px] text-white/40 line-clamp-1 leading-tight mb-1">
+                        <p className="text-[9px] sm:text-[10px] text-white/40 line-clamp-1 leading-tight mb-1">
                           {product.description}
                         </p>
                       )}
@@ -316,14 +316,14 @@ export default function LandingPage() {
                     
                     {/* Price and Ratings */}
                     <div className="flex items-center justify-between pt-1">
-                      <p className={`text-[10px] sm:text-[12px] font-black ${
+                      <p className={`text-[12px] sm:text-[13px] font-black ${
                         isCombo ? 'text-amber-400' : 'text-white'
                       }`}>₹{product.price}</p>
                       <div className={`flex items-center gap-0.5 ${
                         isCombo ? 'text-amber-400' : 'text-amber-500'
                       }`}>
-                        <Star className="w-2 h-2 sm:w-2.5 sm:h-2.5 fill-current" />
-                        <span className="text-[7.5px] sm:text-[8px] font-extrabold">4.9</span>
+                        <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
+                        <span className="text-[9px] sm:text-[10px] font-extrabold">4.9</span>
                       </div>
                     </div>
 
@@ -340,7 +340,7 @@ export default function LandingPage() {
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-[9px] sm:text-[10px] font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
+                          <span className="text-[10px] sm:text-xs font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
                           <button 
                             onClick={() => {
                               playSound(SOUNDS.QUANTITY_TICK);
@@ -354,7 +354,7 @@ export default function LandingPage() {
                       ) : (
                         <button 
                           onClick={() => handledAddWithToast(product)}
-                          className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[9px] sm:text-[10px] uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
+                          className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
                         >
                           Order Now
                         </button>
