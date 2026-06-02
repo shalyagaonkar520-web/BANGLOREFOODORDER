@@ -2,6 +2,54 @@ import { Product } from '../types';
 
 export const MENU_ITEMS: Product[] = [
   {
+    id: 'party-1',
+    name: 'Moms Magic Mega Feast Box',
+    price: 899,
+    category: 'Party Special',
+    type: 'food',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80',
+    description: 'Ultimate party box with 2 Chicken Biryanis, 1 Chicken Starter, 2 Butter Naan, Veg Gravy, and 4 Mango Milkshakes!',
+    isTopPick: true,
+    fires: 3,
+    isVeg: false
+  },
+  {
+    id: 'party-2',
+    name: 'Royal Kebab Platter (Family Pack)',
+    price: 649,
+    category: 'Party Special',
+    type: 'food',
+    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80',
+    description: 'Special assortment of 12 pcs of grilled chicken seekh kebabs, hariyali tikka, and chicken tandoori.',
+    isTopPick: true,
+    fires: 2,
+    isVeg: false
+  },
+  {
+    id: 'party-3',
+    name: 'Veggie Delight Combo Box',
+    price: 549,
+    category: 'Party Special',
+    type: 'food',
+    image: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80',
+    description: 'Special party box containing Paneer Tikka, Veg Fried Rice, Gobi Manchurian, and 3 Coke Bottles.',
+    isTopPick: true,
+    fires: 2,
+    isVeg: true
+  },
+  {
+    id: 'party-4',
+    name: 'Moms Special Sweet Box (Family)',
+    price: 299,
+    category: 'Party Special',
+    type: 'food',
+    image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=400&q=80',
+    description: 'Family dessert box with hot Gulab Jamun (8 pcs) and delicious double ka meetha.',
+    isTopPick: false,
+    fires: 1,
+    isVeg: true
+  },
+  {
     id: 'drink-special-1',
     name: 'Jaipur Mango Milkshake',
     price: 99,
@@ -786,9 +834,10 @@ export const MENU_ITEMS: Product[] = [
   }
 ];
 
-export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
+export const CATEGORIES = ['Party Special', 'Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
 
 export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
+  'Party Special': { icon: '🎉', bg: 'from-purple-500/20 to-pink-600/20' },
   'Fast Food': { icon: '🍟', bg: 'from-orange-500/20 to-amber-600/20' },
   'Rice & Noodles': { icon: '🍜', bg: 'from-yellow-400/20 to-amber-500/20' },
   'Biryani': { icon: '🍛', bg: 'from-emerald-500/20 to-teal-600/20' },

@@ -8,8 +8,19 @@ import toast from 'react-hot-toast';
 import Header from './Header';
 import { playSound, SOUNDS } from '../utils/audio';
 
+const getStableRating = (id: string | number) => {
+  const str = String(id);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const rating = 4.5 + (Math.abs(hash) % 6) * 0.1;
+  return rating.toFixed(1);
+};
+
 // Swish realistic category metadata (uses photographic food assets)
 const CATEGORIES_DATA = [
+  { id: 'Party Special', name: 'Party Special', image: 'https://images.unsplash.com/photo-1530101121860-702f82e3f267?w=200&q=80', count: 4 },
   { id: 'Combos', name: 'Combo Offers', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80', count: 5 },
   { id: 'Fast Food', name: 'Fast Food', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', count: 15 },
   { id: 'Rice & Noodles', name: 'Rice & Noodles', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=200&q=80', count: 18 },
@@ -298,7 +309,7 @@ export default function LandingPage() {
                         isCombo ? 'text-amber-400' : 'text-amber-500'
                       }`}>
                         <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
-                        <span className="text-[9px] sm:text-[10px] font-extrabold">4.9</span>
+                        <span className="text-[9px] sm:text-[10px] font-extrabold">{getStableRating(product.id)}</span>
                       </div>
                     </div>
 

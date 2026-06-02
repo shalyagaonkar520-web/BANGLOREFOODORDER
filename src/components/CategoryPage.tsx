@@ -10,7 +10,7 @@ import { Product } from '../types';
 
 const getDummyRatingInfo = (id: string) => {
   const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const rating = (4.4 + (hash % 7) * 0.1).toFixed(1);
+  const rating = (4.5 + (hash % 6) * 0.1).toFixed(1);
   const reviews = 8 + (hash % 52);
   const messages = [
     "Nice food, must try!",
