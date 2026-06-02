@@ -18,8 +18,6 @@ export default function OperatingHoursGate({ children }: { children: React.React
 
   useEffect(() => {
     const checkTime = () => {
-      setIsOpen(true);
-      return;
       const now = new Date();
       setCurrentTime(now);
       
@@ -47,8 +45,11 @@ export default function OperatingHoursGate({ children }: { children: React.React
         const openTimeVal = openHours * 60 + openMins;
         const closeTimeVal = closeHours * 60 + closeMins;
 
-        setIsOpen(true); // Temporarily always open
-        // setIsOpen(totalMinutes >= openTimeVal && totalMinutes < closeTimeVal);
+        if (openTimeVal <= closeTimeVal) {
+          setIsOpen(totalMinutes >= openTimeVal && totalMinutes < closeTimeVal);
+        } else {
+          setIsOpen(totalMinutes >= openTimeVal || totalMinutes < closeTimeVal);
+        }
       } catch (err) {
         // Fallback to open if settings are misconfigured or unparsed
         setIsOpen(true);
