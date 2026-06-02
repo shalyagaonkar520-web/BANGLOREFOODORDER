@@ -834,10 +834,9 @@ export const MENU_ITEMS: Product[] = [
   }
 ];
 
-export const CATEGORIES = ['Party Special', 'Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
+export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
 
 export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
-  'Party Special': { icon: '🎉', bg: 'from-purple-500/20 to-pink-600/20' },
   'Fast Food': { icon: '🍟', bg: 'from-orange-500/20 to-amber-600/20' },
   'Rice & Noodles': { icon: '🍜', bg: 'from-yellow-400/20 to-amber-500/20' },
   'Biryani': { icon: '🍛', bg: 'from-emerald-500/20 to-teal-600/20' },

@@ -20,7 +20,6 @@ const getStableRating = (id: string | number) => {
 
 // Swish realistic category metadata (uses photographic food assets)
 const CATEGORIES_DATA = [
-  { id: 'Party Special', name: 'Party Special', image: 'https://images.unsplash.com/photo-1530101121860-702f82e3f267?w=200&q=80', count: 4 },
   { id: 'Combos', name: 'Combo Offers', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80', count: 5 },
   { id: 'Fast Food', name: 'Fast Food', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', count: 15 },
   { id: 'Rice & Noodles', name: 'Rice & Noodles', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=200&q=80', count: 18 },
