@@ -7,7 +7,7 @@ export default function BottomNav() {
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Search, label: 'Search', path: '/food' },
-    { icon: Wine, label: 'Locked 🔒', path: '/bar-menu' },
+    { icon: Wine, label: 'Bar', path: '/bar-menu' },
     { icon: ShoppingBag, label: 'Cart', path: '/cart' },
     { icon: User, label: 'Account', path: '/admin' },
   ];

@@ -1,5 +1,6 @@
 // Premium fast-loading public CDN audio assets for interactive user feedback
 export const SOUNDS = {
+  CLICK: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav',        // UI click feedback
   ADD_TO_CART: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav', // Crisp digital bubble pop
   QUANTITY_TICK: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav', // Subtle tick pop
   ORDER_SUCCESS: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav' // Triumphant digital chime/fanfare
