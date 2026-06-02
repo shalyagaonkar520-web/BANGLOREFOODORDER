@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore } from '../store/cartStore';
 import { MENU_ITEMS, CATEGORIES } from '../data/menuItems';
 import { Search, Plus, Minus, Star, ChevronLeft, Zap, Leaf, Drumstick, ShoppingBag, ArrowRight, MessageCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getRecommendations, RecommendationResult } from '../utils/recommendationEngine';
 import RecommendationPopup from './RecommendationPopup';
 import { Product } from '../types';
@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 
 export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addItem, items, updateQuantity, total } = useCartStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -38,7 +39,10 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
 
   useEffect(() => {
     localStorage.removeItem('moms_magic_order_type');
-  }, []);
+    if (location.state?.category) {
+      setActiveCategory(location.state.category);
+    }
+  }, [location.state]);
 
   const handleAddWithRecommend = useCallback((product: Product) => {
     addItem(product);
@@ -166,57 +170,57 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
                 viewport={{ once: true }}
                 className={`group relative perspective-1000 ${isRoyal ? 'z-10' : 'z-0'}`}
               >
-                <div className={`luxury-card rounded-[20px] md:rounded-[45px] p-3 md:p-6 transition-all duration-700 h-full flex flex-col ${
+                <div className={`luxury-card rounded-[20px] md:rounded-[40px] p-3 md:p-6 transition-all duration-700 h-full flex flex-col ${
                   isRoyal 
-                  ? 'border-gold/50 shadow-[0_0_80px_rgba(244,180,0,0.4)] ring-2 md:ring-4 ring-gold/10 bg-gradient-to-br from-gold/20 via-matte-black to-matte-black' 
-                  : 'group-hover:border-gold/30'
+                  ? 'border-[#4CD964]/50 shadow-[0_15px_40px_rgba(76,217,100,0.2)] ring-2 md:ring-4 ring-[#4CD964]/10 bg-gradient-to-br from-[#4CD964]/10 to-[#0B0E14]' 
+                  : 'border-[#4CD964]/10 hover:border-[#4CD964]/30 bg-[#0B0E14]'
                 }`}>
                   {/* Visual Container */}
-                  <div className="relative aspect-square md:aspect-[16/10] rounded-[15px] md:rounded-[35px] overflow-hidden mb-3 md:mb-8 bg-black/40 shrink-0">
+                  <div className="relative aspect-square md:aspect-[16/10] rounded-[18px] md:rounded-[35px] overflow-hidden mb-3 md:mb-8 bg-black/40 shrink-0">
                     <img 
                       src={product.image} 
                       alt={product.name}
-                      className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isRoyal ? 'opacity-100' : 'opacity-80'}`}
+                      className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isRoyal ? 'opacity-100' : 'opacity-90'}`}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent opacity-90" />
                     
                     <div className="absolute top-2 left-2 md:top-5 md:left-5 flex flex-col gap-1 md:gap-2">
-                       <div className={`px-2 md:px-4 py-1 md:py-1.5 rounded-full backdrop-blur-md border border-white/20 text-[6px] md:text-[8px] font-black uppercase tracking-widest ${product.isVeg ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                         {product.isVeg ? 'Pure Veg' : 'Non-Veg'}
+                       <div className={`px-2 md:px-4 py-1 rounded-full border text-[6px] md:text-[8px] font-black uppercase tracking-widest ${product.isVeg ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' : 'bg-red-500/15 text-red-500 border-red-500/30'}`}>
+                          {product.isVeg ? 'Pure Veg' : 'Non-Veg'}
                        </div>
                        {isRoyal && (
-                         <motion.div 
-                           animate={{ scale: [1, 1.1, 1] }}
-                           transition={{ duration: 2, repeat: Infinity }}
-                           className="px-2 md:px-4 py-1 md:py-1.5 rounded-full bg-gold text-matte-black text-[6px] md:text-[8px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(244,180,0,0.4)]"
-                         >
-                           Royal Choice ✨
-                         </motion.div>
+                          <motion.div 
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="px-2 md:px-4 py-1 rounded-full bg-[#4CD964] text-white text-[6px] md:text-[8px] font-black uppercase tracking-widest shadow-md"
+                          >
+                            Royal Choice ✨
+                          </motion.div>
                        )}
                     </div>
                   </div>
 
                   {/* Information */}
                   <div className="px-1 md:px-2 pb-1 md:pb-2 flex flex-col flex-1 justify-between gap-3">
-                    <div className="flex flex-col md:flex-row md:justify-between items-start gap-1">
-                      <div className="space-y-0.5 md:space-y-1 w-full md:w-auto overflow-hidden">
-                        <h4 className={`text-sm md:text-2xl font-black italic uppercase tracking-tighter truncate w-full ${isRoyal ? 'text-luxury-gold drop-shadow-sm' : 'text-white'}`}>{product.name}</h4>
+                    <div className="flex flex-col md:flex-row md:justify-between items-start gap-2">
+                      <div className="space-y-1 w-full md:w-auto overflow-hidden">
+                        <h4 className="text-sm md:text-2xl font-black italic uppercase tracking-tighter truncate w-full text-white">{product.name}</h4>
                         <div 
-                          className="flex items-center gap-1 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                          className="flex items-center gap-1 cursor-pointer bg-[#4CD964]/10 px-2 py-0.5 rounded-lg border border-[#4CD964]/20 w-fit"
                           onClick={() => setSelectedReviewProduct(product)}
                         >
-                          <Star className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-gold fill-gold" />
-                          <span className="text-[8px] md:text-[10px] font-black uppercase text-gold-soft tracking-[2px] md:tracking-[3px]">
-                            {product.rating || getDummyRatingInfo(product.id || '').rating} <span className="text-text-muted/40 ml-1">({getDummyRatingInfo(product.id || '').reviews})</span>
+                          <Star className="w-2.5 h-2.5 text-[#4CD964] fill-[#4CD964]" />
+                          <span className="text-[8px] md:text-[10px] font-black uppercase text-[#4CD964] tracking-[1.5px]">
+                            {product.rating || getDummyRatingInfo(product.id || '').rating} <span className="text-white/40 ml-0.5 font-bold">({getDummyRatingInfo(product.id || '').reviews})</span>
                           </span>
                         </div>
                       </div>
-                      <div className="text-left md:text-right mt-1 md:mt-0">
-                        <span className="text-lg md:text-3xl font-black italic tracking-tighter text-gold">₹{product.price}</span>
+                      <div className="bg-[#4CD964]/10 text-[#4CD964] border border-[#4CD964]/30 font-black italic tracking-tighter text-xs md:text-xl px-2.5 py-1 rounded-xl shadow-sm shrink-0 flex items-center justify-center mt-1 md:mt-0">
+                        ₹{product.price}
                       </div>
                     </div>
 
-                    <p className="hidden md:block text-xs font-medium text-text-muted/60 leading-relaxed line-clamp-2">
+                    <p className="hidden md:block text-xs font-medium text-white/60 leading-relaxed line-clamp-2">
                       {product.description}
                     </p>
                     
@@ -240,33 +244,32 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
                     {/* Interaction */}
                     <div className="pt-2 md:pt-4 mt-auto">
                       {cartItem ? (
-                        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[12px] md:rounded-[20px] h-10 md:h-16 px-2 md:px-4">
+                        <div className="flex items-center justify-between bg-white/5 border border-white/5 rounded-[16px] md:rounded-[20px] h-10 md:h-16 px-2 md:px-4">
                           <button 
                             onClick={() => updateQuantity(product.id!, cartItem.quantity - 1)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white/5 hover:bg-gold/20 transition-all"
+                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white/10 hover:bg-[#4CD964]/20 transition-all text-white"
                           >
-                            <Minus className="w-3 h-3 md:w-4 md:h-4" />
+                            <Minus className="w-3 h-3 md:w-4 md:h-4 text-white" />
                           </button>
                           <span className="text-sm md:text-xl font-black italic text-white">{cartItem.quantity}</span>
                           <button 
                             onClick={() => handleAddWithRecommend(product)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-gold text-matte-black shadow-lg shadow-gold/20"
+                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-[#4CD964] text-white shadow-md hover:bg-[#4CD964]/90"
                           >
-                            <Plus className="w-3 h-3 md:w-4 md:h-4" />
+                            <Plus className="w-3 h-3 md:w-4 md:h-4 text-white" />
                           </button>
                         </div>
                       ) : (
                         <button 
                           onClick={() => handleAddWithRecommend(product)}
-                          className={`w-full h-10 md:h-16 rounded-[12px] md:rounded-[20px] group flex items-center justify-center gap-2 md:gap-4 font-black uppercase tracking-[1px] md:tracking-[2px] text-[9px] md:text-xs transition-all ${
+                          className={`w-full h-10 md:h-16 rounded-[16px] md:rounded-[20px] group flex items-center justify-center gap-2 font-black uppercase tracking-[1px] text-[9px] md:text-xs transition-all duration-300 ${
                             isRoyal 
-                            ? 'bg-gradient-to-r from-gold to-yellow-500 text-matte-black shadow-[0_10px_30px_rgba(244,180,0,0.5)] md:shadow-[0_20px_50px_rgba(244,180,0,0.5)] hover:scale-[1.05] active:scale-95' 
+                            ? 'bg-gradient-to-r from-[#3AC152] to-[#4CD964] text-white shadow-md shadow-brand/10 hover:scale-[1.03] active:scale-95' 
                             : 'btn-luxury-red'
                           }`}
                         >
-                          <span className="hidden md:inline">{isRoyal ? 'ORDER ROYAL MANGO' : 'ADD TO SELECTION'}</span>
-                          <span className="md:hidden">ADD</span>
-                          <Plus className="w-3 h-3 md:w-5 md:h-5 group-hover:rotate-90 transition-transform" />
+                          <span>{isRoyal ? 'ORDER ROYAL' : 'ADD TO CRAVINGS'}</span>
+                          <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform text-white shrink-0" />
                         </button>
                       )}
                     </div>

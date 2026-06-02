@@ -143,7 +143,13 @@ export default function Checkout() {
           additionalServices.setupServing ? `👨‍🍳 Setup & Serving team added` : '',
         ].filter(Boolean).join('\n');
       } else {
-        orderDetails = `🛒 *ITEMS:*\n` + cartItems.map(item => `• ${item.quantity}x ${item.name}`).join('\n');
+        orderDetails = `🛒 *ITEMS:*\n` + cartItems.map(item => {
+          let line = `• ${item.quantity}x ${item.name}`;
+          if (item.items && item.items.length > 0) {
+            line += `\n  (Constituents: ${item.items.join(', ')})`;
+          }
+          return line;
+        }).join('\n');
       }
 
       const venueLabel = decorSetupVenue === 'home' ? '🏡 Setup & Decor in Home' : decorSetupVenue === 'party_hall' ? '🏛️ Setup in Party Hall Yellapur' : '❌ No Decor Setup';
@@ -336,6 +342,16 @@ export default function Checkout() {
                   <div>
                     <h4 className="font-black text-base text-white italic uppercase tracking-tighter">{item.name}</h4>
                     <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">{isBulkOrder ? (item as any).finalQuantity : (item as any).quantity} Unit(s)</p>
+                    {item.items && item.items.length > 0 && (
+                      <ul className="mt-2 space-y-0.5 text-left">
+                        {item.items.map((subItem, sIdx) => (
+                          <li key={sIdx} className="text-white/40 text-[10px] font-medium flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-gold shrink-0" />
+                            {subItem}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">

@@ -104,13 +104,22 @@ export default function CartPage() {
                     <div className="w-40 h-40 rounded-[40px] overflow-hidden border border-white/10 shadow-2xl relative shrink-0 group-hover:scale-105 transition-transform duration-700">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-80" />
                       <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent opacity-80" />
-                      <div className="absolute top-4 left-4 bg-gold text-matte-black text-[9px] font-black px-3 py-1.5 rounded-xl shadow-lg">ELITE OFFER</div>
                     </div>
 
                     <div className="flex-1 space-y-6 text-center md:text-left min-w-0">
                       <div>
                         <span className="text-gold/40 text-[10px] font-black uppercase tracking-[4px]">{item.category}</span>
                         <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white truncate drop-shadow-sm">{item.name}</h3>
+                        {item.items && item.items.length > 0 && (
+                          <ul className="mt-3 space-y-1.5 text-left inline-block md:block">
+                            {item.items.map((subItem, sIdx) => (
+                              <li key={sIdx} className="text-white/60 text-xs font-semibold flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0 shadow-[0_0_8px_rgba(244,180,0,0.4)]" />
+                                {subItem}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-10">
@@ -140,7 +149,6 @@ export default function CartPage() {
                     </div>
 
                     <div className="text-center md:text-right space-y-2">
-                      <p className="text-text-muted text-[10px] font-black uppercase tracking-widest line-through opacity-30">₹{fakePrice * item.quantity}</p>
                       <p className="text-5xl font-black italic text-gold drop-shadow-lg">₹{item.price * item.quantity}</p>
                     </div>
                   </motion.div>

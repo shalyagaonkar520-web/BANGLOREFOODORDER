@@ -40,6 +40,21 @@ export interface Product {
   isAvailable?: boolean;
   stockCount?: number;
   royalHighlight?: boolean;
+  items?: string[]; // For combo offers containing multiple items
+}
+
+export interface ComboOffer {
+  id: string;
+  name: string;
+  regularPrice: number;
+  offerPrice: number;
+  savings: number;
+  items: string[];
+  badge: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  expiryDate?: string;
+  image?: string;
 }
 
 export interface Order {

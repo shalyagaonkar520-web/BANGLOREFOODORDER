@@ -15,7 +15,43 @@ let memorySettings = {
   orderLimit: 50,
   lastUpdated: new Date().toISOString(),
   whatsappNumber: "+919606001790",
-  whatsappAlertsEnabled: true
+  whatsappAlertsEnabled: true,
+  comboOffers: [
+    {
+      id: "combo-chicken",
+      name: "Chicken Feast Combo",
+      regularPrice: 318,
+      offerPrice: 279,
+      savings: 39,
+      items: [
+        "Half Chicken Biryani",
+        "Half Chicken Kabab",
+        "Coke"
+      ],
+      badge: "BESTSELLER",
+      isActive: true,
+      isFeatured: true,
+      expiryDate: "2026-06-30",
+      image: "/chicken_biryani_new.png"
+    },
+    {
+      id: "combo-veg",
+      name: "Veg Delight Combo",
+      regularPrice: 379,
+      offerPrice: 289,
+      savings: 90,
+      items: [
+        "Veg Kadai",
+        "4 Chapati",
+        "Coke"
+      ],
+      badge: "POPULAR",
+      isActive: true,
+      isFeatured: true,
+      expiryDate: "2026-06-30",
+      image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=800&q=80"
+    }
+  ]
 };
 
 export const handler: Handler = async (event) => {

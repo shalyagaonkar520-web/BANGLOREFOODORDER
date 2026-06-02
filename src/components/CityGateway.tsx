@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCityStore, CITIES } from '../store/cityStore';
 import { motion } from 'framer-motion';
-import { MapPin, Navigation2, X, Sparkles, Locate } from 'lucide-react';
+import { MapPin, Navigation2, X, Sparkles, Locate, Lock } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import toast from 'react-hot-toast';
 
@@ -66,11 +66,17 @@ export default function CityGateway({ children }: { children: React.ReactNode })
             {CITIES.map((city) => (
               <button
                 key={city.id}
-                onClick={() => setCity(city)}
+                onClick={() => {
+                  if (city.isActive) {
+                    setCity(city);
+                  } else {
+                    toast.error(`Mom's Magic is currently only operating in Yellapur!`, { id: 'city-lock' });
+                  }
+                }}
                 className={`p-8 rounded-[30px] border flex items-center justify-between transition-all group relative overflow-hidden ${
                   city.isActive 
                     ? 'border-gold/20 bg-white/5 hover:border-gold/40' 
-                    : 'border-white/5 bg-white/[0.02] opacity-60'
+                    : 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
                 }`}
               >
                 <div className="absolute inset-0 bg-gold/0 group-hover:bg-gold/[0.02] transition-colors" />
@@ -80,8 +86,10 @@ export default function CityGateway({ children }: { children: React.ReactNode })
                     {city.name}
                   </span>
                 </div>
-                {city.isActive && (
+                {city.isActive ? (
                   <Sparkles className="w-5 h-5 text-gold animate-pulse relative z-10" />
+                ) : (
+                  <Lock className="w-4 h-4 text-white/20 relative z-10" />
                 )}
               </button>
             ))}

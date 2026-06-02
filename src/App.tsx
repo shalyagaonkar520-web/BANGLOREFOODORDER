@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
@@ -29,10 +29,10 @@ import { useSystemStore } from './store/systemStore';
 function GoldenParticles() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-      {[...Array(25)].map((_, i) => (
+      {[...Array(15)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-gold/30 rounded-full blur-[1px]"
+          className="absolute w-1.5 h-1.5 bg-[#4CD964]/20 rounded-full blur-[0.5px]"
           initial={{ 
             x: Math.random() * 100 + "%", 
             y: Math.random() * 100 + "%",
@@ -40,7 +40,7 @@ function GoldenParticles() {
           }}
           animate={{ 
             y: [null, "-10%"],
-            opacity: [0, 0.6, 0]
+            opacity: [0, 0.4, 0]
           }}
           transition={{ 
             duration: Math.random() * 8 + 8, 
@@ -50,9 +50,17 @@ function GoldenParticles() {
           }}
         />
       ))}
-      {/* Ambient Red Glow */}
-      <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-brand/5 blur-[150px] rounded-full" />
-      <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-gold/5 blur-[150px] rounded-full" />
+      {/* Pizza and Biryani Watermark Mix Background */}
+      <div className="absolute top-[10%] right-[-100px] w-96 h-96 rounded-full overflow-hidden opacity-[0.025] blur-[1px] rotate-12 shrink-0">
+        <img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&q=80" className="w-full h-full object-cover" alt="Biryani" />
+      </div>
+      <div className="absolute bottom-[10%] left-[-100px] w-[450px] h-[450px] rounded-full overflow-hidden opacity-[0.025] blur-[1px] -rotate-12 shrink-0">
+        <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80" className="w-full h-full object-cover" alt="Pizza" />
+      </div>
+
+      {/* Ambient Brand Glow */}
+      <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#4CD964]/5 blur-[150px] rounded-full" />
+      <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-[#4CD964]/5 blur-[150px] rounded-full" />
     </div>
   );
 }
@@ -120,7 +128,7 @@ export default function App() {
                     <Route path="/grocery" element={<CategoryPage type="grocery" />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/offers" element={<OffersPage />} />
+                    <Route path="/offers" element={<Navigate to="/" replace />} />
                     <Route path="/bulk" element={<BulkOrderPage />} />
                     <Route path="/celebration" element={<CelebrationHub />} />
                     <Route path="/celebration/design" element={<CelebrationDesign />} />

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
-  Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop
+  Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
 import { useSystemStore } from '../store/systemStore';
@@ -675,6 +675,181 @@ export default function AdminPage() {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* 🔥 COMBO OFFERS MANAGER */}
+          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-8 mt-8">
+            <div className="flex items-center justify-between border-b border-white/5 pb-5">
+              <div>
+                <h3 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-brand fill-brand" /> Combo Offers Manager
+                </h3>
+                <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Configure and release premium food bundles in real-time</p>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              {localSettings.comboOffers?.map((combo, index) => (
+                <div key={combo.id} className="bg-white/[0.02] border border-white/5 p-6 md:p-8 rounded-3xl space-y-6 relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                    <div>
+                      <h4 className="text-lg font-black italic text-white uppercase">{combo.name}</h4>
+                      <p className="text-[9px] font-mono text-white/30">ID: {combo.id}</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4">
+                      {/* Active Status Toggle */}
+                      <button
+                        onClick={() => {
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { ...combo, isActive: !combo.isActive };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                          toast.success(`${combo.name} status updated locally!`);
+                        }}
+                        className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+                          combo.isActive 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                        }`}
+                      >
+                        {combo.isActive ? 'Active' : 'Disabled'}
+                      </button>
+
+                      {/* Featured Toggle */}
+                      <button
+                        onClick={() => {
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { ...combo, isFeatured: !combo.isFeatured };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                          toast.success(`${combo.name} featured state updated!`);
+                        }}
+                        className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+                          combo.isFeatured 
+                            ? 'bg-gold/10 text-gold border-gold/20' 
+                            : 'bg-white/5 text-white/30 border-white/5'
+                        }`}
+                      >
+                        {combo.isFeatured ? '★ Featured' : '☆ Standard'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Offer Price */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Offer Price (₹)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={combo.offerPrice}
+                        onChange={e => {
+                          const val = parseFloat(e.target.value) || 0;
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { 
+                            ...combo, 
+                            offerPrice: val,
+                            savings: Math.max(0, combo.regularPrice - val)
+                          };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                        }}
+                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      />
+                    </div>
+
+                    {/* Regular Price */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Regular Price (₹)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={combo.regularPrice}
+                        onChange={e => {
+                          const val = parseFloat(e.target.value) || 0;
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { 
+                            ...combo, 
+                            regularPrice: val,
+                            savings: Math.max(0, val - combo.offerPrice)
+                          };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                        }}
+                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      />
+                    </div>
+
+                    {/* Expiry Date */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Expiry Date</label>
+                      <input
+                        type="date"
+                        value={combo.expiryDate || ''}
+                        onChange={e => {
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { ...combo, expiryDate: e.target.value };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                        }}
+                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Badge */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Offer Badge Label</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. BESTSELLER"
+                        value={combo.badge}
+                        onChange={e => {
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { ...combo, badge: e.target.value.toUpperCase() };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                        }}
+                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all"
+                      />
+                    </div>
+
+                    {/* Included Items (Textarea) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Included Food Items (one per line)</label>
+                      <textarea
+                        rows={3}
+                        value={combo.items.join('\n')}
+                        onChange={e => {
+                          const updated = [...localSettings.comboOffers];
+                          updated[index] = { ...combo, items: e.target.value.split('\n').filter(Boolean) };
+                          setLocalSettings({ ...localSettings, comboOffers: updated });
+                        }}
+                        placeholder="Half Chicken Biryani&#10;Half Chicken Kabab&#10;Coke"
+                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all h-28 resize-none leading-relaxed"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-[9px] font-black uppercase text-emerald-400">
+                      Calculated Savings: ₹{combo.savings}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* SAVE BUTTON FOR COMBOS */}
+            <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-4">
+              <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" /> Save changes to commit combo updates
+              </span>
+              <button 
+                onClick={() => handleSaveSettings()}
+                disabled={isSaving}
+                className="px-10 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-matte-black text-center" /> : <Save className="w-4 h-4 text-matte-black" />}
+                Commit Combo Settings
+              </button>
             </div>
           </div>
 
