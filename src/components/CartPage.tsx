@@ -102,7 +102,7 @@ export default function CartPage() {
                     className="relative group luxury-card rounded-[50px] p-8 flex flex-col md:flex-row items-center gap-10 border-white/5 hover:border-gold/30"
                   >
                     <div className="w-40 h-40 rounded-[40px] overflow-hidden border border-white/10 shadow-2xl relative shrink-0 group-hover:scale-105 transition-transform duration-700">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-80" />
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent opacity-80" />
                     </div>
 

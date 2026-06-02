@@ -25,7 +25,8 @@ export default function LandingPage() {
       route: "/food",
       color: "from-[#4CD964]/20 to-matte-black/40",
       badge: "VIP CHOICE ✨",
-      comingSoon: false
+      comingSoon: false,
+      isLocked: false
     },
     {
       title: "PARTY",
@@ -35,17 +36,19 @@ export default function LandingPage() {
       route: "/bulk",
       color: "from-brand/20 to-matte-black/40",
       badge: "NEW ✨",
-      comingSoon: false
+      comingSoon: false,
+      isLocked: false
     },
     {
-      title: "PREMIUM",
-      titleAccent: "FRESH",
-      subtitle: "Daily organic essentials & more",
-      image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1000&auto=format&fit=crop",
-      route: "/grocery",
-      color: "from-gold/20 to-matte-black/40",
-      badge: "COMING SOON 🥬",
-      comingSoon: true
+      title: "LOCKED",
+      titleAccent: "SELECTION 🔒",
+      subtitle: "Elite spirits, fine wines & craft cocktails",
+      image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=1000&auto=format&fit=crop",
+      route: "/bar-menu",
+      color: "from-[#FFB700]/25 to-matte-black/50",
+      badge: "LOCKED AREA 🔒",
+      comingSoon: false,
+      isLocked: true
     }
   ];
 
@@ -84,41 +87,62 @@ export default function LandingPage() {
           >
             <motion.div
               whileHover={{ rotateY: 5, rotateX: -5, scale: 1.03 }}
-              className="relative h-[480px] sm:h-[550px] rounded-[40px] overflow-hidden luxury-card preserve-3d shadow-2xl border border-white/5"
+              className={`relative h-[480px] sm:h-[550px] rounded-[40px] overflow-hidden luxury-card preserve-3d shadow-2xl border transition-all duration-500 ${
+                card.isLocked 
+                  ? 'border-[#FFB700]/30 animate-gold-blink shadow-[0_10px_30px_rgba(255,183,0,0.15)] bg-[#050505]' 
+                  : 'border-white/5'
+              }`}
             >
-              <img 
-                src={card.image} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 mix-blend-luminosity group-hover:mix-blend-normal" 
-                alt="" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-              
-              <div className="absolute inset-0 p-8 flex flex-col justify-end gap-5 translate-z-30 text-left">
-                <div className="space-y-1">
-                  <h3 className="text-4xl font-black italic tracking-tighter leading-[0.9] uppercase text-white">
-                    {card.title}<br />
-                    <span className="text-[#4CD964] drop-shadow-lg">{card.titleAccent}</span>
+              {card.isLocked ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[#050505] bg-[radial-gradient(circle_at_center,rgba(255,183,0,0.08)_0%,transparent_70%)]">
+                  <motion.div 
+                    animate={{ scale: [1, 1.04, 1] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                    className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#FFB700] to-[#FFD166] flex items-center justify-center shadow-[0_0_30px_rgba(255,183,0,0.3)] border border-white/10 mb-6"
+                  >
+                    <Lock className="w-8 h-8 text-matte-black" />
+                  </motion.div>
+                  <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white leading-none">
+                    LOCKED
                   </h3>
-                  <p className="text-white/60 text-[10px] font-black uppercase tracking-[3px] max-w-[200px] leading-relaxed pt-2">
-                    {card.subtitle}
-                  </p>
                 </div>
-                <div className="pt-2">
-                  {card.comingSoon ? (
-                    <div className="inline-flex items-center gap-2.5 text-white/30 font-black text-[9px] uppercase tracking-[3px] bg-white/5 px-5 py-3 rounded-full border border-white/5">
-                      <Lock className="w-3.5 h-3.5" /> Invitation Only
+              ) : (
+                <>
+                  <img 
+                    src={card.image} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 mix-blend-luminosity group-hover:mix-blend-normal" 
+                    alt="" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                  
+                  <div className="absolute inset-0 p-8 flex flex-col justify-end gap-5 translate-z-30 text-left">
+                    <div className="space-y-1">
+                      <h3 className="text-4xl font-black italic tracking-tighter leading-[0.9] uppercase text-white">
+                        {card.title}<br />
+                        <span className="text-[#4CD964] drop-shadow-lg">{card.titleAccent}</span>
+                      </h3>
+                      <p className="text-white/60 text-[10px] font-black uppercase tracking-[3px] max-w-[200px] leading-relaxed pt-2">
+                        {card.subtitle}
+                      </p>
                     </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-3 text-matte-black bg-[#4CD964] font-black text-[11px] uppercase tracking-[3px] px-7 py-3.5 rounded-full group-hover:gap-5 transition-all shadow-[0_10px_25px_rgba(76,217,100,0.25)]">
-                      View Menu <ArrowRight className="w-4 h-4 text-matte-black" />
+                    <div className="pt-2">
+                      {card.comingSoon ? (
+                        <div className="inline-flex items-center gap-2.5 text-white/30 font-black text-[9px] uppercase tracking-[3px] bg-white/5 px-5 py-3 rounded-full border border-white/5">
+                          <Lock className="w-3.5 h-3.5" /> Invitation Only
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-3 text-matte-black bg-[#4CD964] font-black text-[11px] uppercase tracking-[3px] px-7 py-3.5 rounded-full group-hover:gap-5 transition-all shadow-[0_10px_25px_rgba(76,217,100,0.25)]">
+                          View Menu <ArrowRight className="w-4 h-4 text-matte-black" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              <div className="absolute top-6 right-6 px-4 py-1.5 rounded-full border border-white/20 bg-black/45 backdrop-blur-xl translate-z-20">
-                <span className="text-[9px] font-black uppercase tracking-[2px] text-white">{card.badge}</span>
-              </div>
+                  <div className="absolute top-6 right-6 px-4 py-1.5 rounded-full border border-white/20 bg-black/45 backdrop-blur-xl translate-z-20">
+                    <span className="text-[9px] font-black uppercase tracking-[2px] text-white">{card.badge}</span>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         ))}

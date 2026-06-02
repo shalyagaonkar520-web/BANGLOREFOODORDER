@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
-  Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame
+  Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
+  Search, Wine
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
+import { playSound, SOUNDS } from '../utils/audio';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 
@@ -30,6 +32,178 @@ export default function AdminPage() {
   const [localSettings, setLocalSettings] = useState({ ...settings });
   const [isSaving, setIsSaving] = useState(false);
   const [liveOrders, setLiveOrders] = useState(MOCK_LIVE_ORDERS);
+
+  // Bar management states
+  const [activeTab, setActiveTab] = useState<'system' | 'bar'>('system');
+  const [adminDrinks, setAdminDrinks] = useState<any[]>([]);
+  const [drinksLoading, setDrinksLoading] = useState(false);
+  const [editingDrink, setEditingDrink] = useState<any | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  const [barSearch, setBarSearch] = useState('');
+  const [barFilterCategory, setBarFilterCategory] = useState('All');
+
+  const [drinkForm, setDrinkForm] = useState({
+    name: '',
+    brand: '',
+    category: 'Beer',
+    size: '750ml',
+    price: 0,
+    image: '',
+    isAvailable: true
+  });
+
+  const IMAGE_PRESETS = [
+    { name: 'Cold Beer', url: 'https://images.unsplash.com/photo-1600788886242-5c96aabe3757?w=600&q=80' },
+    { name: 'Beer Bottle', url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80' },
+    { name: 'Amber Whisky', url: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=600&q=80' },
+    { name: 'Whisky Glass', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80' },
+    { name: 'Dark Rum', url: 'https://images.unsplash.com/photo-1614313511387-1436a4480feb?w=600&q=80' },
+    { name: 'Rum Cocktail', url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=80' },
+    { name: 'Chilled Vodka', url: 'https://images.unsplash.com/photo-1550985543-f47f38aeee65?w=600&q=80' },
+    { name: 'Vodka Splash', url: 'https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?w=600&q=80' },
+    { name: 'Red Wine', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80' },
+    { name: 'Wine Bottles', url: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80' },
+    { name: 'Brandy Cognac', url: 'https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?w=600&q=80' },
+    { name: 'Champagne Sparkle', url: 'https://images.unsplash.com/photo-1516600171743-c9717e87b184?w=600&q=80' },
+    { name: 'Bombay Sapphire', url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80' },
+    { name: 'Gin & Tonic', url: 'https://images.unsplash.com/photo-1607622750671-6cd9a99eabd1?w=600&q=80' }
+  ];
+
+  // Fetch drinks for admin
+  const fetchAdminDrinks = async () => {
+    setDrinksLoading(true);
+    try {
+      const response = await fetch(`/api/drinks?t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAdminDrinks(data);
+      }
+    } catch (e) {
+      toast.error('Failed to load drinks list.');
+    } finally {
+      setDrinksLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && activeTab === 'bar') {
+      fetchAdminDrinks();
+    }
+  }, [user, activeTab]);
+
+  // Save drink (create or update)
+  const handleSaveDrink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!drinkForm.name || !drinkForm.brand || drinkForm.price <= 0) {
+      toast.error('Please fill in name, brand, and valid price.');
+      return;
+    }
+    
+    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
+    toast.loading('Saving drink...', { id: 'drink-save' });
+    
+    try {
+      const payload = editingDrink ? { ...drinkForm, id: editingDrink.id } : drinkForm;
+      const response = await fetch('/api/drinks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success(editingDrink ? 'Drink updated successfully!' : 'Drink added successfully!', { id: 'drink-save' });
+        setEditingDrink(null);
+        setShowAddForm(false);
+        setDrinkForm({
+          name: '',
+          brand: '',
+          category: 'Beer',
+          size: '750ml',
+          price: 0,
+          image: '',
+          isAvailable: true
+        });
+        fetchAdminDrinks();
+      } else {
+        toast.error(data.message || 'Failed to save drink.', { id: 'drink-save' });
+      }
+    } catch (err) {
+      toast.error('Network error saving drink.', { id: 'drink-save' });
+    }
+  };
+
+  // Toggle availability of drink directly
+  const handleToggleDrinkStock = async (drink: any) => {
+    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
+    const updatedDrink = { ...drink, isAvailable: !drink.isAvailable };
+    
+    // Optimistic UI update
+    setAdminDrinks(prev => prev.map(d => d.id === drink.id ? updatedDrink : d));
+    
+    try {
+      const response = await fetch('/api/drinks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedDrink)
+      });
+      if (response.ok) {
+        toast.success(`${drink.name} is now ${updatedDrink.isAvailable ? 'In Stock' : 'Out of Stock'}`);
+      } else {
+        toast.error('Sync failed.');
+        fetchAdminDrinks();
+      }
+    } catch (e) {
+      toast.error('Network error during sync.');
+      fetchAdminDrinks();
+    }
+  };
+
+  // Delete drink
+  const handleDeleteDrink = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this drink?')) return;
+    
+    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
+    toast.loading('Deleting drink...', { id: 'drink-delete' });
+    
+    try {
+      const response = await fetch(`/api/drinks?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success('Drink deleted successfully!', { id: 'drink-delete' });
+        fetchAdminDrinks();
+      } else {
+        toast.error(data.message || 'Failed to delete drink.', { id: 'drink-delete' });
+      }
+    } catch (e) {
+      toast.error('Network error deleting drink.', { id: 'drink-delete' });
+    }
+  };
+
+  // Filtered drinks for inventory search
+  const filteredAdminDrinks = adminDrinks.filter(drink => {
+    const matchesSearch = 
+      drink.name.toLowerCase().includes(barSearch.toLowerCase()) ||
+      drink.brand.toLowerCase().includes(barSearch.toLowerCase());
+    
+    const matchesCategory = 
+      barFilterCategory === 'All' || 
+      drink.category.toLowerCase() === barFilterCategory.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
 
   // Daily Schedule state (Mock database schema details)
   const [schedule, setSchedule] = useState({
@@ -326,8 +500,39 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* Tab Switcher */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 flex gap-4 relative z-25 text-left">
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('system');
+          }}
+          className={`px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'system'
+              ? 'bg-gradient-to-r from-[#FF4D00] to-[#FFB700] text-matte-black border-[#FFB700] shadow-[0_10px_20px_rgba(255,77,0,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          ⚙️ System Controls
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('bar');
+          }}
+          className={`px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'bar'
+              ? 'bg-gradient-to-r from-[#FFB700] to-[#FFD166] text-matte-black border-[#FFD166] shadow-[0_10px_20px_rgba(255,183,0,0.15)] animate-gold-blink'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          🍸 Bar Inventory
+        </button>
+      </div>
+
       {/* Main Content Layout */}
-      <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+      {activeTab === 'system' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
         
         {/* LEFT COLUMN: PRIMARY TOGGLES & CORE CONTROLS */}
         <div className="lg:col-span-2 space-y-8">
@@ -953,6 +1158,328 @@ export default function AdminPage() {
         </div>
 
       </main>
+      ) : (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+          
+          {/* LEFT COLUMN: DRINKS INVENTORY LIST */}
+          <div className="lg:col-span-2 space-y-8 text-left">
+            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-6">
+              
+              {/* Header with Search and Category filters */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
+                <div>
+                  <h3 className="text-xl font-black italic uppercase tracking-tight">Drinks Inventory</h3>
+                  <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Manage resort bar items availability & price listing</p>
+                </div>
+                <button
+                  onClick={() => {
+                    playSound(SOUNDS.CLICK);
+                    setEditingDrink(null);
+                    setDrinkForm({
+                      name: '',
+                      brand: '',
+                      category: 'Beer',
+                      size: '750ml',
+                      price: 0,
+                      image: '',
+                      isAvailable: true
+                    });
+                    setShowAddForm(true);
+                  }}
+                  className="px-6 py-3.5 bg-gradient-to-r from-[#FFB700] to-[#FFD166] text-matte-black font-black text-xs uppercase tracking-[2px] rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer"
+                >
+                  + Add New Drink
+                </button>
+              </div>
+
+              {/* Filters row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    type="text"
+                    placeholder="Search name or brand..."
+                    value={barSearch}
+                    onChange={e => setBarSearch(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={barFilterCategory}
+                    onChange={e => {
+                      playSound(SOUNDS.CLICK);
+                      setBarFilterCategory(e.target.value);
+                    }}
+                    className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white/70 font-black outline-none focus:border-[#FFB700]/30 transition-all text-xs uppercase tracking-wider"
+                  >
+                    <option value="All">All Categories</option>
+                    <option value="Beer">Beer</option>
+                    <option value="Whisky">Whisky</option>
+                    <option value="Rum">Rum</option>
+                    <option value="Vodka">Vodka</option>
+                    <option value="Wine">Wine</option>
+                    <option value="Brandy">Brandy</option>
+                    <option value="Gin">Gin</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Inventory List */}
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
+                {drinksLoading ? (
+                  <div className="text-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#FFB700] mx-auto" />
+                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-2">Loading catalog...</p>
+                  </div>
+                ) : filteredAdminDrinks.length > 0 ? (
+                  filteredAdminDrinks.map((drink) => (
+                    <div 
+                      key={drink.id} 
+                      className={`p-4 bg-white/[0.02] border rounded-2xl flex items-center justify-between gap-4 transition-all hover:bg-white/[0.04] ${
+                        drink.isAvailable ? 'border-white/5' : 'border-red-500/20 bg-red-500/[0.01]'
+                      }`}
+                    >
+                      {/* Left: Image & Details */}
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/40 border border-white/10 shrink-0">
+                          <img src={drink.image} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <span className="text-[9px] font-bold text-white/30 uppercase tracking-wider">{drink.brand}</span>
+                          <h4 className="font-bold text-sm text-white truncate leading-tight">{drink.name}</h4>
+                          <div className="flex items-center gap-2 text-[10px] text-white/50 font-medium mt-0.5">
+                            <span className="bg-white/5 px-2 py-0.5 rounded text-[8px] uppercase tracking-wider">{drink.category}</span>
+                            <span>•</span>
+                            <span>{drink.size}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right mr-2">
+                          <span className="text-[8px] font-bold text-white/35 block uppercase tracking-wider">Rate Card</span>
+                          <span className="font-black text-sm text-[#FFB700]">₹{drink.price}</span>
+                        </div>
+
+                        {/* Availability Toggle */}
+                        <button
+                          onClick={() => handleToggleDrinkStock(drink)}
+                          className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all ${
+                            drink.isAvailable 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' 
+                              : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
+                          }`}
+                        >
+                          {drink.isAvailable ? 'In Stock' : 'Out of Stock'}
+                        </button>
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => {
+                            playSound(SOUNDS.CLICK);
+                            setEditingDrink(drink);
+                            setDrinkForm(drink);
+                            setShowAddForm(true);
+                          }}
+                          className="p-2 bg-white/5 rounded-xl text-white hover:text-[#FFB700] hover:bg-white/10 transition-colors border border-white/5"
+                        >
+                          ✏️
+                        </button>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => handleDeleteDrink(drink.id)}
+                          className="p-2 bg-red-500/10 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors border border-red-500/15"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-16 border border-dashed border-white/5 rounded-2xl">
+                    <Wine className="w-12 h-12 text-white/10 mx-auto" />
+                    <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-2">No drinks found</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: ADD / EDIT DRINK PANEL */}
+          <div className="space-y-8 text-left">
+            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 space-y-6">
+              <div className="border-b border-white/5 pb-4">
+                <h3 className="text-lg font-black italic uppercase tracking-tight text-white">
+                  {editingDrink ? '✏️ Edit Drink' : '🍸 Add Drink'}
+                </h3>
+                <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">
+                  {editingDrink ? 'Modify existing catalog attributes' : 'Register a new luxury drink item'}
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveDrink} className="space-y-4">
+                {/* Name */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Drink Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Absolut Vodka"
+                    value={drinkForm.name}
+                    onChange={e => setDrinkForm({ ...drinkForm, name: e.target.value })}
+                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
+                  />
+                </div>
+
+                {/* Brand */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Brand Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Pernod Ricard"
+                    value={drinkForm.brand}
+                    onChange={e => setDrinkForm({ ...drinkForm, brand: e.target.value })}
+                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
+                  />
+                </div>
+
+                {/* Category & Size */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Category</label>
+                    <select
+                      value={drinkForm.category}
+                      onChange={e => setDrinkForm({ ...drinkForm, category: e.target.value })}
+                      className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
+                    >
+                      <option value="Beer">Beer</option>
+                      <option value="Whisky">Whisky</option>
+                      <option value="Rum">Rum</option>
+                      <option value="Vodka">Vodka</option>
+                      <option value="Wine">Wine</option>
+                      <option value="Brandy">Brandy</option>
+                      <option value="Gin">Gin</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Bottle Size</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 750ml, 330ml"
+                      value={drinkForm.size}
+                      onChange={e => setDrinkForm({ ...drinkForm, size: e.target.value })}
+                      className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs text-center"
+                    />
+                  </div>
+                </div>
+
+                {/* Price & Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Price (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={drinkForm.price || ''}
+                      onChange={e => setDrinkForm({ ...drinkForm, price: parseInt(e.target.value) || 0 })}
+                      className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs text-center"
+                    />
+                  </div>
+                  <div className="space-y-1.5 flex flex-col justify-end">
+                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1 mb-2">Availability</label>
+                    <button
+                      type="button"
+                      onClick={() => setDrinkForm({ ...drinkForm, isAvailable: !drinkForm.isAvailable })}
+                      className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
+                        drinkForm.isAvailable 
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                          : 'bg-red-500/10 border-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {drinkForm.isAvailable ? 'In Stock' : 'Out of Stock'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Image URL */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Image URL</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="https://images.unsplash.com/..."
+                    value={drinkForm.image}
+                    onChange={e => setDrinkForm({ ...drinkForm, image: e.target.value })}
+                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
+                  />
+                </div>
+
+                {/* Preset image selector */}
+                <div className="space-y-1.5">
+                  <label className="text-[8px] font-bold text-white/30 uppercase tracking-widest ml-1">Or Pick A Premium Preset Image</label>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar border border-white/5 p-2 rounded-xl bg-black/20">
+                    {IMAGE_PRESETS.map((preset) => (
+                      <button
+                        type="button"
+                        key={preset.name}
+                        onClick={() => {
+                          playSound(SOUNDS.CLICK);
+                          setDrinkForm({ ...drinkForm, image: preset.url });
+                          toast.success(`Loaded preset: ${preset.name}`, { duration: 1500 });
+                        }}
+                        className={`px-2 py-1 text-[8px] font-black uppercase rounded-lg border transition-all ${
+                          drinkForm.image === preset.url
+                            ? 'bg-[#FFB700] border-[#FFB700] text-matte-black'
+                            : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10'
+                        }`}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Form buttons */}
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  {editingDrink && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playSound(SOUNDS.CLICK);
+                        setEditingDrink(null);
+                        setDrinkForm({
+                          name: '',
+                          brand: '',
+                          category: 'Beer',
+                          size: '750ml',
+                          price: 0,
+                          image: '',
+                          isAvailable: true
+                        });
+                      }}
+                      className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-wider"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="flex-1 h-12 rounded-xl bg-white text-matte-black font-black text-[10px] uppercase tracking-wider hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    Save Drink
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </main>
+      )}
     </div>
   );
 }

@@ -1,14 +1,15 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown, User, Bell, Gift } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, User, Bell, Menu, X, Wine, Compass, PartyPopper, Utensils } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 import { isFreeDeliveryTimeActive } from '../types';
 
 export default function Header() {
   const { deliveryLocation, openLocationPicker } = useLocationStore();
   const navigate = useNavigate();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
@@ -39,6 +40,19 @@ export default function Header() {
           </button>
         </div>
 
+        {/* Middle: Navigation links for Desktop */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link to="/food" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
+            <Utensils className="w-3.5 h-3.5 text-[#4CD964]" /> Food Order
+          </Link>
+          <Link to="/bulk" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
+            <PartyPopper className="w-3.5 h-3.5 text-[#4CD964]" /> Party Specials
+          </Link>
+          <Link to="/bar-menu" className="text-xs font-black uppercase tracking-widest text-[#FFB700] hover:text-[#FFD166] transition-all bg-[#FFB700]/10 border border-[#FFB700]/20 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,183,0,0.15)] animate-gold-blink">
+            <Wine className="w-3.5 h-3.5 text-[#FFB700]" /> Locked 🔒
+          </Link>
+        </nav>
+
         {/* Right Side: Icons */}
         <div className="flex items-center gap-2">
           {/* Notification Icon */}
@@ -60,8 +74,92 @@ export default function Header() {
           >
             <User className="w-4 h-4 text-white/70" />
           </motion.button>
+
+          {/* Hamburger Menu for Mobile */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsDrawerOpen(true)}
+            className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-sm shrink-0 md:hidden"
+          >
+            <Menu className="w-4 h-4 text-white/60" />
+          </motion.button>
         </div>
       </div>
+
+      {/* Sliding Mobile Drawer */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDrawerOpen(false)}
+              className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-md"
+            />
+            {/* Drawer */}
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-[280px] z-[160] bg-[#050505]/98 border-l border-white/5 shadow-2xl p-6 flex flex-col justify-between font-sans text-left"
+            >
+              <div className="space-y-8">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div className="text-left">
+                    <span className="text-[#4CD964] font-black uppercase tracking-[3px] text-[9px]">Moms Magic</span>
+                    <h4 className="text-base font-black italic tracking-tighter text-white uppercase">Resort Portal</h4>
+                  </div>
+                  <button 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5"
+                  >
+                    <X className="w-4 h-4 text-white/60" />
+                  </button>
+                </div>
+
+                {/* Nav Links */}
+                <div className="flex flex-col gap-4">
+                  <Link 
+                    to="/food" 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#4CD964] transition-colors flex items-center gap-3"
+                  >
+                    <Utensils className="w-4 h-4 text-[#4CD964]" /> Food Order
+                  </Link>
+                  <Link 
+                    to="/bulk" 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#4CD964] transition-colors flex items-center gap-3"
+                  >
+                    <PartyPopper className="w-4 h-4 text-[#4CD964]" /> Party Specials
+                  </Link>
+                  <Link 
+                    to="/bar-menu" 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="p-3.5 bg-[#FFB700]/5 border border-[#FFB700]/20 rounded-2xl text-xs font-black uppercase tracking-wider text-[#FFB700] hover:text-[#FFD166] transition-all flex items-center gap-3 shadow-[0_0_15px_rgba(255,183,0,0.05)] animate-gold-blink"
+                  >
+                    <Wine className="w-4 h-4 text-[#FFB700]" /> Locked 🔒
+                  </Link>
+                </div>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="border-t border-white/5 pt-4 text-center space-y-2">
+                <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Yellapur's Premium Selection</p>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4CD964]" />
+                  <span className="text-[8px] font-black uppercase text-white/40 tracking-wider">Rooms & Room Service Online</span>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

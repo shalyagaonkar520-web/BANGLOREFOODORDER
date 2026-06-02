@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, User, Search, Tag, Heart } from 'lucide-react';
+import { Home, ShoppingBag, User, Search, Wine } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function BottomNav() {
@@ -7,7 +7,7 @@ export default function BottomNav() {
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Search, label: 'Search', path: '/food' },
-    { icon: Heart, label: 'Team', path: '/about' },
+    { icon: Wine, label: 'Locked 🔒', path: '/bar-menu' },
     { icon: ShoppingBag, label: 'Cart', path: '/cart' },
     { icon: User, label: 'Account', path: '/admin' },
   ];

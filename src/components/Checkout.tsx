@@ -44,7 +44,6 @@ export default function Checkout() {
   
 
   const [selectedDrink, setSelectedDrink] = useState<'Coca-Cola' | 'Sprite'>('Coca-Cola');
-  const [decorSetupVenue, setDecorSetupVenue] = useState<'home' | 'party_hall' | 'none'>('none');
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
   
   // Removed Razorpay States
@@ -153,8 +152,6 @@ export default function Checkout() {
         }).join('\n');
       }
 
-      const venueLabel = decorSetupVenue === 'home' ? '🏡 Setup & Decor in Home' : decorSetupVenue === 'party_hall' ? '🏛️ Setup in Party Hall Yellapur' : '❌ No Decor Setup';
-
       const noteSection = formData.additionalMessage.trim() ? `📝 *Note:* ${formData.additionalMessage.trim()}` : '';
 
       const waMessage = [
@@ -165,7 +162,6 @@ export default function Checkout() {
         `📍 *City:* ${selectedCity?.name || 'Unknown'}`,
         `🏠 *Address:* ${deliveryLocation.address}`,
         `📏 *Distance:* ${distanceKm}km`,
-        isBulkOrder ? `✨ *Decor Setup:* ${venueLabel}` : '',
         ``,
         orderDetails,
         ``,
@@ -294,37 +290,6 @@ export default function Checkout() {
             <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Special Instructions</label>
             <textarea rows={2} className="w-full px-8 py-5 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white transition-all placeholder:text-white/5" placeholder="E.g., Extra hot, gate code, ring the bell..." value={formData.additionalMessage} onChange={e => setFormData({ ...formData, additionalMessage: e.target.value })} />
           </div>
-
-          {/* Decor Location Setup Choice */}
-          {isBulkOrder && (
-            <div className="space-y-4 pt-4 border-t border-white/5">
-              <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1 block">
-                ✨ Setup & Decor Venue Selection
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {(
-                  [
-                    { id: 'none', label: 'No Decor Setup ❌' },
-                    { id: 'home', label: 'Setup in Home 🏡' },
-                    { id: 'party_hall', label: 'Party Hall Yellapur 🏛️' },
-                  ] as const
-                ).map((venue) => (
-                  <button
-                    key={venue.id}
-                    type="button"
-                    onClick={() => setDecorSetupVenue(venue.id)}
-                    className={`py-5 px-4 rounded-2xl border font-black text-[11px] uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-2 ${
-                      decorSetupVenue === venue.id
-                        ? 'border-gold bg-gold/10 text-gold shadow-[0_0_20px_rgba(244,180,0,0.15)]'
-                        : 'border-white/5 bg-matte-black/50 text-text-muted hover:border-white/10 hover:text-white'
-                    }`}
-                  >
-                    <span>{venue.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Order Details */}
@@ -339,7 +304,7 @@ export default function Checkout() {
               <div key={item.id} className="flex items-center justify-between gap-6 p-6 bg-matte-black/30 rounded-[30px] border border-white/5">
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 shrink-0">
-                    <img src={item.image} className="w-full h-full object-cover opacity-80" />
+                    <img src={item.image} className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
                   </div>
                   <div>
                     <h4 className="font-black text-base text-white italic uppercase tracking-tighter">{item.name}</h4>

@@ -22,6 +22,7 @@ import AboutFounder from './components/AboutFounder';
 import CelebrationHub from './components/CelebrationHub';
 import CelebrationDesign from './components/CelebrationDesign';
 import AdminPage from './components/AdminPage';
+import BarMenuPage from './components/BarMenuPage';
 
 // Store
 import { useSystemStore } from './store/systemStore';
@@ -135,6 +136,7 @@ export default function App() {
                     <Route path="/feedback" element={<FeedbackPage />} />
                     <Route path="/about" element={<AboutFounder />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/bar-menu" element={<BarMenuPage />} />
                   </Routes>
                 </PageTransition>
               </main>
