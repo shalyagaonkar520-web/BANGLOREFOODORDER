@@ -1,79 +1,75 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Star, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { MENU_ITEMS } from '../data/menuItems';
 import { useCartStore } from '../store/cartStore';
-import { MENU_ITEMS, CATEGORIES } from '../data/menuItems';
-import { Search, Plus, Minus, Star, ChevronLeft, Zap, Leaf, Drumstick, ShoppingBag, ArrowRight, MessageCircle } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getRecommendations, RecommendationResult } from '../utils/recommendationEngine';
-import RecommendationPopup from './RecommendationPopup';
-import { Product } from '../types';
-
-const getDummyRatingInfo = (id: string) => {
-  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const rating = (4.5 + (hash % 6) * 0.1).toFixed(1);
-  const reviews = 8 + (hash % 52);
-  const messages = [
-    "Nice food, must try!",
-    "Incredible taste!",
-    "Highly recommended!",
-    "Super fresh & hot!",
-    "Best in the city!",
-    "Absolutely delicious!",
-    "Amazing quality!"
-  ];
-  const msg = messages[hash % messages.length];
-  return { rating, reviews, msg };
-};
+import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
+import Header from './Header';
+import { playSound, SOUNDS } from '../utils/audio';
+
+const getStableRating = (id: string | number) => {
+  const str = String(id);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const rating = 4.5 + (Math.abs(hash) % 6) * 0.1;
+  return rating.toFixed(1);
+};
+
+// Swish realistic category metadata (uses photographic food assets)
+const CATEGORIES_DATA = [
+  { id: 'Party Special', name: 'Party Special', image: 'https://images.unsplash.com/photo-1530101121860-702f82e3f267?w=200&q=80', count: 4 },
+  { id: 'Combos', name: 'Combo Offers', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80', count: 5 },
+  { id: 'Fast Food', name: 'Fast Food', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', count: 15 },
+  { id: 'Rice & Noodles', name: 'Rice & Noodles', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=200&q=80', count: 18 },
+  { id: 'Biryani', name: 'Biryani', image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=200&q=80', count: 18 },
+  { id: 'Starters', name: 'Starters', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&q=80', count: 12 },
+  { id: 'Veg/Gravy', name: 'Veg / Gravy', image: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=200&q=80', count: 20 },
+  { id: 'Roti', name: 'Roti', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=200&q=80', count: 10 },
+  { id: 'Burgers & Rolls', name: 'Burgers & Rolls', image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=200&q=80', count: 14 },
+  { id: 'Pizzas & Momos', name: 'Pizzas & Momos', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&q=80', count: 16 },
+  { id: 'Maggie', name: 'Maggi & Pasta', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200&q=80', count: 13 },
+  { id: 'Drinks', name: 'Drinks', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=200&q=80', count: 12 }
+];
+
+const ROTATING_SEARCH_PLACEHOLDERS = [
+  'Search "Biryani"',
+  'Search "Shawarma"',
+  'Search "Chicken 65"',
+  'Search "Meals"',
+  'Search "Paneer Tikka"',
+  'Search "Butter Chicken"'
+];
 
 export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { addItem, items, updateQuantity, total } = useCartStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [dietFilter, setDietFilter] = useState<'all' | 'veg' | 'nonveg'>('all');
-  const [selectedReviewProduct, setSelectedReviewProduct] = useState<any>(null);
-  const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
-  const [recommendTriggerProduct, setRecommendTriggerProduct] = useState<Product | null>(null);
+  const { addItem, items: cartItems, updateQuantity } = useCartStore();
+  const settings = useSystemStore(state => state.settings);
+  
+  // States
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchIndex, setSearchIndex] = useState(0);
 
+  // Rotating Search Placeholders
   useEffect(() => {
-    localStorage.removeItem('moms_magic_order_type');
-    if (location.state?.category) {
-      setActiveCategory(location.state.category);
-    }
-  }, [location.state]);
-
-  const handleAddWithRecommend = useCallback((product: Product) => {
-    addItem(product);
-    setTimeout(() => {
-      const rec = getRecommendations(product, total + product.price);
-      if (rec) {
-        setRecommendTriggerProduct(product);
-        setRecommendation(rec);
-      }
-    }, 350);
-  }, [addItem, total]);
-
-  const filteredItems = useMemo(() => {
-    return MENU_ITEMS.filter(item => {
-      const matchesType = item.type === type;
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-      const matchesDiet = dietFilter === 'all' || (dietFilter === 'veg' ? item.isVeg : !item.isVeg);
-      return matchesType && matchesSearch && matchesCategory && matchesDiet;
-    });
-  }, [type, searchTerm, activeCategory, dietFilter]);
+    const timer = setInterval(() => {
+      setSearchIndex((prev) => (prev + 1) % ROTATING_SEARCH_PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (type === 'grocery') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 text-center p-6">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 text-center p-6 bg-matte-black text-white">
         <div className="w-40 h-40 bg-gold/5 rounded-[50px] flex items-center justify-center border border-gold/10 relative">
           <div className="absolute inset-0 bg-gold/5 blur-3xl rounded-full" />
-          <ShoppingBag className="w-20 h-20 text-gold" />
+          <ShoppingBag className="w-20 h-20 text-gold animate-pulse" />
         </div>
         <div className="space-y-4">
-          <h2 className="text-6xl font-black italic tracking-tighter uppercase text-white">PREMIUM <span className="text-luxury-gold">MARKET</span></h2>
+          <h2 className="text-5xl md:text-6xl font-black italic tracking-tighter uppercase text-white">PREMIUM <span className="text-luxury-gold">MARKET</span></h2>
           <p className="text-text-muted font-bold uppercase tracking-[4px] text-[10px]">Curating the finest essentials for you</p>
         </div>
         <button onClick={() => navigate('/')} className="btn-luxury-red px-14">BACK TO SELECTION</button>
@@ -81,297 +77,297 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
     );
   }
 
+  const handledAddWithToast = (product: any) => {
+    playSound(SOUNDS.ADD_TO_CART);
+    addItem(product);
+    toast.success(`${product.name} added to cravings plate! 🍳`, {
+      style: {
+        background: '#FFFFFF',
+        color: '#2B2B2B',
+        border: '1px solid rgba(76, 217, 100, 0.2)',
+        borderRadius: '20px',
+        padding: '16px 24px',
+        fontWeight: '600',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+      }
+    });
+  };
+
+  // Map Combo Offers to standard food format
+  const combos = settings?.comboOffers || [];
+  const activeCombos = combos.filter(combo => {
+    if (!combo.isActive) return false;
+    if (combo.expiryDate) {
+      const now = new Date();
+      const expiry = new Date(combo.expiryDate);
+      expiry.setHours(23, 59, 59, 999);
+      if (now > expiry) return false;
+    }
+    return true;
+  });
+
+  const mappedCombos = activeCombos.map((combo): any => ({
+    id: combo.id,
+    name: combo.name,
+    price: combo.offerPrice,
+    originalPrice: combo.regularPrice,
+    category: 'Combos',
+    type: 'food',
+    image: combo.image || '/chicken_biryani_new.png',
+    description: combo.items.join(' + '),
+    isVeg: combo.name.toLowerCase().includes('veg'),
+    isCombo: true
+  }));
+
+  // Combine Combos with MENU_ITEMS - putting combos at the top
+  const allProducts = [...mappedCombos, ...MENU_ITEMS];
+
+  // Filter items based on selected category and search query
+  const filteredProducts = allProducts.filter(item => {
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Separate combos and standard products, sorting both by price low to high
+  const comboProducts = filteredProducts.filter(item => item.isCombo).sort((a, b) => a.price - b.price);
+  const standardProducts = filteredProducts.filter(item => !item.isCombo).sort((a, b) => a.price - b.price);
+
+  // Combine so combos always appear at the starting/beginning of all page filters
+  const displayedProducts = [...comboProducts, ...standardProducts];
+
+  const categoriesWithAll = [
+    { id: 'All', name: 'All Dishes', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80' },
+    ...CATEGORIES_DATA
+  ];
+
   return (
-    <div className="pb-48">
-      {/* Premium Header */}
-      <div className="sticky top-0 z-[50] bg-matte-black/95 backdrop-blur-3xl px-4 py-4 border-b border-white/5">
-        <div className="flex items-center gap-3 max-w-[1400px] mx-auto">
-          <button onClick={() => navigate('/')} className="w-12 h-12 shrink-0 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group hover:border-gold/30 transition-all">
-             <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
-          </button>
-          
-          <div className="flex-1 relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-gold transition-colors" />
+    <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32">
+      <Header />
+
+      {/* BRANDING HEADER BANNER */}
+      <div className="px-4 pt-5 pb-2 text-left">
+        <h1 className="text-3.5xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none animate-shining-blink">
+          Moms Magic 2.0
+        </h1>
+        <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1.5">
+          Taste the magic of home • Delivered in 10 mins
+        </p>
+      </div>
+
+      {/* SEARCH BAR AREA */}
+      <div className="px-4 pt-4 sticky top-[72px] z-[40] bg-[#050505]/95 backdrop-blur-md pb-2">
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-white/40" />
             <input 
               type="text" 
-              placeholder="Search premium flavors..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:border-gold/30 transition-all font-bold text-sm text-white placeholder:text-text-muted/30"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={ROTATING_SEARCH_PLACEHOLDERS[searchIndex]}
+              className="w-full bg-white/5 border border-white/10 rounded-[18px] py-3.5 pl-11 pr-12 outline-none focus:border-[#4CD964] transition-all font-semibold text-sm text-white placeholder:text-white/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
             />
+            {/* Swish style Toggled Filter Slider on right side of Search bar */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center bg-[#4CD964]/10 p-2 rounded-xl border border-[#4CD964]/10">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#4CD964] inline-block shadow-[0_0_8px_rgba(76,217,100,0.4)] animate-pulse" />
+            </div>
+          </div>
+          <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shadow-sm">
+            <img src="/logo.png" className="w-7 h-7 object-contain opacity-80" alt="Logo" />
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-8 space-y-10 max-w-[1400px] mx-auto">
-        {/* Title */}
-        <div className="text-center">
-          <h2 className="text-4xl font-black italic uppercase tracking-tighter">Order <span className="text-luxury-gold">Food</span></h2>
+      {/* CATEGORY SECTION (CIRCULAR PHOTOGRAPHY LIST) */}
+      <section className="py-4 space-y-3">
+        <div className="px-4 text-left flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">Browse <span className="text-[#4CD964]">Categories</span></h2>
+            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Select to filter your cravings</p>
+          </div>
+          {selectedCategory !== 'All' && (
+            <button 
+              onClick={() => setSelectedCategory('All')} 
+              className="text-[10px] font-extrabold text-[#4CD964] uppercase tracking-wider bg-[#4CD964]/10 px-3 py-1 rounded-full border border-[#4CD964]/20 active:scale-95 transition-all"
+            >
+              Clear Filter
+            </button>
+          )}
         </div>
-        {/* Categories */}
-        <div className="space-y-8">
-          <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
-            {['All', 'Top Picks', ...CATEGORIES].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-10 py-5 rounded-[20px] font-black text-[10px] uppercase tracking-[3px] transition-all whitespace-nowrap border ${
-                  activeCategory === cat 
-                  ? 'bg-gold text-matte-black border-gold shadow-xl shadow-gold/20' 
-                  : 'bg-white/5 text-text-muted border-white/5 hover:border-white/10'
-                }`}
+
+        <div className="flex gap-5 overflow-x-auto no-scrollbar px-4 py-3">
+          {categoriesWithAll.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <div 
+                key={cat.id} 
+                onClick={() => setSelectedCategory(cat.id)}
+                className="flex flex-col items-center gap-3 cursor-pointer shrink-0 group/cat"
               >
-                {cat}
-              </button>
-            ))}
+                <div className="relative shrink-0">
+                  {/* Glowing outer aura that rotates and cycles colors for active category */}
+                  {isActive ? (
+                    <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#4CD964] via-[#FFD166] via-[#FF4D00] via-[#FF007F] to-[#00F0FF] opacity-100 blur-[4px] animate-spin-slow" />
+                  ) : (
+                    <div className="absolute -inset-0.5 rounded-full bg-white/10 opacity-0 group-hover/cat:opacity-100 group-hover/cat:blur-[3px] transition-all duration-300" />
+                  )}
+                  
+                  {/* Main circular frame */}
+                  <div className={`w-[74px] h-[74px] rounded-full p-[3px] relative z-10 flex items-center justify-center overflow-hidden border transition-all duration-300 active:scale-95 ${
+                    isActive ? 'bg-[#050505] border-white/20 scale-105 shadow-[0_0_15px_rgba(76,217,100,0.3)]' : 'bg-[#050505] border-white/10 group-hover/cat:border-white/20'
+                  }`}>
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      <img 
+                        src={cat.image} 
+                        className="w-full h-full object-cover group-hover/cat:scale-110 transition-transform duration-500" 
+                        alt={cat.name} 
+                      />
+                      {/* Soft bottom shading overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${
+                  isActive ? 'text-[#4CD964]' : 'text-white/80 group-hover/cat:text-[#4CD964]'
+                }`}>
+                  {cat.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ALL FOOD GRID SECTION */}
+      <section className="py-4 space-y-4 px-4">
+        <div className="text-left flex justify-between items-center border-b border-white/5 pb-2">
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">
+              {selectedCategory === 'All' ? 'All' : selectedCategory} <span className="text-[#4CD964]">Dishes</span>
+            </h2>
+            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
+              {displayedProducts.length} {displayedProducts.length === 1 ? 'item' : 'items'} available
+            </p>
           </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex gap-4 p-2 bg-white/5 rounded-3xl border border-white/5">
-          {[
-            { id: 'all', label: 'All Selection', icon: Zap },
-            { id: 'veg', label: 'Pure Veg', icon: Leaf },
-            { id: 'nonveg', label: 'Classic Non-Veg', icon: Drumstick }
-          ].map(f => (
-            <button
-              key={f.id}
-              onClick={() => setDietFilter(f.id as any)}
-              className={`flex-1 py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest transition-all ${
-                dietFilter === f.id 
-                ? 'bg-white text-matte-black shadow-lg' 
-                : 'text-text-muted hover:text-white'
-              }`}
+        {displayedProducts.length === 0 ? (
+          <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
+            <div className="text-4xl">🔍</div>
+            <h3 className="text-md font-bold text-white">No food items found</h3>
+            <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try checking other categories or adjust your search.</p>
+            <button 
+              onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
+              className="text-xs font-black bg-[#4CD964] text-black px-4 py-2 rounded-full uppercase tracking-wider active:scale-95 transition-all mt-2"
             >
-              <f.icon className="w-4 h-4" /> {f.label}
+              Reset Filters
             </button>
-          ))}
-        </div>
-
-        {/* Product List */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-12">
-          {MENU_ITEMS.filter(item => {
-            const matchesType = item.type === type;
-            const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = 
-              activeCategory === 'All' || 
-              (activeCategory === 'Top Picks' ? item.isTopPick : item.category === activeCategory);
-            const matchesDiet = dietFilter === 'all' || (dietFilter === 'veg' ? item.isVeg : !item.isVeg);
-            return matchesType && matchesSearch && matchesCategory && matchesDiet;
-          }).map((product) => {
-            const cartItem = items.find(i => i.id === product.id);
-            const isRoyal = (product as any).royalHighlight;
-
-            return (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`group relative perspective-1000 ${isRoyal ? 'z-10' : 'z-0'}`}
-              >
-                <div className={`luxury-card rounded-[20px] md:rounded-[40px] p-3 md:p-6 transition-all duration-700 h-full flex flex-col ${
-                  isRoyal 
-                  ? 'border-[#4CD964]/50 shadow-[0_15px_40px_rgba(76,217,100,0.2)] ring-2 md:ring-4 ring-[#4CD964]/10 bg-gradient-to-br from-[#4CD964]/10 to-[#0B0E14]' 
-                  : 'border-[#4CD964]/10 hover:border-[#4CD964]/30 bg-[#0B0E14]'
-                }`}>
-                  {/* Visual Container */}
-                  <div className="relative aspect-square md:aspect-[16/10] rounded-[18px] md:rounded-[35px] overflow-hidden mb-3 md:mb-8 bg-black/40 shrink-0">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isRoyal ? 'opacity-100' : 'opacity-90'}`}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent opacity-90" />
-                    
-                    <div className="absolute top-2 left-2 md:top-5 md:left-5 flex flex-col gap-1 md:gap-2">
-                       <div className={`px-2 md:px-4 py-1 rounded-full border text-[6px] md:text-[8px] font-black uppercase tracking-widest ${product.isVeg ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' : 'bg-red-500/15 text-red-500 border-red-500/30'}`}>
-                          {product.isVeg ? 'Pure Veg' : 'Non-Veg'}
-                       </div>
-                       {isRoyal && (
-                          <motion.div 
-                            animate={{ scale: [1, 1.05, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className="px-2 md:px-4 py-1 rounded-full bg-[#4CD964] text-white text-[6px] md:text-[8px] font-black uppercase tracking-widest shadow-md"
-                          >
-                            Royal Choice ✨
-                          </motion.div>
-                       )}
-                    </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {displayedProducts.map((product) => {
+              const inCart = cartItems.find(i => i.id === product.id);
+              const isCombo = product.isCombo;
+              
+              return (
+                <div 
+                  key={product.id} 
+                  className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
+                    isCombo 
+                      ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
+                      : 'bg-[#0B0E14] border-white/5'
+                  }`}
+                >
+                  {/* Badges / Indicators */}
+                  <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1">
+                    {isCombo ? (
+                      <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
+                        ⭐ Combo
+                      </span>
+                    ) : product.fires && product.fires >= 2 ? (
+                      <span className="bg-red-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md self-start shrink-0">
+                        🔥 Hot
+                      </span>
+                    ) : null}
                   </div>
 
-                  {/* Information */}
-                  <div className="px-1 md:px-2 pb-1 md:pb-2 flex flex-col flex-1 justify-between gap-3">
-                    <div className="flex flex-col md:flex-row md:justify-between items-start gap-2">
-                      <div className="space-y-1 w-full md:w-auto overflow-hidden">
-                        <h4 className="text-sm md:text-2xl font-black italic uppercase tracking-tighter truncate w-full text-white">{product.name}</h4>
-                        <div 
-                          className="flex items-center gap-1 cursor-pointer bg-[#4CD964]/10 px-2 py-0.5 rounded-lg border border-[#4CD964]/20 w-fit"
-                          onClick={() => setSelectedReviewProduct(product)}
-                        >
-                          <Star className="w-2.5 h-2.5 text-[#4CD964] fill-[#4CD964]" />
-                          <span className="text-[8px] md:text-[10px] font-black uppercase text-[#4CD964] tracking-[1.5px]">
-                            {product.rating || getDummyRatingInfo(product.id || '').rating} <span className="text-white/40 ml-0.5 font-bold">({getDummyRatingInfo(product.id || '').reviews})</span>
-                          </span>
-                        </div>
-                      </div>
-                      <div className="bg-[#4CD964]/10 text-[#4CD964] border border-[#4CD964]/30 font-black italic tracking-tighter text-xs md:text-xl px-2.5 py-1 rounded-xl shadow-sm shrink-0 flex items-center justify-center mt-1 md:mt-0">
-                        ₹{product.price}
+                  {/* Product Image */}
+                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden mb-2 bg-black/40 shrink-0">
+                    <img 
+                      src={product.image} 
+                      className="w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-500" 
+                      alt={product.name} 
+                    />
+                  </div>
+
+                  {/* Title & Description */}
+                  <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
+                    <div>
+                      <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
+                        isCombo ? 'text-amber-300' : 'text-white'
+                      }`}>
+                        {product.name}
+                      </h4>
+                      {product.description && (
+                        <p className="text-[9px] sm:text-[10px] text-white/40 line-clamp-1 leading-tight mb-1">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Price and Ratings */}
+                    <div className="flex items-center justify-between pt-1">
+                      <p className={`text-[12px] sm:text-[13px] font-black ${
+                        isCombo ? 'text-amber-400' : 'text-white'
+                      }`}>₹{product.price}</p>
+                      <div className={`flex items-center gap-0.5 ${
+                        isCombo ? 'text-amber-400' : 'text-amber-500'
+                      }`}>
+                        <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
+                        <span className="text-[9px] sm:text-[10px] font-extrabold">{getStableRating(product.id)}</span>
                       </div>
                     </div>
 
-                    <p className="hidden md:block text-xs font-medium text-white/60 leading-relaxed line-clamp-2">
-                      {product.description}
-                    </p>
-                    
-                    <motion.div 
-                      onClick={() => setSelectedReviewProduct(product)}
-                      initial={{ opacity: 0, x: 40 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                      className="bg-brand/10 border border-brand/20 rounded-lg md:rounded-xl px-2 md:px-4 py-1.5 md:py-2.5 flex gap-1.5 md:gap-3 items-center overflow-hidden relative cursor-pointer hover:bg-brand/20 transition-colors"
-                    >
-                       <MessageCircle className="w-3 h-3 md:w-4 md:h-4 text-brand shrink-0" />
-                       <motion.p 
-                         animate={{ x: [0, -10, 0] }}
-                         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                         className="text-[8px] md:text-[10px] font-bold text-white/80 italic leading-tight whitespace-nowrap"
-                       >
-                         "{getDummyRatingInfo(product.id || '').msg}"
-                       </motion.p>
-                    </motion.div>
-
-                    {/* Interaction */}
-                    <div className="pt-2 md:pt-4 mt-auto">
-                      {cartItem ? (
-                        <div className="flex items-center justify-between bg-white/5 border border-white/5 rounded-[16px] md:rounded-[20px] h-10 md:h-16 px-2 md:px-4">
+                    {/* Full-width Order Button at the very bottom of card content */}
+                    <div className="mt-2.5">
+                      {inCart ? (
+                        <div className="w-full bg-[#4CD964] text-black rounded-xl flex items-center justify-between px-2 py-1.5 shadow-md border border-white">
                           <button 
-                            onClick={() => updateQuantity(product.id!, cartItem.quantity - 1)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-white/10 hover:bg-[#4CD964]/20 transition-all text-white"
+                            onClick={() => {
+                              playSound(SOUNDS.QUANTITY_TICK);
+                              updateQuantity(product.id, inCart.quantity - 1);
+                            }}
+                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
                           >
-                            <Minus className="w-3 h-3 md:w-4 md:h-4 text-white" />
+                            <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-sm md:text-xl font-black italic text-white">{cartItem.quantity}</span>
+                          <span className="text-[10px] sm:text-xs font-black min-w-[8px] text-center">{inCart.quantity} Added</span>
                           <button 
-                            onClick={() => handleAddWithRecommend(product)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl bg-[#4CD964] text-white shadow-md hover:bg-[#4CD964]/90"
+                            onClick={() => {
+                              playSound(SOUNDS.QUANTITY_TICK);
+                              updateQuantity(product.id, inCart.quantity + 1);
+                            }}
+                            className="text-black hover:text-black/80 active:scale-75 transition-all w-4 h-4 flex items-center justify-center font-bold text-xs"
                           >
-                            <Plus className="w-3 h-3 md:w-4 md:h-4 text-white" />
+                            <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <button 
-                          onClick={() => handleAddWithRecommend(product)}
-                          className={`w-full h-10 md:h-16 rounded-[16px] md:rounded-[20px] group flex items-center justify-center gap-2 font-black uppercase tracking-[1px] text-[9px] md:text-xs transition-all duration-300 ${
-                            isRoyal 
-                            ? 'bg-gradient-to-r from-[#3AC152] to-[#4CD964] text-white shadow-md shadow-brand/10 hover:scale-[1.03] active:scale-95' 
-                            : 'btn-luxury-red'
-                          }`}
+                          onClick={() => handledAddWithToast(product)}
+                          className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
                         >
-                          <span>{isRoyal ? 'ORDER ROYAL' : 'ADD TO CRAVINGS'}</span>
-                          <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform text-white shrink-0" />
+                          Order Now
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {selectedReviewProduct && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
-            onClick={() => setSelectedReviewProduct(null)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-matte-black border border-white/10 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative"
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setSelectedReviewProduct(null)}
-                className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                ✕
-              </button>
-              
-              <h3 className="text-2xl font-black italic uppercase text-white mb-2 pr-10">{selectedReviewProduct.name}</h3>
-              <div className="flex items-center gap-2 mb-8">
-                <Star className="w-6 h-6 text-gold fill-gold" />
-                <span className="text-2xl font-black italic text-gold">{selectedReviewProduct.rating || getDummyRatingInfo(selectedReviewProduct.id || '').rating}</span>
-                <span className="text-white/40 text-sm font-bold ml-1">({getDummyRatingInfo(selectedReviewProduct.id || '').reviews} Verified Reviews)</span>
-              </div>
-
-              <div className="space-y-4 mb-8 max-h-60 overflow-y-auto no-scrollbar pr-2">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-brand/20 rounded-full flex items-center justify-center text-xs font-black text-brand uppercase">
-                          {String.fromCharCode(65 + Math.floor(Math.random() * 26))}
-                        </div>
-                        <div>
-                          <span className="text-sm font-black text-white uppercase tracking-widest block">User {Math.floor(Math.random() * 9000) + 1000}</span>
-                          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block">{i === 0 ? 'Just now' : `${i} days ago`}</span>
-                        </div>
-                      </div>
-                      <div className="flex text-gold">
-                        {[...Array(5)].map((_, j) => (
-                          <Star key={j} className={`w-3 h-3 ${j < 4 || Math.random() > 0.5 ? 'fill-gold' : 'fill-white/20 text-white/20'}`} />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-white/80 italic font-bold">"{getDummyRatingInfo(selectedReviewProduct.id + i).msg}"</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-white/10 pt-6">
-                <h4 className="text-[10px] font-black text-brand uppercase tracking-widest mb-4">Add Your Experience</h4>
-                <div className="flex gap-3">
-                  <input type="text" id="review-input" placeholder="How was the food?" className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3 outline-none focus:border-brand/50 transition-colors font-bold text-sm text-white placeholder:text-white/20" />
-                  <button 
-                    onClick={() => {
-                      const input = document.getElementById('review-input') as HTMLInputElement;
-                      if (input && input.value.trim()) {
-                        toast.success('Review posted successfully! 🌟', {
-                          style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
-                        });
-                        input.value = '';
-                      } else {
-                        toast.error('Please write something first!', {
-                          style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
-                        });
-                      }
-                    }}
-                    className="bg-brand text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,77,0,0.3)]"
-                  >
-                    Post
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+              );
+            })}
+          </div>
         )}
-      </AnimatePresence>
-
-      {/* AI Recommendation Popup */}
-      {recommendation && recommendTriggerProduct && (
-        <RecommendationPopup
-          result={recommendation}
-          triggerId={recommendTriggerProduct.id!}
-          onClose={() => setRecommendation(null)}
-        />
-      )}
+      </section>
     </div>
   );
 }
