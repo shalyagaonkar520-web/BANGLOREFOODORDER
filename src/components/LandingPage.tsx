@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Star, Plus, Minus, X, Sparkles, ShoppingBag } from 'lucide-react';
+import { Search, Star, Plus, Minus } from 'lucide-react';
 import { MENU_ITEMS } from '../data/menuItems';
 import { useCartStore } from '../store/cartStore';
 import { useSystemStore } from '../store/systemStore';
@@ -42,8 +41,6 @@ export default function LandingPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchIndex, setSearchIndex] = useState(0);
-  const [recommendationOpen, setRecommendationOpen] = useState(false);
-  const [lastAddedProduct, setLastAddedProduct] = useState<any>(null);
 
   // Rotating Search Placeholders
   useEffect(() => {
@@ -56,8 +53,6 @@ export default function LandingPage() {
   const handledAddWithToast = (product: any) => {
     playSound(SOUNDS.ADD_TO_CART);
     addItem(product);
-    setLastAddedProduct(product);
-    setRecommendationOpen(true); // Automatically slide open sideways drawer when added!
     toast.success(`${product.name} added to cravings plate! 🍳`, {
       style: {
         background: '#FFFFFF',
@@ -119,26 +114,6 @@ export default function LandingPage() {
     ...CATEGORIES_DATA
   ];
 
-  // Get companion recommendations
-  const getRecommendations = () => {
-    const baseProduct = lastAddedProduct || MENU_ITEMS[0];
-    if (!baseProduct) return [];
-    
-    const drinks = MENU_ITEMS.filter(item => item.category === 'Drinks' && item.id !== baseProduct.id);
-    const starters = MENU_ITEMS.filter(item => item.category === 'Starters' && item.id !== baseProduct.id);
-    const fastfood = MENU_ITEMS.filter(item => item.category === 'Fast Food' && item.id !== baseProduct.id);
-    
-    const recs: any[] = [];
-    if (drinks.length > 0) recs.push(drinks[0]);
-    if (starters.length > 0) recs.push(starters[0]);
-    else if (fastfood.length > 0) recs.push(fastfood[0]);
-    if (fastfood.length > 1) recs.push(fastfood[1]);
-    else if (MENU_ITEMS.length > 0) {
-      const fallback = MENU_ITEMS.filter(item => item.id !== baseProduct.id && !recs.some(r => r.id === item.id));
-      if (fallback.length > 0) recs.push(fallback[0]);
-    }
-    return recs.slice(0, 3);
-  };
 
   return (
     <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32">
@@ -368,130 +343,7 @@ export default function LandingPage() {
         )}
       </section>
 
-      {/* OPTIONAL SLIDING SIDE RECS TAB - ALWAYS VISIBLE */}
-      <motion.button 
-        initial={{ x: 100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        whileHover={{ scale: 1.05 }}
-        onClick={() => setRecommendationOpen(true)}
-        className="fixed right-0 top-[40%] -translate-y-1/2 z-[80] bg-gradient-to-l from-amber-500 to-yellow-400 text-black font-black text-[9px] uppercase tracking-widest pl-3.5 pr-2 py-3.5 rounded-l-2xl shadow-[0_4px_20px_rgba(255,209,102,0.3)] border border-yellow-300/30 flex flex-col items-center gap-1.5 cursor-pointer animate-pulse"
-      >
-        <Sparkles className="w-3.5 h-3.5 fill-black text-black" />
-        <span className="writing-mode-vertical uppercase tracking-wider text-[8px]">Pairings</span>
-      </motion.button>
 
-      {/* SIDEWAYS SLIDING RECOMMENDATION PANEL */}
-      <AnimatePresence>
-        {recommendationOpen && (
-          <div className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-xs" onClick={() => setRecommendationOpen(false)}>
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="bg-[#0B0E14] border-l border-[#4CD964]/20 w-[80%] max-w-sm h-full shadow-[-10px_0_40px_rgba(0,0,0,0.6)] flex flex-col justify-between p-5 text-left overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Panel content */}
-              <div className="space-y-6">
-                <div className="flex justify-between items-start border-b border-white/5 pb-4">
-                  <div>
-                    <div className="flex items-center gap-1 text-[8px] font-black uppercase text-amber-400 tracking-widest">
-                      <Sparkles className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      Perfect Pairings
-                    </div>
-                    <h3 className="text-sm font-extrabold text-white mt-1">
-                      {lastAddedProduct ? (
-                        <>Pairs well with <span className="text-[#4CD964]">{lastAddedProduct.name}</span></>
-                      ) : (
-                        <>Signature Cravings for You</>
-                      )}
-                    </h3>
-                  </div>
-                  <button 
-                    onClick={() => setRecommendationOpen(false)}
-                    className="w-8 h-8 rounded-full bg-white/5 text-white/60 flex items-center justify-center hover:bg-white/10 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Recommended items list */}
-                <div className="space-y-4">
-                  {getRecommendations().map((item) => {
-                    const inCart = cartItems.find(i => i.id === item.id);
-                    return (
-                      <div 
-                        key={item.id}
-                        className="bg-white/5 border border-white/5 hover:border-[#4CD964]/20 rounded-2xl p-3 flex flex-col gap-3 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/40 border border-white/5 shrink-0">
-                            <img src={item.image} className="w-full h-full object-cover" alt="" />
-                          </div>
-                          <div>
-                            <h4 className="text-[11px] font-black text-white leading-tight">{item.name}</h4>
-                            <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider block mt-0.5">{item.category}</span>
-                            <p className="text-[10px] font-black text-[#4CD964] mt-1">₹{item.price}</p>
-                          </div>
-                        </div>
-
-                        <div>
-                          {inCart ? (
-                            <div className="w-full bg-[#4CD964] text-black rounded-lg flex items-center justify-between px-2 py-1 shadow-md border border-white">
-                              <button 
-                                onClick={() => {
-                                  playSound(SOUNDS.QUANTITY_TICK);
-                                  updateQuantity(item.id, inCart.quantity - 1);
-                                }}
-                                className="text-black hover:text-black/80 active:scale-75 transition-all w-4.5 h-4.5 flex items-center justify-center font-bold text-xs"
-                              >
-                                <Minus className="w-2.5 h-2.5" />
-                              </button>
-                              <span className="text-[9px] font-black text-center">{inCart.quantity} Added</span>
-                              <button 
-                                onClick={() => {
-                                  playSound(SOUNDS.QUANTITY_TICK);
-                                  updateQuantity(item.id, inCart.quantity + 1);
-                                }}
-                                className="text-black hover:text-black/80 active:scale-75 transition-all w-4.5 h-4.5 flex items-center justify-center font-bold text-xs"
-                              >
-                                <Plus className="w-2.5 h-2.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button 
-                              onClick={() => {
-                                playSound(SOUNDS.ADD_TO_CART);
-                                addItem(item);
-                                toast.success(`${item.name} added! 🍯`, { duration: 1500 });
-                              }}
-                              className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[9px] uppercase tracking-widest py-2 rounded-xl transition-all active:scale-95"
-                            >
-                              Order It
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Close Button / Bottom Area */}
-              <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
-                <button 
-                  onClick={() => setRecommendationOpen(false)}
-                  className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] uppercase tracking-widest py-3.5 rounded-[18px] text-center shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <ShoppingBag className="w-4 h-4 text-black" />
-                  <span>Continue To Plate</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
