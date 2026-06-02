@@ -83,17 +83,25 @@ export interface CartItem extends Product {
 // Up to 2 km = ₹20
 // Above 2 km = ₹10 per km (e.g., 3km = ₹30, 4km = ₹40)
 // ═══════════════════════════════════════════════════════════════
+export function isFreeDeliveryTimeActive(): boolean {
+  const now = new Date();
+  const hours = now.getHours();
+  // 8:00 PM to 8:59 PM is exactly hour 20 in 24-hour local time
+  return hours === 20;
+}
+
 export function calculateDeliveryCharge(distanceKm: number): number {
+  if (isFreeDeliveryTimeActive()) return 0; // FREE DELIVERY during 8 PM - 9 PM!
   if (distanceKm <= 0) return 0;
   if (distanceKm <= 2) return 20;
   return Math.ceil(distanceKm) * 10;
 }
 
-// Free delivery is disabled
+// Free delivery helper checks
 export function shouldWaiveDelivery(_items: CartItem[], _cartTotal: number, _distanceKm: number): boolean {
-  return false;
+  return isFreeDeliveryTimeActive();
 }
 
 export function isGlobalFreeDeliveryActive(): boolean {
-  return false;
+  return isFreeDeliveryTimeActive();
 }

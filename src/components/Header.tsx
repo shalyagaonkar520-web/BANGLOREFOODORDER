@@ -4,6 +4,8 @@ import { ChevronDown, User, Bell, Gift } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate } from 'react-router-dom';
 
+import { isFreeDeliveryTimeActive } from '../types';
+
 export default function Header() {
   const { deliveryLocation, openLocationPicker } = useLocationStore();
   const navigate = useNavigate();
@@ -18,6 +20,11 @@ export default function Header() {
             <span className="bg-[#4CD964]/10 text-[#4CD964] text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1">
               ⚡ 10 Minutes
             </span>
+            {isFreeDeliveryTimeActive() && (
+              <span className="bg-red-500/10 text-[#D62828] text-[9px] font-black px-1.5 py-0.5 rounded-lg border border-red-500/10 animate-pulse flex items-center gap-0.5">
+                🔥 Free Delivery
+              </span>
+            )}
           </div>
           
           {/* Location Picker Dropdown */}
