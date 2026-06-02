@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Quote, Star, ChevronRight } from 'lucide-react';
+import { ArrowRight, Lock, Quote, Star } from 'lucide-react';
 import { DUMMY_REVIEWS } from '../data/reviews';
 import Header from './Header';
 import { playSound, SOUNDS } from '../utils/audio';
@@ -41,12 +41,12 @@ export default function LandingPage() {
     },
     {
       title: "LOCKED",
-      titleAccent: "SELECTION 🔒",
-      subtitle: "Elite spirits, fine wines & craft cocktails",
-      image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=1000&auto=format&fit=crop",
+      titleAccent: "",
+      subtitle: "",
+      image: "",
       route: "/bar-menu",
       color: "from-[#FFB700]/25 to-matte-black/50",
-      badge: "LOCKED AREA 🔒",
+      badge: "",
       comingSoon: false,
       isLocked: true
     }
@@ -148,77 +148,7 @@ export default function LandingPage() {
         ))}
       </section>
 
-      {/* Founder Teaser Section */}
-      <section className="relative z-10 py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-r from-white/5 to-[#4CD964]/5 backdrop-blur-2xl border border-white/10 rounded-[50px] overflow-hidden flex flex-col md:flex-row items-center gap-10 p-8 md:p-14"
-          >
-            <div className="w-full md:w-[35%] aspect-[3/4] rounded-[30px] overflow-hidden border border-white/10 shadow-2xl">
-              <img src="/founder.jpg" className="w-full h-full object-cover" alt="Founder" />
-            </div>
-            <div className="flex-1 space-y-5 text-center md:text-left">
-              <div className="space-y-1">
-                <span className="text-[#4CD964] font-black uppercase tracking-[6px] text-[10px]">The Visionary</span>
-                <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
-                  Shalya <span className="text-[#4CD964]">Gaonkar</span>
-                </h2>
-              </div>
-              <p className="text-white/60 text-base md:text-lg leading-relaxed max-w-2xl font-medium">
-                "I believe food is not just about eating — it’s about comfort, memories, and sharing special moments with family and friends."
-              </p>
-              <button 
-                onClick={() => {
-                  playSound(SOUNDS.CLICK);
-                  navigate('/about');
-                }}
-                className="inline-flex items-center gap-3 text-matte-black bg-[#4CD964] font-black text-xs uppercase tracking-[3px] px-8 py-4.5 rounded-full hover:scale-105 transition-all shadow-[0_10px_25px_rgba(76,217,100,0.2)] group"
-              >
-                Meet the Founder <ChevronRight className="w-4.5 h-4.5 group-hover:translate-x-1.5 transition-transform" />
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Partner Teaser Section */}
-      <section className="relative z-10 py-12 px-6 -mt-8">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-l from-white/5 to-brand/5 backdrop-blur-2xl border border-white/10 rounded-[50px] overflow-hidden flex flex-col md:flex-row-reverse items-center gap-10 p-8 md:p-14"
-          >
-            <div className="w-full md:w-[35%] aspect-[3/4] rounded-[30px] overflow-hidden border border-white/10 shadow-2xl">
-              <img src="/partner.jpg" className="w-full h-full object-cover" alt="Partner JIS" />
-            </div>
-            <div className="flex-1 space-y-5 text-center md:text-right">
-              <div className="space-y-1">
-                <span className="text-brand font-black uppercase tracking-[6px] text-[10px]">The Operational Pillar</span>
-                <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
-                  JIS <span className="text-brand">Partner</span>
-                </h2>
-              </div>
-              <p className="text-white/60 text-base md:text-lg leading-relaxed max-w-2xl font-medium ml-auto">
-                "A strong support behind Moms Magic, helping in growing the brand, managing operations, and ensuring customers receive the best service."
-              </p>
-              <button 
-                onClick={() => {
-                  playSound(SOUNDS.CLICK);
-                  navigate('/about');
-                }}
-                className="inline-flex items-center gap-3 text-matte-black bg-brand font-black text-xs uppercase tracking-[3px] px-8 py-4.5 rounded-full hover:scale-105 transition-all shadow-[0_10px_25px_rgba(255,77,0,0.2)] group flex-row-reverse"
-              >
-                Meet the Partner <ChevronRight className="w-4.5 h-4.5 group-hover:-translate-x-1.5 transition-transform rotate-180" />
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Premium Reviews Grid */}
       <section className="relative z-10 py-24 bg-gradient-to-b from-transparent to-black/50">
