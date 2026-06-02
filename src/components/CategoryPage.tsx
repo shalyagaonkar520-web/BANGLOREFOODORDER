@@ -51,6 +51,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchIndex, setSearchIndex] = useState(0);
+  const [activeDietTab, setActiveDietTab] = useState<'veg' | 'nonveg'>('veg');
 
   // Rotating Search Placeholders
   useEffect(() => {
@@ -355,6 +356,47 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
           </div>
         </div>
 
+        {/* DIET SWITCHER BUTTONS */}
+        <div className="flex gap-3 p-1.5 bg-white/5 rounded-2xl border border-white/5 max-w-md mx-auto mb-4">
+          <button
+            onClick={() => {
+              playSound(SOUNDS.CLICK);
+              setActiveDietTab('veg');
+            }}
+            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider transition-all duration-300 ${
+              activeDietTab === 'veg'
+                ? 'bg-[#4CD964] text-black shadow-md shadow-[#4CD964]/20'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <span>🥦 Veg Delights</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              activeDietTab === 'veg' ? 'bg-black/10 text-black' : 'bg-white/5 text-white/40'
+            }`}>
+              {vegProducts.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSound(SOUNDS.CLICK);
+              setActiveDietTab('nonveg');
+            }}
+            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider transition-all duration-300 ${
+              activeDietTab === 'nonveg'
+                ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <span>🍗 Non-Veg Cravings</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              activeDietTab === 'nonveg' ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40'
+            }`}>
+              {nonVegProducts.length}
+            </span>
+          </button>
+        </div>
+
         {displayedProducts.length === 0 ? (
           <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
             <div className="text-4xl">🔍</div>
@@ -368,46 +410,32 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {/* VEG COLUMN */}
-            <div className="space-y-4">
-              <div className="px-3 py-2.5 rounded-2xl bg-[#4CD964]/10 border border-[#4CD964]/20 flex items-center justify-between">
-                <span className="text-xs font-black text-[#4CD964] uppercase tracking-wider flex items-center gap-1.5">
-                  🥦 Veg Delights
-                </span>
-                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{vegProducts.length} items</span>
-              </div>
-              {vegProducts.length === 0 ? (
-                <div className="py-8 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider">No Veg Dishes</p>
-                  <p className="text-[8px] text-white/20">in this filter selection</p>
+          <div>
+            {activeDietTab === 'veg' ? (
+              vegProducts.length === 0 ? (
+                <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-4xl">🥦</div>
+                  <h3 className="text-md font-bold text-white">No Veg Dishes found</h3>
+                  <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try selecting another category or check the Non-Veg tab.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                   {vegProducts.map((product) => renderProductCard(product))}
                 </div>
-              )}
-            </div>
-
-            {/* NON-VEG COLUMN */}
-            <div className="space-y-4">
-              <div className="px-3 py-2.5 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-between">
-                <span className="text-xs font-black text-red-500 uppercase tracking-wider flex items-center gap-1.5">
-                  🍗 Non-Veg Cravings
-                </span>
-                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{nonVegProducts.length} items</span>
-              </div>
-              {nonVegProducts.length === 0 ? (
-                <div className="py-8 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider">No Non-Veg Dishes</p>
-                  <p className="text-[8px] text-white/20">in this filter selection</p>
+              )
+            ) : (
+              nonVegProducts.length === 0 ? (
+                <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-4xl">🍗</div>
+                  <h3 className="text-md font-bold text-white">No Non-Veg Dishes found</h3>
+                  <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try selecting another category or check the Veg tab.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                   {nonVegProducts.map((product) => renderProductCard(product))}
                 </div>
-              )}
-            </div>
+              )
+            )}
           </div>
         )}
       </section>
