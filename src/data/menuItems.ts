@@ -391,7 +391,7 @@ export const MENU_ITEMS: Product[] = [
     isVeg: false},
   {
     id: 'st-3',
-    name: 'Chicken Kabab',
+    name: 'Chicken Kabab (12 Pcs)',
     price: 180,
     category: 'Starters',
     type: 'food',
@@ -433,7 +433,7 @@ export const MENU_ITEMS: Product[] = [
     isVeg: false},
   {
     id: 'st-7',
-    name: 'Chicken Kabab Half',
+    name: 'Chicken Kabab Half (6 Pcs)',
     price: 119,
     category: 'Starters',
     type: 'food',
