@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Tag, Sparkles, Truck, Flame, ArrowRight, Gift, Percent, Zap, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function OffersPage() {
   const navigate = useNavigate();
@@ -26,6 +27,16 @@ export default function OffersPage() {
       icon: Sparkles,
       color: "from-blue-600 to-indigo-600",
       image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=800&q=80"
+    },
+    {
+      id: 4,
+      title: "FREE DELIVERY MAGIC",
+      description: "Unlock absolutely free delivery on your entire order using coupon code MOMSMAGIC01!",
+      badge: "LIMITED CODES",
+      icon: Truck,
+      color: "from-amber-500 to-yellow-600",
+      image: "/delivery_boy_bag.png",
+      code: "MOMSMAGIC01"
     }
   ];
 
@@ -104,13 +115,26 @@ export default function OffersPage() {
                     </div>
                   )}
 
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/food')}
-                    className="btn-premium px-12"
-                  >
-                    Claim Offer <ArrowRight className="w-5 h-5" />
-                  </motion.button>
+                  {offer.code ? (
+                    <motion.button 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(offer.code!);
+                        toast.success(`Coupon "${offer.code}" copied to clipboard!`);
+                      }}
+                      className="btn-premium px-12 flex items-center gap-3 justify-center md:justify-start"
+                    >
+                      Copy Code: {offer.code} <Gift className="w-5 h-5 text-brand" />
+                    </motion.button>
+                  ) : (
+                    <motion.button 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate('/food')}
+                      className="btn-premium px-12"
+                    >
+                      Claim Offer <ArrowRight className="w-5 h-5" />
+                    </motion.button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

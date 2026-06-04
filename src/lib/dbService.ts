@@ -1,4 +1,4 @@
-import { AdminSettings as TypesAdminSettings, ComboOffer } from '../types';
+import { ComboOffer } from '../types';
 
 export interface AdminSettings {
   websiteStatus: 'ON' | 'OFF';

@@ -1,10 +1,11 @@
+import React, { useState } from 'react';
 import { useCartStore } from '../store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, Trash2, ShoppingBag, Truck, Sparkles, Zap, ShieldCheck, ChevronLeft } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Truck, Sparkles, Zap, ShieldCheck, ChevronLeft, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getFakeOriginalPrice } from '../data/menuItems';
 import { useLocationStore } from '../store/locationStore';
-import { calculateDeliveryCharge } from '../types';
+import { calculateDeliveryCharge, isFreeDeliveryTimeActive } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 
@@ -14,8 +15,32 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   const settings = useSystemStore(state => state.settings);
   
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(() => localStorage.getItem('moms_magic_applied_coupon') || '');
+
+  const handleApplyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (code === 'MOMSMAGIC01') {
+      setAppliedCoupon('MOMSMAGIC01');
+      localStorage.setItem('moms_magic_applied_coupon', 'MOMSMAGIC01');
+      toast.success('Coupon "MOMSMAGIC01" applied! Free delivery activated.');
+      setCouponInput('');
+    } else if (code === '') {
+      toast.error('Please enter a coupon code');
+    } else {
+      toast.error('Invalid coupon code');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon('');
+    localStorage.removeItem('moms_magic_applied_coupon');
+    toast.success('Coupon removed');
+  };
+
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = calculateDeliveryCharge(distanceKm);
+  const baseDeliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : Math.ceil(distanceKm) * 10;
+  const deliveryCharge = (isFreeDeliveryTimeActive() || appliedCoupon === 'MOMSMAGIC01') ? 0 : baseDeliveryCharge;
   const grandTotal = total + deliveryCharge;
   
   const isOrderingPaused = settings.websiteStatus === 'OFF' || settings.emergencyStop;
@@ -178,10 +203,21 @@ export default function CartPage() {
                     <Truck className="w-4 h-4 text-gold" />
                     <span>Delivery</span>
                   </div>
-                  <span className={`text-white text-2xl font-black italic tracking-tighter`}>
-                    ₹{deliveryCharge}
+                  <span className={`text-white text-2xl font-black italic tracking-tighter ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'line-through text-white/30' : ''}`}>
+                    ₹{baseDeliveryCharge}
                   </span>
                 </div>
+                {isFreeDeliveryTimeActive() ? (
+                  <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
+                    <span>Free Delivery Active</span>
+                    <span>8 PM - 9 PM Special</span>
+                  </div>
+                ) : appliedCoupon === 'MOMSMAGIC01' ? (
+                  <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
+                    <span>Coupon: MOMSMAGIC01</span>
+                    <span>Free Delivery Applied</span>
+                  </div>
+                ) : null}
                 <div className="h-[1px] bg-white/5 shadow-inner" />
                 <div className="flex justify-between items-end">
                   <div className="space-y-2">
@@ -189,6 +225,44 @@ export default function CartPage() {
                     <p className="text-7xl font-black italic tracking-tighter text-white leading-none drop-shadow-xl">₹{grandTotal}</p>
                   </div>
                 </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Ticket className="w-4 h-4 text-gold" />
+                  <span className="text-white text-[10px] font-black uppercase tracking-[4px]">Promo Coupon</span>
+                </div>
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Enter code" 
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      className="flex-1 min-w-0 px-4 py-3 bg-matte-black/50 rounded-xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white text-xs transition-all uppercase placeholder:normal-case placeholder:text-white/20"
+                    />
+                    <button 
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="px-5 py-3 bg-gold text-matte-black font-black text-xs uppercase tracking-widest rounded-xl hover:bg-gold/80 transition-all shadow-lg shadow-gold/20 shrink-0"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-4 py-3 bg-gold/10 rounded-xl border border-gold/20">
+                    <span className="text-gold text-[10px] font-black uppercase tracking-widest truncate max-w-[150px]">
+                      MOMSMAGIC01 Applied
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={handleRemoveCoupon}
+                      className="text-white/40 hover:text-white text-[10px] font-black uppercase tracking-wider transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
