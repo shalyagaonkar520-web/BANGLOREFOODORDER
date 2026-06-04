@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send, Sparkles, ChevronLeft as ArrowLeft, ChevronRight as ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSEO } from '../utils/seo';
 
 const GALLERY = [
   {
@@ -35,6 +36,7 @@ const OCCASION_TYPES = [
 const WHATSAPP_NUMBER = '919606001790';
 
 export default function CelebrationDesign() {
+  useSEO("Design Celebration", "Submit your budget and event details to plan a custom balloon and stage setup with Moms Magic.");
   const navigate = useNavigate();
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [form, setForm] = useState({

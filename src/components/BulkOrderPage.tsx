@@ -8,6 +8,7 @@ import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { PARTY_ITEMS, SNACKS, ICE_CAKES, NORMAL_CAKES } from '../data/partyItems';
 import { MENU_ITEMS } from '../data/menuItems';
 import { Product } from '../types';
+import { useSEO } from '../utils/seo';
 
 // NOTE: Party Specials label swap (names only):
 // - Ice Cakes  -> Normal
@@ -15,6 +16,7 @@ import { Product } from '../types';
 type Category = 'Normal' | 'Ice Cake' | 'Party Items' | 'Order Food' | 'Snacks';
 
 export default function BulkOrderPage() {
+  useSEO("Bulk & Party Orders", "Plan and customize your custom catering, cakes, and event setup options at Moms Magic.");
   const navigate = useNavigate();
   const { addItem, items } = useCartStore();
   const { eventDate, setEventDate, peopleCount, setPeopleCount } = useBulkOrderStore();

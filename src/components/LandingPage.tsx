@@ -5,8 +5,13 @@ import { ArrowRight, Lock, Quote, Star } from 'lucide-react';
 import { DUMMY_REVIEWS } from '../data/reviews';
 import Header from './Header';
 import { playSound, SOUNDS } from '../utils/audio';
+import { useSEO } from '../utils/seo';
 
 export default function LandingPage() {
+  useSEO(
+    "Moms Magic", 
+    "Order Chicken Biryani, Shawarma, Noodles, Veg Meals, Fast Food and Special Combo Offers from Moms Magic. Fast delivery in Yellapur, Dandeli and nearby areas."
+  );
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 

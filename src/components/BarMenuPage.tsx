@@ -9,6 +9,7 @@ import { playSound, SOUNDS } from '../utils/audio';
 import { useCartStore } from '../store/cartStore';
 import Header from './Header';
 import toast from 'react-hot-toast';
+import { useSEO } from '../utils/seo';
 
 interface Drink {
   id: string;
@@ -33,6 +34,7 @@ const CATEGORIES = [
 ];
 
 export default function BarMenuPage() {
+  useSEO("Bar Menu", "View available beverages and drinks.");
   const navigate = useNavigate();
   const addItemToCart = useCartStore(state => state.addItem);
 

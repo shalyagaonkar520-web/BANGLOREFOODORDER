@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, MessageSquare, ChevronLeft, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSEO } from '../utils/seo';
 
 export default function FeedbackPage() {
+  useSEO("Feedback", "We value your opinion. Share your dining experience and feedback with the team at Moms Magic.");
   const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);

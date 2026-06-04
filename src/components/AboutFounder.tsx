@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Quote, Heart, Sparkles, MessageCircle } from 'lucide-react';
+import { useSEO } from '../utils/seo';
 
 export default function AboutFounder() {
+  useSEO("Our Story", "Learn about Shalya Gaonkar, the founder, and the vision behind Moms Magic Yellapur and Dandeli.");
   const navigate = useNavigate();
 
   return (

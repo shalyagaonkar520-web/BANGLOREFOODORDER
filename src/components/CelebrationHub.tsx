@@ -5,6 +5,7 @@ import { ChevronLeft, Cake, PartyPopper, Sparkles, X, Wand2, Hammer, Send } from
 import toast from 'react-hot-toast';
 import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
+import { useSEO } from '../utils/seo';
 
 const GALLERY_IMAGES = [
   {
@@ -68,6 +69,7 @@ const CELEBRATION_CARDS = [
 ];
 
 export default function CelebrationHub() {
+  useSEO("Celebration Hub", "Host your birthday party, function setup, or luxury celebration with custom decorations from Moms Magic.");
   const navigate = useNavigate();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

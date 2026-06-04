@@ -10,6 +10,7 @@ import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge, isFreeDeliveryTimeActive } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import { playSound, SOUNDS } from '../utils/audio';
+import { useSEO } from '../utils/seo';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -25,6 +26,7 @@ import DeliveryAnimation from './DeliveryAnimation';
 
 
 export default function Checkout() {
+  useSEO("Checkout", "Finalize delivery details and confirm your elite culinary order at Moms Magic.");
   const navigate = useNavigate();
   const isBulkOrder = localStorage.getItem('moms_magic_order_type') === 'bulk';
   

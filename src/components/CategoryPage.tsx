@@ -7,6 +7,7 @@ import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 import Header from './Header';
 import { playSound, SOUNDS } from '../utils/audio';
+import { useSEO } from '../utils/seo';
 
 const getStableRating = (id: string | number) => {
   const str = String(id);
@@ -43,6 +44,12 @@ const ROTATING_SEARCH_PLACEHOLDERS = [
 ];
 
 export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
+  useSEO(
+    type === 'food' ? 'Food Menu' : 'Grocery Menu',
+    type === 'food'
+      ? 'Browse our complete hot food menu including biryanis, gravies, fast food and delicious combo offers at Moms Magic Yellapur and Dandeli.'
+      : 'Order fresh grocery essentials and dairy items online with fast home delivery from Moms Magic.'
+  );
   const navigate = useNavigate();
   const { addItem, items: cartItems, updateQuantity } = useCartStore();
   const settings = useSystemStore(state => state.settings);

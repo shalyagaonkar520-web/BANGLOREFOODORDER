@@ -8,8 +8,10 @@ import { useLocationStore } from '../store/locationStore';
 import { calculateDeliveryCharge, isFreeDeliveryTimeActive } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
+import { useSEO } from '../utils/seo';
 
 export default function CartPage() {
+  useSEO("Your Cart", "Review your selected items, apply promo codes, and complete your order details at Moms Magic.");
   const { items, updateQuantity, removeItem, total } = useCartStore();
   const navigate = useNavigate();
   const { deliveryLocation } = useLocationStore();

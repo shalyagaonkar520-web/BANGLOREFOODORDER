@@ -10,6 +10,7 @@ import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
+import { useSEO } from '../utils/seo';
 
 // Define simulated live orders to populate feed
 const MOCK_LIVE_ORDERS = [
@@ -20,6 +21,7 @@ const MOCK_LIVE_ORDERS = [
 ];
 
 export default function AdminPage() {
+  useSEO("Admin Panel", "Manage operations, menu availability, and systems for Moms Magic.");
   const { user, setUser, logout } = useAdminStore();
   const { settings, isLoading, loadSettings, updateSettings, triggerEmergencyStop, resetEmergencyStop } = useSystemStore();
 
