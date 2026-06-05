@@ -117,7 +117,7 @@ export default function CelebrationHub() {
       `🌟 Powered by Moms Magic`,
     ].join('\n');
 
-    const waUrl = `https://wa.me/919606001790?text=${encodeURIComponent(message)}`;
+    const waUrl = `https://wa.me/917483187572?text=${encodeURIComponent(message)}`;
     toast.success('Opening WhatsApp to send reference! 🚀', {
       style: { background: '#0E0E18', color: '#a78bfa', border: '1px solid #7c3aed' }
     });

@@ -19,9 +19,40 @@ const getMultiplier = (plan: SubscriptionPlan) => {
   return 1;
 };
 
+const applyOffers = (items: CartItem[]): CartItem[] => {
+  const baseItems = items.filter(i => i.id !== 'free-coke');
+  
+  const eligibleIds = ['br-5', 'br-5-full', 'rn-2'];
+  const eligibleCount = baseItems
+    .filter(i => eligibleIds.includes(i.id))
+    .reduce((sum, i) => sum + i.quantity, 0);
+    
+  const freeCokes = Math.floor(eligibleCount / 2);
+  
+  if (freeCokes > 0) {
+    baseItems.push({
+      id: 'free-coke',
+      name: 'Free Coke 500ml',
+      price: 0,
+      category: 'Drinks',
+      type: 'food',
+      image: '/coke_range.png',
+      quantity: freeCokes,
+      subscriptionPlan: null as any
+    } as CartItem);
+  }
+  
+  return baseItems;
+};
+
 export const useCartStore = create<CartStore>((set, get) => {
   const calculateTotal = (items: CartItem[]) => 
     items.reduce((acc, i) => acc + (i.price * i.quantity * getMultiplier(i.subscriptionPlan)), 0);
+
+  const updateCart = (newItems: CartItem[]) => {
+    const itemsWithOffers = applyOffers(newItems);
+    set({ items: itemsWithOffers, total: calculateTotal(itemsWithOffers) });
+  };
 
   return {
     items: [],
@@ -38,28 +69,22 @@ export const useCartStore = create<CartStore>((set, get) => {
       } else {
         newItems = [...items, { ...product, quantity, subscriptionPlan }];
       }
-      set({ items: newItems, total: calculateTotal(newItems) });
+      updateCart(newItems);
     },
     removeItem: (productId) => {
       const itemToRemove = get().items.find(i => i.id === productId);
       if (itemToRemove) {
         const newItems = get().items.filter(i => i.id !== productId);
-        set({ 
-          lastRemovedItem: itemToRemove,
-          items: newItems,
-          total: calculateTotal(newItems)
-        });
+        set({ lastRemovedItem: itemToRemove });
+        updateCart(newItems);
       }
     },
     undoRemove: () => {
       const lastItem = get().lastRemovedItem;
       if (lastItem) {
         const newItems = [...get().items, lastItem];
-        set({ 
-          items: newItems,
-          lastRemovedItem: null,
-          total: calculateTotal(newItems)
-        });
+        set({ lastRemovedItem: null });
+        updateCart(newItems);
       }
     },
     updateQuantity: (productId, quantity) => {
@@ -68,11 +93,11 @@ export const useCartStore = create<CartStore>((set, get) => {
         return;
       }
       const newItems = get().items.map(i => i.id === productId ? { ...i, quantity } : i);
-      set({ items: newItems, total: calculateTotal(newItems) });
+      updateCart(newItems);
     },
     updateSubscriptionPlan: (productId, plan) => {
       const newItems = get().items.map(i => i.id === productId ? { ...i, subscriptionPlan: plan } : i);
-      set({ items: newItems, total: calculateTotal(newItems) });
+      updateCart(newItems);
     },
     clearCart: () => set({ items: [], total: 0 }),
   };
