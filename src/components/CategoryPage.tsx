@@ -254,221 +254,144 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   };
 
   return (
-    <div className="relative min-h-screen bg-matte-black text-text-main font-sans pb-32">
-      <Header />
-
-      {/* BRANDING HEADER BANNER */}
-      <div className="px-4 pt-5 pb-2 text-left">
-        <h1 className="text-3.5xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none animate-shining-blink">
-          Moms Magic 2.0
-        </h1>
-        <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1.5">
-          Taste the magic of home • Delivered in 10 mins
-        </p>
-      </div>
-
-      {/* SEARCH BAR AREA */}
-      <div className="px-4 pt-4 sticky top-[72px] z-[40] bg-[#050505]/95 backdrop-blur-md pb-2">
-        <div className="relative flex items-center justify-between gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-white/40" />
+    <div className="relative min-h-screen bg-[#0a0a0a] text-white font-sans pb-32">
+      {/* Header & Search */}
+      <header className="sticky top-0 z-50 bg-[#0a0a0a] px-4 pt-4 pb-2">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/')} className="bg-[#1a1a1a] p-3 rounded-xl border border-[#262626] hover:bg-zinc-800 transition-colors">
+            <svg className="h-5 w-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+            </svg>
+          </button>
+          <div className="relative flex-1">
+            <span className="absolute inset-y-0 left-4 flex items-center">
+              <svg className="h-5 w-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              </svg>
+            </span>
             <input 
-              type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={ROTATING_SEARCH_PLACEHOLDERS[searchIndex]}
-              className="w-full bg-white/5 border border-white/10 rounded-[18px] py-3.5 pl-11 pr-12 outline-none focus:border-[#4CD964] transition-all font-semibold text-sm text-white placeholder:text-white/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+              className="w-full bg-[#1a1a1a] border border-[#262626] rounded-xl py-3 pl-12 pr-4 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#facc15] transition-colors text-sm" 
+              placeholder={ROTATING_SEARCH_PLACEHOLDERS[searchIndex]} 
+              type="text"
             />
-            {/* Swish style Toggled Filter Slider on right side of Search bar */}
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center bg-[#4CD964]/10 p-2 rounded-xl border border-[#4CD964]/10">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#4CD964] inline-block shadow-[0_0_8px_rgba(76,217,100,0.4)] animate-pulse" />
-            </div>
-          </div>
-          <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center shadow-sm">
-            <img src="/logo.png" className="w-7 h-7 object-contain opacity-80" alt="Logo" />
           </div>
         </div>
-      </div>
-
-      {/* CATEGORY SECTION (CIRCULAR PHOTOGRAPHY LIST) */}
-      <section className="py-4 space-y-3">
-        <div className="px-4 text-left flex justify-between items-center">
-          <div>
-            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">Browse <span className="text-[#4CD964]">Categories</span></h2>
-            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Select to filter your cravings</p>
-          </div>
-          {selectedCategory !== 'All' && (
-            <button 
-              onClick={() => setSelectedCategory('All')} 
-              className="text-[10px] font-extrabold text-[#4CD964] uppercase tracking-wider bg-[#4CD964]/10 px-3 py-1 rounded-full border border-[#4CD964]/20 active:scale-95 transition-all"
-            >
-              Clear Filter
-            </button>
-          )}
+        <div className="mt-8 text-center">
+          <h1 className="italic font-[900] tracking-[-0.02em] text-4xl uppercase">
+            <span className="text-white">Order</span> <span className="text-[#facc15]">Food</span>
+          </h1>
         </div>
+      </header>
 
-        <div className="flex gap-5 overflow-x-auto no-scrollbar px-4 py-3">
-          {categoriesWithAll.map((cat) => {
-            const isActive = selectedCategory === cat.id;
-            return (
-              <div 
-                key={cat.id} 
+      <main className="pb-32">
+        {/* Primary Categories */}
+        <section className="mt-6">
+          <div className="flex overflow-x-auto no-scrollbar gap-3 px-4">
+            {categoriesWithAll.map((cat) => (
+              <button
+                key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className="flex flex-col items-center gap-3 cursor-pointer shrink-0 group/cat"
+                className={`flex-shrink-0 font-bold px-8 py-4 rounded-2xl uppercase text-xs tracking-widest transition-all ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#facc15] text-black shadow-[0_0_15px_rgba(250,204,21,0.3)]'
+                    : 'bg-[#1a1a1a] text-zinc-400 border border-[#262626]'
+                }`}
               >
-                <div className="relative shrink-0">
-                  {/* Glowing outer aura that rotates and cycles colors for active category */}
-                  {isActive ? (
-                    <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#4CD964] via-[#FFD166] via-[#FF4D00] via-[#FF007F] to-[#00F0FF] opacity-100 blur-[4px] animate-spin-slow" />
-                  ) : (
-                    <div className="absolute -inset-0.5 rounded-full bg-white/10 opacity-0 group-hover/cat:opacity-100 group-hover/cat:blur-[3px] transition-all duration-300" />
-                  )}
-                  
-                  {/* Main circular frame */}
-                  <div className={`w-[74px] h-[74px] rounded-full p-[3px] relative z-10 flex items-center justify-center overflow-hidden border transition-all duration-300 active:scale-95 ${
-                    isActive ? 'bg-[#050505] border-white/20 scale-105 shadow-[0_0_15px_rgba(76,217,100,0.3)]' : 'bg-[#050505] border-white/10 group-hover/cat:border-white/20'
-                  }`}>
-                    <div className="w-full h-full rounded-full overflow-hidden relative">
-                      <img 
-                        src={cat.image} 
-                        className="w-full h-full object-cover group-hover/cat:scale-110 transition-transform duration-500" 
-                        alt={cat.name} 
-                      />
-                      {/* Soft bottom shading overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Diet Filters */}
+        <section className="mt-8 px-4">
+          <div className="bg-[#1a1a1a] border border-[#262626] rounded-3xl p-2 flex items-center justify-between">
+            <button 
+              onClick={() => setActiveDietTab('all')}
+              className={`rounded-2xl px-4 py-3 flex items-center gap-2 flex-1 justify-center transition-all ${
+                activeDietTab === 'all' ? 'bg-white text-black shadow-lg' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              </svg>
+              <span className="font-extrabold text-[10px] leading-tight uppercase text-center">All<br/>Selection</span>
+            </button>
+            <button 
+              onClick={() => setActiveDietTab('veg')}
+              className={`rounded-2xl px-4 py-3 flex items-center gap-2 flex-1 justify-center transition-all ${
+                activeDietTab === 'veg' ? 'bg-emerald-400 text-black shadow-lg' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              </svg>
+              <span className="font-bold text-[10px] uppercase">Pure Veg</span>
+            </button>
+            <button 
+              onClick={() => setActiveDietTab('nonveg')}
+              className={`rounded-2xl px-4 py-3 flex items-center gap-2 flex-1 justify-center transition-all ${
+                activeDietTab === 'nonveg' ? 'bg-red-500 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              </svg>
+              <span className="font-bold text-[10px] uppercase text-center">Classic Non-Veg</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Food Grid */}
+        <section className="mt-8 px-4 grid grid-cols-2 gap-4">
+          {(activeDietTab === 'all' ? displayedProducts : activeDietTab === 'veg' ? vegProducts : nonVegProducts).map((product: any) => {
+            const inCart = cartItems.find(i => i.id === product.id);
+            const isCombo = product.isCombo;
+            return (
+              <article key={product.id} className="bg-[#1a1a1a] rounded-[2.5rem] p-3 border border-[#262626] shadow-[0_4px_20px_rgba(250,204,21,0.05)] relative overflow-hidden flex flex-col justify-between">
+                {isCombo && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] bg-[#facc15] opacity-50"></div>
+                )}
+                <div>
+                  <div className="relative rounded-3xl overflow-hidden aspect-square">
+                    <img alt={product.name} className="w-full h-full object-cover" src={product.image} />
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {product.isVeg && (
+                        <span className="bg-emerald-400/20 text-emerald-400 text-[8px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30 backdrop-blur-md uppercase">Pure Veg</span>
+                      )}
+                      {isCombo && (
+                        <span className="bg-[#facc15] text-black text-[8px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 uppercase">
+                          Royal Choice <span>✦</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4 px-1">
+                    <h3 className="font-black text-xs uppercase tracking-tight truncate text-white">{product.name}</h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-[#facc15] text-[10px]">★ {getStableRating(product.id)}</span>
+                      <span className="text-zinc-500 text-[10px]">(₹{product.price})</span>
                     </div>
                   </div>
                 </div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${
-                  isActive ? 'text-[#4CD964]' : 'text-white/80 group-hover/cat:text-[#4CD964]'
-                }`}>
-                  {cat.name}
-                </span>
-              </div>
+                {inCart ? (
+                  <div className="w-full mt-4 bg-[#facc15] text-black rounded-2xl flex items-center justify-between px-3 py-2 shadow-lg shadow-[#facc15]/20">
+                    <button onClick={() => { playSound(SOUNDS.QUANTITY_TICK); updateQuantity(product.id, inCart.quantity - 1); }} className="font-black text-xs px-2 py-1"><Minus className="w-4 h-4"/></button>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{inCart.quantity} Added</span>
+                    <button onClick={() => { playSound(SOUNDS.QUANTITY_TICK); updateQuantity(product.id, inCart.quantity + 1); }} className="font-black text-xs px-2 py-1"><Plus className="w-4 h-4"/></button>
+                  </div>
+                ) : (
+                  <button onClick={() => handledAddWithToast(product)} className="w-full mt-4 bg-[#facc15] hover:bg-yellow-500 text-black font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-[#facc15]/20 active:scale-95 transition-transform">
+                    Add +
+                  </button>
+                )}
+              </article>
             );
           })}
-        </div>
-      </section>
-
-      {/* ALL FOOD GRID SECTION */}
-      <section className="py-4 space-y-4 px-4">
-        <div className="text-left flex justify-between items-center border-b border-white/5 pb-2">
-          <div>
-            <h2 className="text-lg font-black uppercase tracking-tight italic text-white">
-              {selectedCategory === 'All' ? 'All' : selectedCategory} <span className="text-[#4CD964]">Dishes</span>
-            </h2>
-            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
-              {displayedProducts.length} {displayedProducts.length === 1 ? 'item' : 'items'} available
-            </p>
-          </div>
-        </div>
-
-        {/* DIET SWITCHER BUTTONS */}
-        <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 max-w-lg mx-auto mb-4">
-          <button
-            onClick={() => {
-              playSound(SOUNDS.CLICK);
-              setActiveDietTab('all');
-            }}
-            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-1.5 font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-300 ${
-              activeDietTab === 'all'
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-md shadow-amber-500/20'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <span>🍽️ All</span>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeDietTab === 'all' ? 'bg-black/10 text-black' : 'bg-white/5 text-white/40'
-            }`}>
-              {displayedProducts.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              playSound(SOUNDS.CLICK);
-              setActiveDietTab('veg');
-            }}
-            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-1.5 font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-300 ${
-              activeDietTab === 'veg'
-                ? 'bg-[#4CD964] text-black shadow-md shadow-[#4CD964]/20'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <span>🥦 Veg</span>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeDietTab === 'veg' ? 'bg-black/10 text-black' : 'bg-white/5 text-white/40'
-            }`}>
-              {vegProducts.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              playSound(SOUNDS.CLICK);
-              setActiveDietTab('nonveg');
-            }}
-            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-1.5 font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-300 ${
-              activeDietTab === 'nonveg'
-                ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <span>🍗 Non-Veg</span>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-              activeDietTab === 'nonveg' ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40'
-            }`}>
-              {nonVegProducts.length}
-            </span>
-          </button>
-        </div>
-
-        {displayedProducts.length === 0 ? (
-          <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
-            <div className="text-4xl">🔍</div>
-            <h3 className="text-md font-bold text-white">No food items found</h3>
-            <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try checking other categories or adjust your search.</p>
-            <button 
-              onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
-              className="text-xs font-black bg-[#4CD964] text-black px-4 py-2 rounded-full uppercase tracking-wider active:scale-95 transition-all mt-2"
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <div>
-            {activeDietTab === 'all' ? (
-              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {displayedProducts.map((product) => renderProductCard(product))}
-              </div>
-            ) : activeDietTab === 'veg' ? (
-              vegProducts.length === 0 ? (
-                <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
-                  <div className="text-4xl">🥦</div>
-                  <h3 className="text-md font-bold text-white">No Veg Dishes found</h3>
-                  <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try selecting another category or check the Non-Veg tab.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {vegProducts.map((product) => renderProductCard(product))}
-                </div>
-              )
-            ) : (
-              nonVegProducts.length === 0 ? (
-                <div className="py-16 text-center space-y-3 bg-white/5 rounded-3xl border border-white/5">
-                  <div className="text-4xl">🍗</div>
-                  <h3 className="text-md font-bold text-white">No Non-Veg Dishes found</h3>
-                  <p className="text-xs text-white/40 max-w-[250px] mx-auto">Try selecting another category or check the Veg tab.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {nonVegProducts.map((product) => renderProductCard(product))}
-                </div>
-              )
-            )}
-          </div>
-        )}
-      </section>
+        </section>
+      </main>
     </div>
   );
 }

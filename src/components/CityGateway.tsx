@@ -29,72 +29,75 @@ export default function CityGateway({ children }: { children: React.ReactNode })
 
   if (!selectedCity) {
     return (
-      <div className="fixed inset-0 z-[200] bg-matte-black flex items-center justify-center p-6 overflow-y-auto">
-        {/* Ambient Luxury Background */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-brand/5 blur-[150px] rounded-full" />
-          <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-gold/5 blur-[120px] rounded-full" />
-        </div>
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-2xl luxury-card p-10 md:p-16 rounded-[50px] relative z-10"
-        >
-          <div className="text-center space-y-6 mb-16">
-            <div className="w-24 h-24 bg-gold/10 rounded-[35px] flex items-center justify-center mx-auto text-gold border border-gold/20 shadow-2xl mb-8 rotate-12">
-              <Navigation2 className="w-12 h-12" />
-            </div>
-            <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter text-white uppercase leading-none">
-              Elite <br />
-              <span className="text-luxury-gold drop-shadow-xl">Selection</span>
-            </h1>
-            <p className="text-white/60 font-bold uppercase tracking-[6px] text-[10px]">Select your delivery city</p>
-          </div>
+      <div className="fixed inset-0 z-[200] flex flex-col items-center p-6 sm:p-10 min-h-screen bg-[radial-gradient(circle_at_top,#1e1e1e_0%,#000000_100%)] text-white overflow-y-auto">
+        <header className="w-full max-w-md text-center mb-10 mt-4">
+          <h1 className="text-5xl font-[900] italic tracking-tighter text-[#FFD700] drop-shadow-[0px_4px_10px_rgba(0,0,0,0.5)] uppercase mb-2 font-sans">
+            SELECTION
+          </h1>
+          <p className="text-[10px] tracking-[0.3em] font-bold text-gray-400 uppercase">
+            Select Your Delivery City
+          </p>
+        </header>
 
-          <div className="mb-8">
-            <button 
-              onClick={handleAutoDetect}
-              className="w-full py-6 rounded-[30px] border border-gold/30 bg-gold/5 flex items-center justify-center gap-4 group hover:bg-gold hover:text-matte-black transition-all"
+        <main className="w-full max-w-md space-y-4">
+          <button 
+            onClick={handleAutoDetect}
+            className="w-full flex items-center justify-center gap-4 py-5 px-6 rounded-[40px] border border-[rgba(255,215,0,0.4)] bg-transparent hover:bg-[rgba(255,215,0,0.1)] transition-all duration-300"
+          >
+            <svg className="w-6 h-6 text-[#FFD700]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V5m0 14v-3m0-11a9 9 0 110 18 9 9 0 010-18z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+              <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+            </svg>
+            <span className="text-[12px] font-black tracking-[0.2em] uppercase text-white">
+              Auto Detect My Location
+            </span>
+          </button>
+          
+          <div className="h-4"></div>
+
+          {CITIES.map((city) => (
+            <button
+              key={city.id}
+              onClick={() => {
+                if (city.isActive) {
+                  setCity(city);
+                } else {
+                  toast.error(`Mom's Magic is currently only operating in Yellapur!`, { id: 'city-lock' });
+                }
+              }}
+              className={`w-full flex items-center py-6 px-8 rounded-[40px] transition-colors ${
+                city.isActive 
+                  ? 'justify-between border-2 border-[#FFD700] bg-[#1A1A1A] shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
+                  : 'border border-white/5 bg-white/5 hover:bg-white/10 opacity-40'
+              }`}
             >
-              <Locate className="w-6 h-6 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[4px]">Auto Detect My Location</span>
+              <div className="flex items-center gap-5">
+                <svg className={`w-7 h-7 ${city.isActive ? 'text-[#FFD700]' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                  <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+                </svg>
+                <span className={`text-2xl font-black italic ${city.isActive ? 'text-white' : 'text-white/60'}`}>
+                  {city.name}
+                </span>
+              </div>
+              {city.isActive && (
+                <svg className="w-6 h-6 text-[#FFD700] opacity-80" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l1.5 4.5H18l-3.5 3 1.5 5-4-3-4 3 1.5-5-3.5-3h4.5z"></path>
+                </svg>
+              )}
             </button>
-          </div>
+          ))}
+        </main>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {CITIES.map((city) => (
-              <button
-                key={city.id}
-                onClick={() => {
-                  if (city.isActive) {
-                    setCity(city);
-                  } else {
-                    toast.error(`Mom's Magic is currently only operating in Yellapur!`, { id: 'city-lock' });
-                  }
-                }}
-                className={`p-8 rounded-[30px] border flex items-center justify-between transition-all group relative overflow-hidden ${
-                  city.isActive 
-                    ? 'border-gold/20 bg-white/5 hover:border-gold/40' 
-                    : 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
-                }`}
-              >
-                <div className="absolute inset-0 bg-gold/0 group-hover:bg-gold/[0.02] transition-colors" />
-                <div className="flex items-center gap-5 relative z-10">
-                  <MapPin className={`w-7 h-7 ${city.isActive ? 'text-gold' : 'text-text-muted/30'}`} />
-                  <span className={`font-black text-xl italic ${city.isActive ? 'text-white' : 'text-text-muted/50'}`}>
-                    {city.name}
-                  </span>
-                </div>
-                {city.isActive ? (
-                  <Sparkles className="w-5 h-5 text-gold animate-pulse relative z-10" />
-                ) : (
-                  <Lock className="w-4 h-4 text-white/20 relative z-10" />
-                )}
-              </button>
-            ))}
+        <footer className="mt-auto w-full max-w-md pt-8 opacity-20 pointer-events-none">
+          <div className="flex justify-around border-t border-white/10 py-4">
+            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
+            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
+            <div className="w-12 h-12 bg-white/50 rounded-full -mt-4"></div>
+            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
+            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
           </div>
-        </motion.div>
+        </footer>
       </div>
     );
   }
