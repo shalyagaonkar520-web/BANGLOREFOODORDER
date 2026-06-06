@@ -79,8 +79,9 @@ export default function Checkout() {
 
 
 
-  // Load saved user data
+  // Load saved user data and scroll to top
   React.useEffect(() => {
+    window.scrollTo(0, 0);
     const savedName = localStorage.getItem('moms_magic_user_name');
     const savedPhone = localStorage.getItem('moms_magic_user_phone');
     if (savedName || savedPhone) {
@@ -252,10 +253,10 @@ export default function Checkout() {
       <div className="space-y-6">
         <motion.button 
           whileHover={{ x: -5 }}
-          onClick={() => navigate('/cart')}
+          onClick={() => navigate('/food')}
           className="flex items-center gap-3 text-text-muted font-black uppercase tracking-[3px] text-[10px] hover:text-gold transition-colors"
         >
-          <ChevronLeft className="w-5 h-5" /> Back to Review
+          <ChevronLeft className="w-5 h-5" /> Back to Menu
         </motion.button>
         <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter italic uppercase leading-none">
           {isBulkOrder ? 'Grand ' : 'Final '} 

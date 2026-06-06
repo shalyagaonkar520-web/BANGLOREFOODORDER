@@ -5,7 +5,6 @@ import { ShoppingBag, ArrowRight, Zap, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSystemStore } from '../store/systemStore';
 
-
 export default function BottomCartBar() {
   const { items, total } = useCartStore();
   const { deliveryLocation } = useLocationStore();
@@ -17,8 +16,7 @@ export default function BottomCartBar() {
   const distanceKm = deliveryLocation?.distance ?? 999;
   const isOrderingPaused = settings.websiteStatus === 'OFF' || settings.emergencyStop;
 
-  
-  if (itemCount === 0 || location.pathname === '/cart' || location.pathname === '/checkout' || isOrderingPaused) return null;
+  if (itemCount === 0 || location.pathname === '/checkout' || isOrderingPaused) return null;
 
   return (
     <AnimatePresence>
@@ -26,7 +24,7 @@ export default function BottomCartBar() {
         initial={{ y: 100, opacity: 0, scale: 0.9 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 100, opacity: 0, scale: 0.9 }}
-        className="fixed bottom-[80px] md:bottom-12 left-6 right-6 md:left-1/2 md:-translate-x-1/2 md:max-w-xl z-[90] pointer-events-none"
+        className="fixed bottom-[110px] md:bottom-[90px] left-6 right-6 md:left-1/2 md:-translate-x-1/2 md:max-w-xl z-[90] pointer-events-none"
       >
         <div className="relative group pointer-events-auto">
           {/* Luxury Ambient Glow */}
@@ -68,7 +66,7 @@ export default function BottomCartBar() {
             <motion.button 
               whileHover={{ x: 5 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/cart')}
+              onClick={() => navigate('/checkout')}
               className="h-12 md:h-18 px-5 md:px-10 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-[2px] text-white flex items-center gap-2 md:gap-3 relative overflow-hidden group/btn shadow-[0_8px_25px_rgba(76,217,100,0.2)] shrink-0"
               style={{
                 background: 'linear-gradient(135deg, #4CD964, #3AC152)'

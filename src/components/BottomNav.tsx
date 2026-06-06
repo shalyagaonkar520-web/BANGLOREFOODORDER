@@ -29,8 +29,8 @@ export default function BottomNav() {
           </div>
           <span className="text-[#facc15] text-[10px] font-black uppercase mt-1 tracking-widest">Search</span>
         </Link>
-        {/* Favorites -> Cart */}
-        <Link to="/cart" className={`transition-colors ${isActive('/cart') ? 'text-white' : 'text-zinc-500 hover:text-white'}`}>
+        {/* Favorites -> Cart/Checkout */}
+        <Link to="/checkout" className={`transition-colors ${isActive('/checkout') ? 'text-white' : 'text-zinc-500 hover:text-white'}`}>
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             {/* Using a shopping bag icon instead of favorite heart for cart */}
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></path>

@@ -126,7 +126,7 @@ export default function App() {
                   <Route path="/" element={<Navigate to="/food" replace />} />
                   <Route path="/food" element={<CategoryPage type="food" />} />
                   <Route path="/grocery" element={<CategoryPage type="grocery" />} />
-                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/cart" element={<Navigate to="/checkout" replace />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/offers" element={<OffersPage />} />
                   <Route path="/bulk" element={<BulkOrderPage />} />
