@@ -205,8 +205,11 @@ export default function Checkout() {
         `👉 https://momsmagic.shop`,
         `━━━━━━━━━━━━━━━━`
       ].filter(line => line !== '').join('\n');
+      const BULK_WHATSAPP_NUMBER = '917483187572';
+      const FOOD_WHATSAPP_NUMBER = '919606001790';
+      const waNumber = isBulkOrder ? BULK_WHATSAPP_NUMBER : FOOD_WHATSAPP_NUMBER;
 
-      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`;
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
       setWaLink(waUrl);
 
 
