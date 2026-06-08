@@ -64,7 +64,7 @@ export const hotelData: Record<string, { hotel: number, app: number }> = {
   "Schezwan Egg Rice": { hotel: 130, app: 159 },
   "Mutton Fried Rice": { hotel: 170, app: 200 },
   "Schezwan Mutton Rice": { hotel: 200, app: 240 },
-  "Chicken Noodles": { hotel: 110, app: 129 },
+  "Chicken Noodles": { hotel: 110, app: 149 },
   "Veg Noodles": { hotel: 80, app: 100 }
 };
 

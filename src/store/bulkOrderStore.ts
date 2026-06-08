@@ -83,7 +83,6 @@ const BASE_QTY_MAP: Record<string, number> = {
   'Roti': 3,
   'Burgers & Rolls': 1,
   'Pizzas & Momos': 1,
-  'Maggie': 1,
   'Drinks': 1,
   'Combos': 1,
   'Mutton': 1,

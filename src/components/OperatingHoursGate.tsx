@@ -33,27 +33,8 @@ export default function OperatingHoursGate({ children }: { children: React.React
         return;
       }
 
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const totalMinutes = hours * 60 + minutes;
-
-      // Extract opening & closing schedule dynamically
-      try {
-        const [openHours, openMins] = settings.openTime.split(':').map(Number);
-        const [closeHours, closeMins] = settings.closeTime.split(':').map(Number);
-        
-        const openTimeVal = openHours * 60 + openMins;
-        const closeTimeVal = closeHours * 60 + closeMins;
-
-        if (openTimeVal <= closeTimeVal) {
-          setIsOpen(totalMinutes >= openTimeVal && totalMinutes < closeTimeVal);
-        } else {
-          setIsOpen(totalMinutes >= openTimeVal || totalMinutes < closeTimeVal);
-        }
-      } catch (err) {
-        // Fallback to open if settings are misconfigured or unparsed
-        setIsOpen(true);
-      }
+      // TEMPORARILY ALWAYS OPEN FOR TESTING
+      setIsOpen(true);
     };
 
     checkTime();

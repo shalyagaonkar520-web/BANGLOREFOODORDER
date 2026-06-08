@@ -169,7 +169,7 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'rn-6',
     name: 'Chicken Noodles',
-    price: 129,
+    price: 149,
     category: 'Rice & Noodles',
     type: 'food',
     image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=800&q=80',
@@ -729,47 +729,6 @@ export const MENU_ITEMS: Product[] = [
 ,  
     isVeg: false},
 
-  // 🍜 MAGGIE
-  {
-    id: 'mag-1',
-    name: 'Veg Maggie',
-    price: 70,
-    category: 'Maggie',
-    type: 'food',
-    image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=800&q=80',
-    fires: 1
-,  
-    isVeg: true},
-  {
-    id: 'mag-2',
-    name: 'Chicken Maggie',
-    price: 120,
-    category: 'Maggie',
-    type: 'food',
-    image: '/chicken_maggie.jpg',
-    fires: 2
-,  
-    isVeg: false},
-  {
-    id: 'mag-3',
-    name: 'Cheese Maggie',
-    price: 90,
-    category: 'Maggie',
-    type: 'food',
-    image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=800&q=80',
-    fires: 1
-,  
-    isVeg: true},
-  {
-    id: 'mag-4',
-    name: 'Egg Maggie',
-    price: 90,
-    category: 'Maggie',
-    type: 'food',
-    image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=800&q=80',
-    fires: 1
-,  
-    isVeg: false},
 
   {
     id: 'drink-special-2',
@@ -834,7 +793,7 @@ export const MENU_ITEMS: Product[] = [
   }
 ];
 
-export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Maggie', 'Drinks'];
+export const CATEGORIES = ['Fast Food', 'Rice & Noodles', 'Biryani', 'Starters', 'Veg/Gravy', 'Roti', 'Burgers & Rolls', 'Pizzas & Momos', 'Drinks'];
 
 export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
   'Fast Food': { icon: '🍟', bg: 'from-orange-500/20 to-amber-600/20' },
@@ -845,8 +804,6 @@ export const CATEGORY_ICONS: Record<string, { icon: string, bg: string }> = {
   'Soups': { icon: '🍲', bg: 'from-blue-500/20 to-cyan-600/20' },
   'Roti': { icon: '🍞', bg: 'from-stone-500/20 to-orange-600/20' },
   'Burgers & Rolls': { icon: '🍔', bg: 'from-orange-400/20 to-red-500/20' },
-  'Pizzas & Momos': { icon: '🍕', bg: 'from-yellow-500/20 to-orange-600/20' },
-  'Maggie': { icon: '🍜', bg: 'from-yellow-300/20 to-amber-400/20' },
   'Drinks': { icon: '🥤', bg: 'from-blue-400/20 to-indigo-500/20' }
 };
 

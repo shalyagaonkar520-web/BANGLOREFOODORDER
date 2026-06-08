@@ -197,7 +197,7 @@ export default function CartPage() {
 
               <div className="space-y-8">
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
-                  <span>Selection Value</span>
+                  <span>Subtotal</span>
                   <span className="text-white text-2xl font-black italic tracking-tighter">₹{total}</span>
                 </div>
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
@@ -205,16 +205,11 @@ export default function CartPage() {
                     <Truck className="w-4 h-4 text-gold" />
                     <span>Delivery</span>
                   </div>
-                  <span className={`text-white text-2xl font-black italic tracking-tighter ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'line-through text-white/30' : ''}`}>
-                    ₹{baseDeliveryCharge}
+                  <span className={`text-white text-2xl font-black italic tracking-tighter ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'text-[#4CD964]' : ''}`}>
+                    {(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'Free' : `₹${baseDeliveryCharge}`}
                   </span>
                 </div>
-                {isFreeDeliveryTimeActive() ? (
-                  <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
-                    <span>Free Delivery Active</span>
-                    <span>8 PM - 9 PM Special</span>
-                  </div>
-                ) : appliedCoupon === 'MOMSMAGIC01' ? (
+                {appliedCoupon === 'MOMSMAGIC01' && !isFreeDeliveryTimeActive() ? (
                   <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
                     <span>Coupon: MOMSMAGIC01</span>
                     <span>Free Delivery Applied</span>

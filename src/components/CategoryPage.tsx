@@ -30,7 +30,6 @@ const CATEGORIES_DATA = [
   { id: 'Roti', name: 'Roti', image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=200&q=80', count: 10 },
   { id: 'Burgers & Rolls', name: 'Burgers & Rolls', image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=200&q=80', count: 14 },
   { id: 'Pizzas & Momos', name: 'Pizzas & Momos', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&q=80', count: 16 },
-  { id: 'Maggie', name: 'Maggi & Pasta', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200&q=80', count: 13 },
   { id: 'Drinks', name: 'Drinks', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=200&q=80', count: 12 }
 ];
 
@@ -372,7 +371,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
                     <h3 className="font-black text-xs uppercase tracking-tight truncate text-white">{product.name}</h3>
                     <div className="flex items-center gap-1 mt-1">
                       <span className="text-[#facc15] text-[10px]">★ {getStableRating(product.id)}</span>
-                      <span className="text-zinc-500 text-[10px]">(₹{product.price})</span>
+                      <span className="text-zinc-500 text-[10px]">₹{product.price}</span>
                     </div>
                   </div>
                 </div>

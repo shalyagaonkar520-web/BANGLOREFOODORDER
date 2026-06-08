@@ -193,7 +193,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ₹${deliveryCharge}${isFreeDeliveryTimeActive() ? ' (8 PM - 9 PM Special)' : appliedCoupon === 'MOMSMAGIC01' ? ' (Coupon: MOMSMAGIC01)' : ''}`,
+        `🚚 *Delivery:* ₹${deliveryCharge}${isFreeDeliveryTimeActive() ? ' (Free)' : appliedCoupon === 'MOMSMAGIC01' ? ' (Coupon: MOMSMAGIC01)' : ''}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -375,14 +375,11 @@ export default function Checkout() {
                  <Truck className="w-4 h-4 text-gold" />
                  <span>Delivery Fee</span>
               </div>
-              <span className={`text-white text-xl font-black ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'line-through text-white/30' : ''}`}>₹{baseDeliveryCharge}</span>
+              <span className={`text-white text-xl font-black ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'text-[#4CD964]' : ''}`}>
+                {(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'Free' : `₹${baseDeliveryCharge}`}
+              </span>
             </div>
-            {isFreeDeliveryTimeActive() ? (
-              <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
-                <span>Free Delivery Active</span>
-                <span>8 PM - 9 PM Special</span>
-              </div>
-            ) : appliedCoupon === 'MOMSMAGIC01' ? (
+            {appliedCoupon === 'MOMSMAGIC01' && !isFreeDeliveryTimeActive() ? (
               <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
                 <span>Coupon: MOMSMAGIC01</span>
                 <span>Free Delivery Applied</span>
