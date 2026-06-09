@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Lock, Quote, Star } from 'lucide-react';
 import { DUMMY_REVIEWS } from '../data/reviews';
 import Header from './Header';
+import { useCartStore } from '../store/cartStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
 
@@ -14,10 +15,20 @@ export default function LandingPage() {
   );
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const clearCart = useCartStore(state => state.clearCart);
 
   const handleCardClick = (card: typeof cards[0]) => {
     if (card.comingSoon) return;
     playSound(SOUNDS.ADD_TO_CART); // Immersive pop sound
+    
+    // Clear cart and set order type based on route
+    clearCart();
+    if (card.route === '/food') {
+      localStorage.setItem('moms_magic_order_type', 'regular');
+    } else if (card.route === '/bulk') {
+      localStorage.setItem('moms_magic_order_type', 'bulk');
+    }
+    
     navigate(card.route);
   };
 

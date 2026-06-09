@@ -53,8 +53,8 @@ export default function Checkout() {
 
 
   // Determine active data
-  const activeItems = isBulkOrder ? bulkItems : cartItems;
-  const subtotal = isBulkOrder ? getBulkTotal() : cartTotal;
+  const activeItems = isBulkOrder ? [...bulkItems, ...cartItems.map(item => ({ ...item, finalQuantity: item.quantity } as any))] : cartItems;
+  const subtotal = isBulkOrder ? getBulkTotal() + cartTotal : cartTotal;
 
 
 
