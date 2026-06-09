@@ -38,7 +38,7 @@ export default function LandingPage() {
       titleAccent: "ORDER",
       subtitle: "Celebrations • Cakes • Decoration Setup",
       image: "https://images.unsplash.com/photo-1530101121860-702f82e3f267?w=1000&auto=format&fit=crop",
-      route: "/celebration",
+      route: "/bulk",
       color: "from-brand/20 to-matte-black/40",
       badge: "NEW ✨",
       comingSoon: false,

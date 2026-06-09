@@ -74,7 +74,8 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
+  let deliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
+  if (isBulkOrder) deliveryCharge = 0;
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -156,7 +157,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ₹${deliveryCharge}`,
+        `🚚 *Delivery:* ${isBulkOrder ? 'FREE' : `₹${deliveryCharge}`}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -253,7 +254,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <div className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black uppercase text-text-muted border border-white/5">{distanceKm} KM DISTANCE</div>
-                  <div className="px-4 py-2 bg-gold/10 rounded-xl text-[10px] font-black uppercase text-gold border border-gold/20">₹{deliveryCharge} LOGISTICS</div>
+                  <div className="px-4 py-2 bg-gold/10 rounded-xl text-[10px] font-black uppercase text-gold border border-gold/20">{isBulkOrder ? 'FREE DELIVERY' : `₹${deliveryCharge} LOGISTICS`}</div>
                 </div>
                 <button 
                   type="button" 
@@ -338,7 +339,7 @@ export default function Checkout() {
                  <span>Delivery Fee</span>
               </div>
               <span className="text-white text-xl font-black">
-                ₹{deliveryCharge}
+                {isBulkOrder ? <span className="text-[#4CD964]">FREE</span> : `₹${deliveryCharge}`}
               </span>
             </div>
           </div>

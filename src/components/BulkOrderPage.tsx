@@ -85,20 +85,22 @@ export default function BulkOrderPage() {
         <div className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[150px]" />
         <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[200px] animate-pulse" />
         
-        {/* Floating Particles */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-gold/30 rounded-full blur-[1px]"
-            initial={{ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight }}
-            animate={{ 
-              y: [null, Math.random() * -200 - 100],
-              x: [null, Math.random() * 100 - 50],
-              opacity: [0, 0.8, 0]
-            }}
-            transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear" }}
-          />
-        ))}
+        {/* Floating Particles - Hidden on Mobile to save battery/performance */}
+        <div className="hidden md:block">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-gold/30 rounded-full blur-[1px]"
+              initial={{ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight }}
+              animate={{ 
+                y: [null, Math.random() * -200 - 100],
+                x: [null, Math.random() * 100 - 50],
+                opacity: [0, 0.8, 0]
+              }}
+              transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear" }}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="relative z-10 px-4 md:px-8 max-w-7xl mx-auto pt-8">
