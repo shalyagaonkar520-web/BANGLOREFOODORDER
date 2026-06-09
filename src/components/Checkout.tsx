@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Send, MapPin, Navigation, Ticket, Locate, Loader2, Calendar, ShieldCheck, Truck, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
-import { calculateDeliveryCharge, isFreeDeliveryTimeActive } from '../types';
+import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
@@ -50,28 +50,7 @@ export default function Checkout() {
   
   // Removed Razorpay States
 
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(() => localStorage.getItem('moms_magic_applied_coupon') || '');
 
-  const handleApplyCoupon = () => {
-    const code = couponInput.trim().toUpperCase();
-    if (code === 'MOMSMAGIC01') {
-      setAppliedCoupon('MOMSMAGIC01');
-      localStorage.setItem('moms_magic_applied_coupon', 'MOMSMAGIC01');
-      toast.success('Coupon "MOMSMAGIC01" applied! Free delivery activated.');
-      setCouponInput('');
-    } else if (code === '') {
-      toast.error('Please enter a coupon code');
-    } else {
-      toast.error('Invalid coupon code');
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon('');
-    localStorage.removeItem('moms_magic_applied_coupon');
-    toast.success('Coupon removed');
-  };
 
   // Determine active data
   const activeItems = isBulkOrder ? bulkItems : cartItems;
@@ -95,8 +74,7 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const baseDeliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : Math.ceil(distanceKm) * 10;
-  const deliveryCharge = (isFreeDeliveryTimeActive() || appliedCoupon === 'MOMSMAGIC01') ? 0 : baseDeliveryCharge;
+  const deliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -193,7 +171,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ₹${deliveryCharge}${isFreeDeliveryTimeActive() ? ' (Free)' : appliedCoupon === 'MOMSMAGIC01' ? ' (Coupon: MOMSMAGIC01)' : ''}`,
+        `🚚 *Delivery:* ₹${deliveryCharge}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -226,7 +204,6 @@ export default function Checkout() {
       } else {
         clearCart();
       }
-      localStorage.removeItem('moms_magic_applied_coupon');
       playSound(SOUNDS.ORDER_SUCCESS);
       toast.success('VIP Order placed! Redirecting to WhatsApp...');
       setTimeout(() => {
@@ -375,55 +352,10 @@ export default function Checkout() {
                  <Truck className="w-4 h-4 text-gold" />
                  <span>Delivery Fee</span>
               </div>
-              <span className={`text-white text-xl font-black ${(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'text-[#4CD964]' : ''}`}>
-                {(appliedCoupon === 'MOMSMAGIC01' || isFreeDeliveryTimeActive()) ? 'Free' : `₹${baseDeliveryCharge}`}
+              <span className="text-white text-xl font-black">
+                ₹{deliveryCharge}
               </span>
             </div>
-            {appliedCoupon === 'MOMSMAGIC01' && !isFreeDeliveryTimeActive() ? (
-              <div className="flex justify-between items-center text-gold font-bold uppercase text-[10px] tracking-widest bg-gold/10 p-3 rounded-2xl border border-gold/20">
-                <span>Coupon: MOMSMAGIC01</span>
-                <span>Free Delivery Applied</span>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Promo Coupon Input */}
-          <div className="mb-10 pb-8 border-b border-white/5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Ticket className="w-4 h-4 text-gold" />
-              <span className="text-white text-[10px] font-black uppercase tracking-[4px]">Promo Coupon</span>
-            </div>
-            {!appliedCoupon ? (
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Enter code" 
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value)}
-                  className="flex-1 min-w-0 px-6 py-4 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white text-xs transition-all uppercase placeholder:normal-case placeholder:text-white/20"
-                />
-                <button 
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  className="px-6 py-4 bg-gold text-matte-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-gold/80 transition-all shadow-lg shadow-gold/20 shrink-0"
-                >
-                  Apply
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between px-6 py-4 bg-gold/10 rounded-2xl border border-gold/20">
-                <span className="text-gold text-[10px] font-black uppercase tracking-widest truncate max-w-[200px]">
-                  MOMSMAGIC01 Applied
-                </span>
-                <button 
-                  type="button" 
-                  onClick={handleRemoveCoupon}
-                  className="text-white/40 hover:text-white text-[10px] font-black uppercase tracking-wider transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="flex justify-between items-end mb-12">

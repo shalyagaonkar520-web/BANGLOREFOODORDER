@@ -27,16 +27,6 @@ export default function OffersPage() {
       icon: Sparkles,
       color: "from-blue-600 to-indigo-600",
       image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=800&q=80"
-    },
-    {
-      id: 4,
-      title: "FREE DELIVERY MAGIC",
-      description: "Unlock absolutely free delivery on your entire order using coupon code MOMSMAGIC01!",
-      badge: "LIMITED CODES",
-      icon: Truck,
-      color: "from-amber-500 to-yellow-600",
-      image: "/delivery_boy_bag.png",
-      code: "MOMSMAGIC01"
     }
   ];
 
