@@ -13,26 +13,20 @@ import { useSEO } from '../utils/seo';
 // NOTE: Party Specials label swap (names only):
 // - Ice Cakes  -> Normal
 // - Normal Cakes -> Ice Cake
-type Category = 'Normal' | 'Ice Cake' | 'Party Items' | 'Order Food' | 'Snacks';
+type Category = 'Normal' | 'Ice Cake' | 'Party Items' | 'Snacks';
 
 export default function BulkOrderPage() {
   useSEO("Bulk & Party Orders", "Plan and customize your custom catering, cakes, and event setup options at Moms Magic.");
   const navigate = useNavigate();
   const { addItem, items } = useCartStore();
-  const { eventDate, setEventDate, peopleCount, setPeopleCount } = useBulkOrderStore();
   const [activeCategory, setActiveCategory] = useState<Category>('Normal');
   const [showUpsell, setShowUpsell] = useState(false);
-  const [peopleInput, setPeopleInput] = useState<string>(String(peopleCount));
 
   useEffect(() => {
     localStorage.setItem('moms_magic_order_type', 'bulk');
   }, []);
 
-  useEffect(() => {
-    setPeopleInput(String(peopleCount));
-  }, [peopleCount]);
-
-  const categories: Category[] = ['Normal', 'Ice Cake', 'Party Items', 'Order Food', 'Snacks'];
+  const categories: Category[] = ['Normal', 'Ice Cake', 'Party Items', 'Snacks'];
 
   const advanceToNextCategory = (currentCat: Category) => {
     const currentIndex = categories.indexOf(currentCat);
@@ -47,50 +41,9 @@ export default function BulkOrderPage() {
 
 
   const handleAddToCart = (product: Product, category: Category) => {
-    if (!eventDate) {
-      toast.error('Please select an Event Date first!', {
-        icon: '📅',
-        style: { background: '#161A22', color: '#FF4D00', border: '1px solid #FF4D00' }
-      });
-      return;
-    }
-    const tomorrowStr = (() => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
-    })();
-    if (eventDate < tomorrowStr) {
-      toast.error('Please select a future Event Date (tomorrow onwards)!', {
-        icon: '📅',
-        style: { background: '#161A22', color: '#FF4D00', border: '1px solid #FF4D00' }
-      });
-      return;
-    }
-    if (!peopleCount || peopleCount < 3) {
-      toast.error('Minimum 3 guests required!', {
-        icon: '👥',
-        style: { background: '#161A22', color: '#FF4D00', border: '1px solid #FF4D00' }
-      });
-      return;
-    }
+    addItem(product, undefined, 1);
 
-    const qty = (category === 'Order Food' || category === 'Snacks') ? peopleCount : 1;
-    addItem(product, undefined, qty);
-
-    if (category === 'Order Food' || category === 'Snacks') {
-      toast(`Scaled for ${peopleCount} guests! Adjust guests count at the top if needed.`, {
-        icon: '👥',
-        style: {
-          background: '#161A22',
-          color: '#A855F7',
-          border: '1px solid #A855F7',
-          fontWeight: 'bold',
-        },
-        duration: 3500
-      });
-    }
-
-    toast.success(`${product.name} Added! ${qty > 1 ? `(x${qty})` : ''} 🎈`, {
+    toast.success(`${product.name} Added! 🎈`, {
       icon: '🎉',
       style: {
         background: '#161A22',
@@ -165,69 +118,7 @@ export default function BulkOrderPage() {
         </div>
 
 
-        {/* Event Details Card */}
-        <div className="bg-[#111]/80 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 mb-10 flex flex-col md:flex-row gap-6 max-w-3xl mx-auto">
-          <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/50 flex items-center gap-2"><Calendar className="w-4 h-4 text-brand" /> Event Date</label>
-            <input
-              type="date"
-              min={(() => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                return tomorrow.toISOString().split('T')[0];
-              })()}
-              onKeyDown={e => e.preventDefault()}
-              value={eventDate}
-              onChange={e => {
-                const val = e.target.value;
-                const tomorrowStr = (() => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  return tomorrow.toISOString().split('T')[0];
-                })();
-                if (val && val < tomorrowStr) {
-                  toast.error('Please select a future event date (tomorrow onwards)');
-                  return;
-                }
-                setEventDate(val);
-              }}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-brand/50 transition-colors font-bold text-white [color-scheme:dark]"
-            />
-          </div>
-          <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/50 flex items-center gap-2"><Users className="w-4 h-4 text-brand" /> Number of Guests</label>
-            <input
-              type="number"
-              min="3"
-              value={peopleInput}
-              onChange={e => {
-                const val = e.target.value;
-                setPeopleInput(val);
-                if (val === '') return; // allow clearing while typing
-                const n = parseInt(val, 10);
-                if (Number.isNaN(n)) return;
-                setPeopleCount(n);
-              }}
-              onBlur={() => {
-                if (peopleInput.trim() === '') {
-                  setPeopleInput('3');
-                  setPeopleCount(3);
-                  return;
-                }
-                const n = parseInt(peopleInput, 10);
-                if (Number.isNaN(n) || n < 3) {
-                  setPeopleInput('3');
-                  setPeopleCount(3);
-                  return;
-                }
-                // normalize to remove leading zeros etc.
-                setPeopleInput(String(n));
-                setPeopleCount(n);
-              }}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-brand/50 transition-colors font-bold text-white"
-            />
-          </div>
-        </div>
+
 
         {/* Upsell: Book A Setup Card at starting of main list */}
         <motion.div
@@ -278,18 +169,7 @@ export default function BulkOrderPage() {
             {/* Normal (Ice Cakes), Ice Cake (Normal Cakes), Party Items & Snacks */}
             {(activeCategory === 'Normal' || activeCategory === 'Ice Cake' || activeCategory === 'Party Items' || activeCategory === 'Snacks') && (
               <div className="space-y-6">
-                {activeCategory === 'Snacks' && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-5 rounded-[24px] bg-purple-500/10 border border-purple-500/20 text-center space-y-1 backdrop-blur-md"
-                  >
-                    <span className="text-xs font-black uppercase tracking-widest text-purple-400">💡 Smart Scaling Active</span>
-                    <p className="text-[11px] font-bold text-white/70">
-                      Snacks added below will automatically scale for your <span className="text-purple-300 font-extrabold italic text-sm">{peopleCount} guests</span>. Adjust guest count in the event card above!
-                    </p>
-                  </motion.div>
-                )}
+
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {(
                     activeCategory === 'Normal' ? ICE_CAKES :
@@ -312,23 +192,19 @@ export default function BulkOrderPage() {
                              <span className="text-[8px] font-black uppercase tracking-widest bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-white/80">Perfect for Birthday</span>
                            </div>
                          )}
-                         {activeCategory === 'Snacks' && (
-                           <div className="absolute bottom-2 left-2 right-2 text-center">
-                             <span className="text-[8px] font-black uppercase tracking-widest bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-brand">Qty: {peopleCount}</span>
-                           </div>
-                         )}
+
                       </div>
                       
                       <div className="space-y-3 relative z-10">
                         <div>
                           <h4 className="font-black italic uppercase tracking-tighter text-lg leading-tight">{item.name}</h4>
-                          <span className="text-brand font-black">₹{item.price} {activeCategory === 'Snacks' && <span className="text-[10px] text-white/40">x {peopleCount}</span>}</span>
+                          <span className="text-brand font-black">₹{item.price}</span>
                         </div>
                         <button 
                           onClick={() => handleAddToCart(item, activeCategory)}
                           className="w-full py-3 bg-white/10 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-brand transition-colors active:scale-95"
                         >
-                          {activeCategory === 'Snacks' ? `Add ${peopleCount} Items` : 'Add Item'}
+                          Add Item
                         </button>
                       </div>
                     </div>
@@ -337,48 +213,7 @@ export default function BulkOrderPage() {
               </div>
             )}
 
-            {/* Order Food */}
-            {activeCategory === 'Order Food' && (
-              <div className="space-y-6">
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-5 rounded-[24px] bg-purple-500/10 border border-purple-500/20 text-center space-y-1 backdrop-blur-md"
-                >
-                  <span className="text-xs font-black uppercase tracking-widest text-purple-400">💡 Smart Scaling Active</span>
-                  <p className="text-[11px] font-bold text-white/70">
-                    Food items added below will automatically scale for your <span className="text-purple-300 font-extrabold italic text-sm">{peopleCount} guests</span>. Adjust guest count in the event card above!
-                  </p>
-                </motion.div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {MENU_ITEMS.map(item => (
-                  <div key={item.id} className="group relative p-5 rounded-[30px] bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-colors overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
-                    <div className="aspect-square rounded-[20px] overflow-hidden mb-4 relative bg-black/40">
-                       <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                       <div className="absolute bottom-2 left-2 right-2 text-center">
-                         <span className="text-[8px] font-black uppercase tracking-widest bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-brand">Qty: {peopleCount}</span>
-                       </div>
-                    </div>
-                    
-                    <div className="space-y-3 relative z-10">
-                      <div>
-                        <h4 className="font-black italic uppercase tracking-tighter text-lg leading-tight truncate">{item.name}</h4>
-                        <span className="text-brand font-black">₹{item.price} <span className="text-[10px] text-white/40">x {peopleCount}</span></span>
-                      </div>
-                      <button 
-                        onClick={() => handleAddToCart(item, activeCategory)}
-                        className="w-full py-3 bg-white/10 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-brand transition-colors active:scale-95"
-                      >
-                        Add {peopleCount} Items
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           </motion.div>
         </AnimatePresence>

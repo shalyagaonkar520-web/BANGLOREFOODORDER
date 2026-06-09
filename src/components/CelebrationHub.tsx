@@ -196,7 +196,7 @@ export default function CelebrationHub() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="grid grid-cols-2 gap-4 mb-8"
+          className="grid grid-cols-1 gap-4 mb-8"
         >
           <button
             onClick={() => navigate('/bulk')}
@@ -207,14 +207,7 @@ export default function CelebrationHub() {
             <span className="text-xs font-black uppercase tracking-tight text-white group-hover:text-purple-400 transition-colors">🎂 See Items</span>
           </button>
 
-          <button
-            onClick={() => navigate('/celebration/design')}
-            className="relative overflow-hidden group py-4 px-6 rounded-3xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 active:scale-95 transition-all text-center flex flex-col items-center justify-center gap-1 shadow-[0_0_25px_rgba(168,85,247,0.4)]"
-          >
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-white/70">Moms Magic Luxury</span>
-            <span className="text-xs font-black uppercase tracking-tight text-white">✨ Book Full Setup</span>
-          </button>
+
         </motion.div>
 
         {/* Celebration cards */}

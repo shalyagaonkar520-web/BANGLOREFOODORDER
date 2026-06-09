@@ -104,19 +104,7 @@ export default function Checkout() {
     if (deliveryLocation.distance > 5) { toast.error('Sorry, not deliverable (location is >5km)'); return; }
 
     if (isBulkOrder) {
-      if (!eventDate) {
-        toast.error('Please select your Event Date first!');
-        return;
-      }
-      const tomorrowStr = (() => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
-      })();
-      if (eventDate < tomorrowStr) {
-        toast.error('Event Date must be a future date (tomorrow onwards)');
-        return;
-      }
+      // Event date validation removed
     }
 
     localStorage.setItem('moms_magic_user_name', formData.name.trim());
@@ -136,9 +124,6 @@ export default function Checkout() {
         ].filter(Boolean).join(', ');
 
         orderDetails = [
-          `📅 *Event Date:* ${eventDate}`,
-          `👥 *People:* ${peopleCount}`,
-          ``,
           `🛒 *FOOD ITEMS:*`,
           bulkItems.map(i => `• ${i.name} (${i.finalQuantity} units)`).join('\n'),
           ``,
@@ -304,7 +289,7 @@ export default function Checkout() {
         <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">
           <div className="flex items-center justify-between">
              <h2 className="text-2xl font-black italic uppercase flex items-center gap-4"><Ticket className="w-6 h-6 text-gold" /> {isBulkOrder ? 'Event' : 'Selection'} Content</h2>
-             {isBulkOrder && <div className="flex items-center gap-3 px-4 py-2 bg-gold/10 rounded-full text-[10px] font-black uppercase text-gold border border-gold/20"><Calendar className="w-4 h-4" /> {eventDate}</div>}
+             {isBulkOrder && <div className="flex items-center gap-3 px-4 py-2 bg-gold/10 rounded-full text-[10px] font-black uppercase text-gold border border-gold/20"><Calendar className="w-4 h-4" /> Bulk Order</div>}
           </div>
           
           <div className="space-y-6">
