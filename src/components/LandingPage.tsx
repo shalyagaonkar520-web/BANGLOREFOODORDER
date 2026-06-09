@@ -23,8 +23,8 @@ export default function LandingPage() {
 
   const cards = [
     {
-      title: "ORDER",
-      titleAccent: "FOOD",
+      title: "FOOD",
+      titleAccent: "ORDER",
       subtitle: "Luxury culinary experiences at your door",
       image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&auto=format&fit=crop",
       route: "/food",
@@ -34,26 +34,15 @@ export default function LandingPage() {
       isLocked: false
     },
     {
-      title: "PARTY",
-      titleAccent: "SPECIALS",
+      title: "CAKE",
+      titleAccent: "ORDER",
       subtitle: "Celebrations • Cakes • Decoration Setup",
       image: "https://images.unsplash.com/photo-1530101121860-702f82e3f267?w=1000&auto=format&fit=crop",
-      route: "/bulk",
+      route: "/celebration",
       color: "from-brand/20 to-matte-black/40",
       badge: "NEW ✨",
       comingSoon: false,
       isLocked: false
-    },
-    {
-      title: "LOCKED",
-      titleAccent: "",
-      subtitle: "",
-      image: "",
-      route: "/bar-menu",
-      color: "from-[#FFB700]/25 to-matte-black/50",
-      badge: "",
-      comingSoon: false,
-      isLocked: true
     }
   ];
 
@@ -72,8 +61,8 @@ export default function LandingPage() {
       </div>
 
       {/* 3D Menu Cards Collection */}
-      <section className="relative z-20 px-6 py-12 max-w-[1500px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
-        <div className="col-span-1 md:col-span-3 text-center mb-6 space-y-2">
+      <section className="relative z-20 px-6 py-12 max-w-[1500px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="col-span-1 md:col-span-2 text-center mb-6 space-y-2">
           <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
             Explore <span className="text-[#4CD964]">Categories</span>
           </h2>

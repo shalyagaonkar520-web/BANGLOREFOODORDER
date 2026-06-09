@@ -123,7 +123,7 @@ export default function App() {
             <main className="flex-1 relative z-10">
               <PageTransition>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/food" replace />} />
+                  <Route path="/" element={<LandingPage />} />
                   <Route path="/food" element={<CategoryPage type="food" />} />
                   <Route path="/grocery" element={<CategoryPage type="grocery" />} />
                   <Route path="/cart" element={<Navigate to="/checkout" replace />} />
