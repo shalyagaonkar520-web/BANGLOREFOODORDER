@@ -45,10 +45,10 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
   }, []);
 
   const isBypassed = location.pathname.startsWith('/admin');
-  const isMaintenanceActive = settings.websiteStatus === 'OFF' || settings.emergencyStop;
+  const isMaintenanceActive = true; // Forced closed for today
 
-  // Render original application routes if bypassed or if website is online
-  if (true || isBypassed || !isMaintenanceActive) {
+  // Render original application routes if bypassed
+  if (isBypassed) {
     return <>{children}</>;
   }
 
@@ -111,7 +111,7 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
           >
             Moms Magic <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4B2B] to-[#F4B400]">
-              {settings.emergencyStop ? 'Order Lockdown' : 'Getting an Upgrade'}
+              Closed For Today
             </span>
           </motion.h1>
 
@@ -121,74 +121,15 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
             transition={{ delay: 0.6 }}
             className="text-white/60 text-sm md:text-base font-medium max-w-md mx-auto leading-relaxed"
           >
-            {settings.emergencyStop ? (
-              "Our checkout pipelines are temporarily locked due to an operational emergency. We are working diligently to resume normal service shortly!"
-            ) : (
-              settings.maintenanceMessage
-            )}
+            Sorry, we are off today. Come tomorrow!
             <br />
-            <span className="text-white/90 font-semibold mt-3 block">
-              {settings.reopenMessage}
-            </span>
-            <span className="text-white/40 text-xs block mt-2 font-normal italic">
+            <span className="text-white/40 text-xs block mt-4 font-normal italic">
               Thank you so much for your kind patience and support! 🙏
             </span>
           </motion.p>
         </div>
 
-        {/* Live Countdown Timer Grid (Only show if not emergency stop) */}
-        {!settings.emergencyStop && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-white/[0.03] backdrop-blur-md rounded-[32px] p-6 border border-white/10 shadow-2xl max-w-md mx-auto"
-          >
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Hourglass className="w-4 h-4 text-[#F4B400] animate-spin" style={{ animationDuration: '4s' }} />
-              <span className="text-white/50 font-black uppercase tracking-[3px] text-[10px]">Reopening In</span>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3 text-center">
-              {/* Days */}
-              <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-                <span className="block text-3xl font-black italic text-white tracking-tighter leading-none">
-                  {formatNumber(timeLeft.days)}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/30 mt-1 block">
-                  Days
-                </span>
-              </div>
-              {/* Hours */}
-              <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-                <span className="block text-3xl font-black italic text-white tracking-tighter leading-none">
-                  {formatNumber(timeLeft.hours)}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/30 mt-1 block">
-                  Hours
-                </span>
-              </div>
-              {/* Minutes */}
-              <div className="bg-white/5 rounded-2xl py-3 border border-white/5">
-                <span className="block text-3xl font-black italic text-[#F4B400] tracking-tighter leading-none">
-                  {formatNumber(timeLeft.minutes)}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/30 mt-1 block">
-                  Mins
-                </span>
-              </div>
-              {/* Seconds */}
-              <div className="bg-white/5 rounded-2xl py-3 border border-[#FF4B2B]/20">
-                <span className="block text-3xl font-black italic text-[#FF4B2B] tracking-tighter leading-none animate-pulse">
-                  {formatNumber(timeLeft.seconds)}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white/30 mt-1 block">
-                  Secs
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Live Countdown Timer Grid Removed for now */}
 
         {/* Branded Footer */}
         <motion.div
