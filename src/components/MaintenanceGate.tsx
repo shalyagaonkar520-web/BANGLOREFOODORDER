@@ -45,10 +45,10 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
   }, []);
 
   const isBypassed = location.pathname.startsWith('/admin');
-  const isMaintenanceActive = true; // Forced closed for today
+  const isMaintenanceActive = false; // Removed temporary closed restriction
 
-  // Render original application routes if bypassed
-  if (isBypassed) {
+  // Render original application routes if bypassed or not in maintenance
+  if (isBypassed || !isMaintenanceActive) {
     return <>{children}</>;
   }
 
