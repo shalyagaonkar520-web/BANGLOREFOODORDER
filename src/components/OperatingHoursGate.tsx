@@ -33,8 +33,15 @@ export default function OperatingHoursGate({ children }: { children: React.React
         return;
       }
 
-      // Remove the time restriction completely based on user request
-      setIsOpen(true);
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const currentTimeStr = `${hours}:${minutes}`;
+
+      if (currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
     };
 
     checkTime();
