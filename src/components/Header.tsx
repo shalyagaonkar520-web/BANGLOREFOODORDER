@@ -11,12 +11,6 @@ export default function Header() {
   const navigate = useNavigate();
 
   const userPhone = localStorage.getItem('moms_magic_user_phone');
-  const handleLogout = () => {
-    localStorage.removeItem('moms_magic_user_phone');
-    localStorage.removeItem('moms_magic_user_name');
-    auth.signOut();
-    window.location.reload();
-  };
 
   return (
     <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
@@ -50,54 +44,23 @@ export default function Header() {
           <Link to="/bulk" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
             <PartyPopper className="w-3.5 h-3.5 text-[#4CD964]" /> Party Specials
           </Link>
-          {userPhone ? (
-            <>
-              <Link to="/orders" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
-                <PackageSearch className="w-3.5 h-3.5 text-[#4CD964]" /> My Orders
-              </Link>
-              <button onClick={handleLogout} className="text-xs font-black uppercase tracking-widest text-[#FF4D00]/70 hover:text-[#FF4D00] transition-colors flex items-center gap-1.5">
-                <LogOut className="w-3.5 h-3.5 text-[#FF4D00]" /> Logout
-              </button>
-            </>
-          ) : (
-            <Link to="/auth" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-[#4CD964]" /> Login / Signup
+          {userPhone && (
+            <Link to="/orders" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
+              <PackageSearch className="w-3.5 h-3.5 text-[#4CD964]" /> My Orders
             </Link>
           )}
         </nav>
 
         {/* Right Side: Icons (Mobile) */}
         <div className="flex md:hidden items-center gap-2">
-          {userPhone ? (
-            <>
-              {/* My Orders */}
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/orders')}
-                className="w-8 h-8 rounded-full bg-white/5 border border-[#4CD964]/30 flex items-center justify-center shadow-sm shrink-0"
-              >
-                <PackageSearch className="w-4 h-4 text-[#4CD964]" />
-              </motion.button>
-
-              {/* Logout */}
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="w-8 h-8 rounded-full bg-white/5 border border-[#FF4D00]/30 flex items-center justify-center shadow-sm shrink-0"
-              >
-                <LogOut className="w-4 h-4 text-[#FF4D00]" />
-              </motion.button>
-            </>
-          ) : (
+          {userPhone && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/auth')}
-              className="w-8 h-8 rounded-full bg-[#4CD964]/10 border border-[#4CD964]/30 flex items-center justify-center shadow-sm shrink-0"
+              onClick={() => navigate('/orders')}
+              className="w-8 h-8 rounded-full bg-white/5 border border-[#4CD964]/30 flex items-center justify-center shadow-sm shrink-0"
             >
-              <User className="w-4 h-4 text-[#4CD964]" />
+              <PackageSearch className="w-4 h-4 text-[#4CD964]" />
             </motion.button>
           )}
         </div>

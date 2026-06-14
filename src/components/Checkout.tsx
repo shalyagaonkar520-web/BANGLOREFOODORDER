@@ -316,19 +316,6 @@ export default function Checkout() {
         </p>
       </div>
 
-      {/* Auth Banner Upside */}
-      {!localStorage.getItem('moms_magic_user_phone') && (
-        <div className="luxury-card p-6 rounded-[30px] border-gold/20 bg-gold/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <h3 className="text-gold font-black italic uppercase tracking-widest text-sm">Want a faster checkout?</h3>
-            <p className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">Log in or sign up to save your details (Optional)</p>
-          </div>
-          <button onClick={() => navigate('/auth')} type="button" className="px-6 py-3 bg-gold text-black font-black uppercase tracking-[3px] text-[10px] rounded-xl hover:scale-105 transition-transform whitespace-nowrap shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-            Login / Sign Up
-          </button>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-12">
         {/* User Info */}
         <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">

@@ -23,7 +23,6 @@ const CelebrationHub = lazy(() => import('./components/CelebrationHub'));
 const CelebrationDesign = lazy(() => import('./components/CelebrationDesign'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const BarMenuPage = lazy(() => import('./components/BarMenuPage'));
-const AuthPage = lazy(() => import('./components/AuthPage'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 
 // Store
@@ -145,7 +144,6 @@ export default function App() {
                     <Route path="/about" element={<AboutFounder />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="/bar-menu" element={<BarMenuPage />} />
-                    <Route path="/auth" element={<AuthPage />} />
                     <Route path="/orders" element={<OrdersPage />} />
                   </Routes>
                 </Suspense>
