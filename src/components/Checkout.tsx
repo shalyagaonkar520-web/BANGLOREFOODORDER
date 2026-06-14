@@ -76,7 +76,14 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  let deliveryCharge = distanceKm <= 0 ? 0 : distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
+  let deliveryCharge = 0;
+  if (distanceKm > 0) {
+    if (distanceKm <= 5) {
+      deliveryCharge = distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
+    } else {
+      deliveryCharge = 50 + Math.ceil(distanceKm - 5) * 20;
+    }
+  }
   if (isBulkOrder) deliveryCharge = 0;
   const grandTotal = subtotal + deliveryCharge;
 
@@ -104,7 +111,12 @@ export default function Checkout() {
     if (!formData.name.trim()) { toast.error('Please enter your name'); return; }
     if (!formData.phone.trim() || formData.phone.length < 10) { toast.error('Please enter a valid phone number'); return; }
     if (!deliveryLocation) { toast.error('Please select a delivery location'); openLocationPicker(); return; }
-    if (deliveryLocation.distance > 5) { toast.error('Sorry, not deliverable (location is >5km)'); return; }
+    if (deliveryLocation.distance > 12) { toast.error('Sorry, not deliverable (location is >12km)'); return; }
+    
+    if (distanceKm > 5 && paymentMethod === 'cod') {
+      toast.error('Cash on Delivery is not available for deliveries above 5km. Please select Pay Online.');
+      return;
+    }
 
     if (isBulkOrder) {
       // Event date validation removed
@@ -447,8 +459,15 @@ export default function Checkout() {
               </button>
               <button
                 type="button"
-                onClick={() => setPaymentMethod('cod')}
+                onClick={() => {
+                  if (distanceKm > 5) {
+                    toast.error('COD is not available beyond 5km. Please pay online.');
+                    return;
+                  }
+                  setPaymentMethod('cod');
+                }}
                 className={`py-5 rounded-2xl border font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-3 ${
+                  distanceKm > 5 ? 'opacity-40 cursor-not-allowed bg-matte-black/50 border-white/5 text-white/20' :
                   paymentMethod === 'cod'
                     ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(212,175,55,0.2)]'
                     : 'bg-matte-black/50 border-white/10 text-white/40 hover:border-white/30'
