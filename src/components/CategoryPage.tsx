@@ -21,7 +21,6 @@ const getStableRating = (id: string | number) => {
 
 // Swish realistic category metadata (uses photographic food assets)
 const CATEGORIES_DATA = [
-  { id: 'Combos', name: 'Combo Offers', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80', count: 5 },
   { id: 'Fast Food', name: 'Fast Food', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', count: 15 },
   { id: 'Rice & Noodles', name: 'Rice & Noodles', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=200&q=80', count: 18 },
   { id: 'Biryani', name: 'Biryani', image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=200&q=80', count: 18 },
@@ -99,34 +98,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
     });
   };
 
-  // Map Combo Offers to standard food format
-  const combos = settings?.comboOffers || [];
-  const activeCombos = combos.filter(combo => {
-    if (!combo.isActive) return false;
-    if (combo.expiryDate) {
-      const now = new Date();
-      const expiry = new Date(combo.expiryDate);
-      expiry.setHours(23, 59, 59, 999);
-      if (now > expiry) return false;
-    }
-    return true;
-  });
-
-  const mappedCombos = activeCombos.map((combo): any => ({
-    id: combo.id,
-    name: combo.name,
-    price: combo.offerPrice,
-    originalPrice: combo.regularPrice,
-    category: 'Combos',
-    type: 'food',
-    image: combo.image || '/chicken_biryani_new.png',
-    description: combo.items.join(' + '),
-    isVeg: combo.name.toLowerCase().includes('veg'),
-    isCombo: true
-  }));
-
-  // Combine Combos with MENU_ITEMS - putting combos at the top
-  const allProducts = [...mappedCombos, ...MENU_ITEMS];
+  const allProducts = [...MENU_ITEMS];
 
   // Filter items based on selected category and search query
   const filteredProducts = allProducts.filter(item => {
@@ -135,12 +107,8 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
     return matchesCategory && matchesSearch;
   });
 
-  // Separate combos and standard products, sorting both by price low to high
-  const comboProducts = filteredProducts.filter(item => item.isCombo).sort((a, b) => a.price - b.price);
-  const standardProducts = filteredProducts.filter(item => !item.isCombo).sort((a, b) => a.price - b.price);
-
-  // Combine so combos always appear at the starting/beginning of all page filters
-  const displayedProducts = [...comboProducts, ...standardProducts];
+  // Sort by price low to high
+  const displayedProducts = filteredProducts.sort((a, b) => a.price - b.price);
 
   // Split into Veg and Non-Veg columns so all products are organized cleanly
   const vegProducts = displayedProducts.filter(product => product.isVeg);
@@ -153,24 +121,15 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
 
   const renderProductCard = (product: any) => {
     const inCart = cartItems.find(i => i.id === product.id);
-    const isCombo = product.isCombo;
     
     return (
       <div 
         key={product.id} 
-        className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] ${
-          isCombo 
-            ? 'border-amber-400 bg-gradient-to-b from-[#1A150D] via-[#0E0F14] to-[#0B0E14] shadow-[0_0_20px_rgba(255,209,102,0.25)] animate-gold-blink border-2' 
-            : 'bg-[#0B0E14] border-white/5'
-        }`}
+        className={`border rounded-[20px] p-2.5 flex flex-col justify-between relative shadow-[0_8px_25px_rgba(0,0,0,0.5)] group transition-all duration-300 hover:scale-[1.02] bg-[#0B0E14] border-white/5`}
       >
         {/* Badges / Indicators */}
         <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1">
-          {isCombo ? (
-            <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[6.5px] sm:text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md animate-pulse border border-yellow-300/30 shrink-0">
-              ⭐ Combo
-            </span>
-          ) : product.fires && product.fires >= 2 ? (
+          {product.fires && product.fires >= 2 ? (
             <span className="bg-red-500 text-white text-[6px] sm:text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-md self-start shrink-0">
               🔥 Hot
             </span>
@@ -189,9 +148,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
         {/* Title & Description */}
         <div className="text-left flex-1 flex flex-col justify-between mt-1 px-1">
           <div>
-            <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors ${
-              isCombo ? 'text-amber-300' : 'text-white'
-            }`}>
+            <h4 className={`text-[12px] sm:text-[13px] font-extrabold truncate tracking-tight mb-0.5 group-hover:text-[#4CD964] transition-colors text-white`}>
               {product.name}
             </h4>
             {product.description && (
@@ -203,12 +160,8 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
           
           {/* Price and Ratings */}
           <div className="flex items-center justify-between pt-1">
-            <p className={`text-[12px] sm:text-[13px] font-black ${
-              isCombo ? 'text-amber-400' : 'text-white'
-            }`}>₹{product.price}</p>
-            <div className={`flex items-center gap-0.5 ${
-              isCombo ? 'text-amber-400' : 'text-amber-500'
-            }`}>
+            <p className={`text-[12px] sm:text-[13px] font-black text-white`}>₹{product.price}</p>
+            <div className={`flex items-center gap-0.5 text-amber-500`}>
               <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
               <span className="text-[9px] sm:text-[10px] font-extrabold">{getStableRating(product.id)}</span>
             </div>
@@ -347,23 +300,14 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
         <section className="mt-8 px-4 grid grid-cols-2 gap-4">
           {(activeDietTab === 'all' ? displayedProducts : activeDietTab === 'veg' ? vegProducts : nonVegProducts).map((product: any) => {
             const inCart = cartItems.find(i => i.id === product.id);
-            const isCombo = product.isCombo;
             return (
               <article key={product.id} className="bg-[#1a1a1a] rounded-[2.5rem] p-3 border border-[#262626] shadow-[0_4px_20px_rgba(250,204,21,0.05)] relative overflow-hidden flex flex-col justify-between">
-                {isCombo && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[2px] bg-[#facc15] opacity-50"></div>
-                )}
                 <div>
                   <div className="relative rounded-3xl overflow-hidden aspect-square">
                     <img alt={product.name} className="w-full h-full object-cover" src={product.image} />
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
                       {product.isVeg && (
                         <span className="bg-emerald-400/20 text-emerald-400 text-[8px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30 backdrop-blur-md uppercase">Pure Veg</span>
-                      )}
-                      {isCombo && (
-                        <span className="bg-[#facc15] text-black text-[8px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 uppercase">
-                          Royal Choice <span>✦</span>
-                        </span>
                       )}
                     </div>
                   </div>
