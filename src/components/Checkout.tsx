@@ -216,9 +216,12 @@ export default function Checkout() {
           createdAt: serverTimestamp(),
           instructions: formData.additionalMessage.trim()
         };
-        await addDoc(collection(db, 'orders'), orderData);
+        // Do not await this. If Firestore hangs, we still want Telegram/WhatsApp to work!
+        addDoc(collection(db, 'orders'), orderData).catch(dbErr => {
+          console.error('Failed to save order to db:', dbErr);
+        });
       } catch (dbErr) {
-        console.error('Failed to save order to db:', dbErr);
+        console.error('Failed to construct order data:', dbErr);
       }
       // --------------------------------
 
@@ -226,7 +229,7 @@ export default function Checkout() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: waMessage, parse_mode: 'Markdown' })
-      });
+      }).catch(err => console.error("Telegram error:", err));
 
       if (isBulkOrder) {
         resetBulkOrder();
