@@ -74,6 +74,14 @@ export default function Checkout() {
     }
   }, []);
 
+  // Force Pay Online for distances > 5km
+  React.useEffect(() => {
+    const distanceKm = deliveryLocation?.distance ?? 0;
+    if (distanceKm > 5) {
+      setPaymentMethod('online');
+    }
+  }, [deliveryLocation]);
+
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
   let deliveryCharge = 0;
