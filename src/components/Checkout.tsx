@@ -11,6 +11,8 @@ import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -177,6 +179,28 @@ export default function Checkout() {
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
       setWaLink(waUrl);
 
+      // --- SAVE ORDER TO FIRESTORE ---
+      try {
+        const orderData = {
+          userName: formData.name.trim(),
+          userPhone: formData.phone.trim(),
+          orderType: isBulkOrder ? 'bulk' : 'regular',
+          items: activeItems,
+          subtotal,
+          deliveryCharge,
+          grandTotal,
+          paymentMethod: paymentMethod,
+          paymentId: paymentId || null,
+          deliveryLocation: deliveryLocation,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          instructions: formData.additionalMessage.trim()
+        };
+        await addDoc(collection(db, 'orders'), orderData);
+      } catch (dbErr) {
+        console.error('Failed to save order to db:', dbErr);
+      }
+      // --------------------------------
 
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
@@ -202,7 +226,49 @@ export default function Checkout() {
       }
     };
 
-    await completeOrderProcess(undefined);
+    if (paymentMethod === 'online') {
+      const loadRazorpay = () => {
+        return new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const res = await loadRazorpay();
+      if (!res) {
+        toast.error('Failed to load Razorpay SDK. Please check your connection.');
+        return;
+      }
+
+      const options = {
+        key: 'rzp_live_T1Y1yu09Jbjo6b',
+        amount: grandTotal * 100,
+        currency: 'INR',
+        name: 'Moms Magic',
+        description: 'Elite Food Order',
+        handler: async function (response: any) {
+          await completeOrderProcess(response.razorpay_payment_id);
+        },
+        prefill: {
+          name: formData.name,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#D4AF37'
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        toast.error('Payment Failed: ' + response.error.description);
+      });
+      rzp.open();
+    } else {
+      await completeOrderProcess(undefined);
+    }
   };
 
   if (orderSent) {
@@ -229,6 +295,19 @@ export default function Checkout() {
           {isBulkOrder ? 'Confirm your exclusive event logistics' : 'Finalize your elite culinary delivery'}
         </p>
       </div>
+
+      {/* Auth Banner Upside */}
+      {!localStorage.getItem('moms_magic_user_phone') && (
+        <div className="luxury-card p-6 rounded-[30px] border-gold/20 bg-gold/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <h3 className="text-gold font-black italic uppercase tracking-widest text-sm">Want a faster checkout?</h3>
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-[2px]">Log in or sign up to save your details (Optional)</p>
+          </div>
+          <button onClick={() => navigate('/auth')} type="button" className="px-6 py-3 bg-gold text-black font-black uppercase tracking-[3px] text-[10px] rounded-xl hover:scale-105 transition-transform whitespace-nowrap shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+            Login / Sign Up
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-12">
         {/* User Info */}
@@ -351,6 +430,34 @@ export default function Checkout() {
             </div>
           </div>
 
+          {/* Payment Method Selector */}
+          <div className="space-y-4 mb-10">
+            <h3 className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Payment Method</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('online')}
+                className={`py-5 rounded-2xl border font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-3 ${
+                  paymentMethod === 'online'
+                    ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(212,175,55,0.2)]'
+                    : 'bg-matte-black/50 border-white/10 text-white/40 hover:border-white/30'
+                }`}
+              >
+                Pay Online
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cod')}
+                className={`py-5 rounded-2xl border font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-3 ${
+                  paymentMethod === 'cod'
+                    ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(212,175,55,0.2)]'
+                    : 'bg-matte-black/50 border-white/10 text-white/40 hover:border-white/30'
+                }`}
+              >
+                Cash on Delivery
+              </button>
+            </div>
+          </div>
 
           <button 
             type="submit" 

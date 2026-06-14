@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils } from 'lucide-react';
+import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils, LogOut, PackageSearch } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate, Link } from 'react-router-dom';
+import { auth } from '../firebase';
 
 
 export default function Header() {
   const { deliveryLocation, openLocationPicker } = useLocationStore();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const userPhone = localStorage.getItem('moms_magic_user_phone');
+  const handleLogout = () => {
+    localStorage.removeItem('moms_magic_user_phone');
+    localStorage.removeItem('moms_magic_user_name');
+    auth.signOut();
+    window.location.reload();
+  };
 
   return (
     <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
@@ -42,6 +51,20 @@ export default function Header() {
           <Link to="/bulk" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
             <PartyPopper className="w-3.5 h-3.5 text-[#4CD964]" /> Party Specials
           </Link>
+          {userPhone ? (
+            <>
+              <Link to="/orders" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
+                <PackageSearch className="w-3.5 h-3.5 text-[#4CD964]" /> My Orders
+              </Link>
+              <button onClick={handleLogout} className="text-xs font-black uppercase tracking-widest text-[#FF4D00]/70 hover:text-[#FF4D00] transition-colors flex items-center gap-1.5">
+                <LogOut className="w-3.5 h-3.5 text-[#FF4D00]" /> Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/auth" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#4CD964]" /> Login / Signup
+            </Link>
+          )}
         </nav>
 
         {/* Right Side: Icons */}
@@ -128,6 +151,31 @@ export default function Header() {
                   >
                     <PartyPopper className="w-4 h-4 text-[#4CD964]" /> Party Specials
                   </Link>
+                  {userPhone ? (
+                    <>
+                      <Link 
+                        to="/orders" 
+                        onClick={() => setIsDrawerOpen(false)}
+                        className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#4CD964] transition-colors flex items-center gap-3"
+                      >
+                        <PackageSearch className="w-4 h-4 text-[#4CD964]" /> My Orders
+                      </Link>
+                      <button 
+                        onClick={() => { handleLogout(); setIsDrawerOpen(false); }}
+                        className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#FF4D00] transition-colors flex items-center gap-3 w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4 text-[#FF4D00]" /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link 
+                      to="/auth" 
+                      onClick={() => setIsDrawerOpen(false)}
+                      className="p-3.5 bg-white/[0.02] border border-white/5 rounded-2xl text-xs font-black uppercase tracking-wider text-white hover:text-[#4CD964] transition-colors flex items-center gap-3"
+                    >
+                      <User className="w-4 h-4 text-[#4CD964]" /> Login / Signup
+                    </Link>
+                  )}
                 </div>
               </div>
 
