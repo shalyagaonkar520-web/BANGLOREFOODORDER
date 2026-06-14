@@ -11,8 +11,7 @@ import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 
 const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
 const TELEGRAM_CHAT_ID = '-1003803637741';
@@ -199,9 +198,10 @@ export default function Checkout() {
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
       setWaLink(waUrl);
 
-      // --- SAVE ORDER TO FIRESTORE ---
+      // --- SAVE ORDER LOCALLY ---
       try {
         const orderData = {
+          id: Date.now().toString(),
           userName: formData.name.trim(),
           userPhone: formData.phone.trim(),
           orderType: isBulkOrder ? 'bulk' : 'regular',
@@ -213,15 +213,14 @@ export default function Checkout() {
           paymentId: paymentId || null,
           deliveryLocation: deliveryLocation,
           status: 'pending',
-          createdAt: serverTimestamp(),
+          createdAt: new Date().toISOString(),
           instructions: formData.additionalMessage.trim()
         };
-        // Do not await this. If Firestore hangs, we still want Telegram/WhatsApp to work!
-        addDoc(collection(db, 'orders'), orderData).catch(dbErr => {
-          console.error('Failed to save order to db:', dbErr);
-        });
-      } catch (dbErr) {
-        console.error('Failed to construct order data:', dbErr);
+        const existingOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+        existingOrders.push(orderData);
+        localStorage.setItem('moms_magic_orders', JSON.stringify(existingOrders));
+      } catch (err) {
+        console.error('Failed to construct order data:', err);
       }
       // --------------------------------
 

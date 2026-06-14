@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils, LogOut, PackageSearch } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../firebase';
+
 
 
 export default function Header() {

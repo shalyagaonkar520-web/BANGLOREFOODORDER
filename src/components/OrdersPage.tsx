@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, PackageSearch, Loader2, ArrowRight } from 'lucide-react';
+import { ChevronLeft, PackageSearch, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useSEO } from '../utils/seo';
 
 interface OrderItem {
@@ -36,21 +34,14 @@ export default function OrdersPage() {
       return;
     }
 
-    const fetchOrders = async () => {
+    const fetchOrders = () => {
       try {
-        const q = query(
-          collection(db, 'orders'),
-          where('userPhone', '==', userPhone),
-          orderBy('createdAt', 'desc')
-        );
-        const querySnapshot = await getDocs(q);
-        const fetchedOrders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedOrders.push({ id: doc.id, ...doc.data() } as Order);
-        });
-        setOrders(fetchedOrders);
+        const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+        const userOrders = storedOrders.filter((o: any) => o.userPhone === userPhone);
+        userOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setOrders(userOrders);
       } catch (err) {
-        console.error('Error fetching orders:', err);
+        console.error('Error loading orders:', err);
       } finally {
         setLoading(false);
       }
@@ -71,9 +62,10 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-matte-black p-6 flex flex-col items-center justify-center space-y-6">
         <PackageSearch className="w-20 h-20 text-[#4CD964]/50" />
-        <h2 className="text-2xl font-black text-white italic uppercase text-center">Login to view orders</h2>
-        <button onClick={() => navigate('/auth')} className="px-8 py-3 bg-[#4CD964] text-black font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(76,217,100,0.2)]">
-          Login / Signup
+        <h2 className="text-xl font-black text-white italic uppercase text-center">No Order History Found</h2>
+        <p className="text-white/40 text-xs font-bold text-center">Place your first order to start tracking!</p>
+        <button onClick={() => navigate('/food')} className="px-8 py-3 bg-[#4CD964] text-black font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(76,217,100,0.2)]">
+          Browse Menu
         </button>
       </div>
     );
@@ -112,7 +104,7 @@ export default function OrdersPage() {
                   <div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Order ID: {order.id.slice(0, 8)}</p>
                     <p className="text-white text-sm font-bold mt-1">
-                      {order.createdAt?.seconds ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Just now'}
                     </p>
                   </div>
                   <div className="text-right">
