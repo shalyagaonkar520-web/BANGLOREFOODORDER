@@ -542,8 +542,8 @@ export const MENU_ITEMS: Product[] = [
   // 🍞 ROTI
   {
     id: 'rt-1',
-    name: 'Chapati',
-    price: 25,
+    name: '4 Chapati',
+    price: 49,
     category: 'Roti',
     type: 'food',
     image: '/chapati.jpg',
@@ -554,8 +554,8 @@ export const MENU_ITEMS: Product[] = [
     isVeg: true},
   {
     id: 'rt-2',
-    name: 'Parota',
-    price: 35,
+    name: '2 Parota',
+    price: 39,
     category: 'Roti',
     type: 'food',
     image: '/parota.jpg',
@@ -566,8 +566,8 @@ export const MENU_ITEMS: Product[] = [
     isVeg: true},
   {
     id: 'rt-3',
-    name: 'Butter Parota',
-    price: 35,
+    name: 'Butter Roti',
+    price: 29,
     category: 'Roti',
     type: 'food',
     image: '/butter_parota.jpg',
@@ -578,8 +578,8 @@ export const MENU_ITEMS: Product[] = [
     isVeg: true},
   {
     id: 'rt-4',
-    name: 'Tandoor Roti',
-    price: 35,
+    name: '2 Tandoori Roti',
+    price: 49,
     category: 'Roti',
     type: 'food',
     image: '/tandoor_roti_real.png',
@@ -590,8 +590,8 @@ export const MENU_ITEMS: Product[] = [
     isVeg: true},
   {
     id: 'rt-6',
-    name: 'Butter Roti',
-    price: 50,
+    name: '2 Butter Roti',
+    price: 59,
     category: 'Roti',
     type: 'food',
     image: '/butter_roti.png',
