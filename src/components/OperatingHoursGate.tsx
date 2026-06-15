@@ -11,10 +11,12 @@ export default function OperatingHoursGate({ children }: { children: React.React
 
   const location = useLocation();
   const isBulkOrder = localStorage.getItem('moms_magic_order_type') === 'bulk';
-  const isFoodRoute = location.pathname === '/food' || 
-                      location.pathname === '/grocery' ||
-                      (location.pathname === '/cart' && !isBulkOrder) ||
-                      (location.pathname === '/checkout' && !isBulkOrder);
+  
+  // Apply operating hours to all main consumer routes
+  const isConsumerRoute = !location.pathname.startsWith('/admin') &&
+                          !location.pathname.startsWith('/feedback') &&
+                          !location.pathname.startsWith('/about') &&
+                          !(isBulkOrder && (location.pathname === '/checkout' || location.pathname === '/cart'));
 
   useEffect(() => {
     const checkTime = () => {
@@ -22,7 +24,7 @@ export default function OperatingHoursGate({ children }: { children: React.React
       setCurrentTime(now);
       
       const isBypassed = location.pathname.startsWith('/admin');
-      if (isBypassed || !isFoodRoute) {
+      if (isBypassed || !isConsumerRoute) {
         setIsOpen(true);
         return;
       }
@@ -47,7 +49,7 @@ export default function OperatingHoursGate({ children }: { children: React.React
     checkTime();
     const interval = setInterval(checkTime, 10000); // Check every 10 seconds for real-time responsiveness
     return () => clearInterval(interval);
-  }, [isFoodRoute, settings, location.pathname]);
+  }, [isConsumerRoute, settings, location.pathname]);
 
   if (isOpen) {
     return <>{children}</>;
