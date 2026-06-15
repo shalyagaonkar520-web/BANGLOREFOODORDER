@@ -23,7 +23,15 @@ export default function OperatingHoursGate({ children }: { children: React.React
       const now = new Date();
       setCurrentTime(now);
       
-      const isBypassed = location.pathname.startsWith('/admin');
+      const adminToken = localStorage.getItem('moms_magic_admin_token');
+      const userPhone = localStorage.getItem('moms_magic_user_phone');
+      const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
+                      userPhone === '+917483187572' || 
+                      userPhone === '+919606001790' || 
+                      userPhone === '7483187572' || 
+                      userPhone === '9606001790';
+
+      const isBypassed = location.pathname.startsWith('/admin') || isAdmin;
       if (isBypassed || !isConsumerRoute) {
         setIsOpen(true);
         return;
