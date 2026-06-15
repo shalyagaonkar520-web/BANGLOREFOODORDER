@@ -39,7 +39,11 @@ export default function OperatingHoursGate({ children }: { children: React.React
       const minutes = now.getMinutes().toString().padStart(2, '0');
       const currentTimeStr = `${hours}:${minutes}`;
 
-      if (currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime) {
+      const isWithinHours = settings.openTime <= settings.closeTime
+        ? (currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime)
+        : (currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime);
+
+      if (isWithinHours) {
         setIsOpen(true);
       } else {
         setIsOpen(false);
