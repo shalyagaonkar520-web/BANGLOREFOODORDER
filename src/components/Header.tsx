@@ -1,16 +1,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils, LogOut, PackageSearch } from 'lucide-react';
+import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils, LogOut, PackageSearch, Clock } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate, Link } from 'react-router-dom';
-
-
+import { useSystemStore } from '../store/systemStore';
 
 export default function Header() {
   const { deliveryLocation, openLocationPicker } = useLocationStore();
   const navigate = useNavigate();
+  const settings = useSystemStore(state => state.settings);
 
   const userPhone = localStorage.getItem('moms_magic_user_phone');
+
+  const formatTime12h = (time24: string) => {
+    try {
+      const [hStr, mStr] = time24.split(':');
+      const h = parseInt(hStr, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const displayHours = h % 12 || 12;
+      return `${displayHours}:${mStr} ${ampm}`;
+    } catch (e) {
+      return time24;
+    }
+  };
 
   return (
     <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
@@ -22,7 +34,9 @@ export default function Header() {
             <span className="bg-[#4CD964]/10 text-[#4CD964] text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1">
               ⚡ 10 Minutes
             </span>
-
+            <span className="bg-white/5 border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-[#4CD964]" /> {formatTime12h(settings.openTime)} - {formatTime12h(settings.closeTime)}
+            </span>
           </div>
           
           {/* Location Picker Dropdown */}

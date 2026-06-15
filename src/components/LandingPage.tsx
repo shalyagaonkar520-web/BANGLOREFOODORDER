@@ -1,12 +1,13 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lock, Quote, Star } from 'lucide-react';
+import { ArrowRight, Lock, Quote, Star, Clock } from 'lucide-react';
 import { DUMMY_REVIEWS } from '../data/reviews';
 import Header from './Header';
 import { useCartStore } from '../store/cartStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
+import { useSystemStore } from '../store/systemStore';
 
 export default function LandingPage() {
   useSEO(
@@ -16,6 +17,19 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const clearCart = useCartStore(state => state.clearCart);
+  const settings = useSystemStore(state => state.settings);
+
+  const formatTime12h = (time24: string) => {
+    try {
+      const [hStr, mStr] = time24.split(':');
+      const h = parseInt(hStr, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const displayHours = h % 12 || 12;
+      return `${displayHours}:${mStr} ${ampm}`;
+    } catch (e) {
+      return time24;
+    }
+  };
 
   const handleCardClick = (card: typeof cards[0]) => {
     if (card.comingSoon) return;
@@ -62,13 +76,17 @@ export default function LandingPage() {
       <Header />
 
       {/* BRANDING HEADER BANNER */}
-      <div className="px-6 pt-8 pb-4 text-center">
+      <div className="px-6 pt-8 pb-4 text-center flex flex-col items-center">
         <h1 className="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none animate-shining-blink">
           Moms Magic 2.0
         </h1>
         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
           Taste the magic of home • Yellapur's Premium Selection
         </p>
+        <div className="mt-4 inline-flex items-center gap-2 bg-[#4CD964]/10 border border-[#4CD964]/20 rounded-full px-4 py-1.5 text-[11px] text-[#4CD964] font-black uppercase tracking-wider shadow-[0_4px_15px_rgba(76,217,100,0.15)] animate-pulse">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Hours: {formatTime12h(settings.openTime)} - {formatTime12h(settings.closeTime)}</span>
+        </div>
       </div>
 
       {/* 3D Menu Cards Collection */}
