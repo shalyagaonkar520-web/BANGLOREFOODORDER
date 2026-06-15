@@ -17,7 +17,7 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = 0; // Free delivery
+  const deliveryCharge = distanceKm <= 5 ? 0 : Math.ceil(distanceKm - 5) * 20;
   const grandTotal = total + deliveryCharge;
   
   const adminToken = localStorage.getItem('moms_magic_admin_token');
@@ -188,8 +188,8 @@ export default function CartPage() {
                     <Truck className="w-4 h-4 text-gold" />
                     <span>Delivery</span>
                   </div>
-                  <span className="text-[#4CD964] text-lg font-black italic tracking-tighter">
-                    FREE 🎉
+                  <span className={`text-lg font-black italic tracking-tighter ${deliveryCharge === 0 ? 'text-[#4CD964]' : 'text-white'}`}>
+                    {deliveryCharge === 0 ? 'FREE 🎉' : `₹${deliveryCharge}`}
                   </span>
                 </div>
                 <div className="h-[1px] bg-white/5 shadow-inner" />
