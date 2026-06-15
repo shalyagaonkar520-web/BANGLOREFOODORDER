@@ -19,6 +19,22 @@ export default function LandingPage() {
   const clearCart = useCartStore(state => state.clearCart);
   const settings = useSystemStore(state => state.settings);
 
+  const isStoreOpen = () => {
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+      return false;
+    }
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    if (settings.openTime <= settings.closeTime) {
+      return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+    } else {
+      return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+    }
+  };
+
   const formatTime12h = (time24: string) => {
     try {
       const [hStr, mStr] = time24.split(':');
@@ -83,9 +99,31 @@ export default function LandingPage() {
         <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
           Taste the magic of home • Yellapur's Premium Selection
         </p>
-        <div className="mt-4 inline-flex items-center gap-2 bg-[#4CD964]/10 border border-[#4CD964]/20 rounded-full px-4 py-1.5 text-[11px] text-[#4CD964] font-black uppercase tracking-wider shadow-[0_4px_15px_rgba(76,217,100,0.15)] animate-pulse">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Hours: {formatTime12h(settings.openTime)} - {formatTime12h(settings.closeTime)}</span>
+
+        {/* Current Status & Today's Operating Hours Display */}
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-4 bg-white/5 border border-white/10 rounded-[28px] px-6 py-4 shadow-xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Current Status:</span>
+              {isStoreOpen() ? (
+                <span className="bg-[#4CD964]/10 border border-[#4CD964]/25 text-[#4CD964] text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full animate-pulse flex items-center gap-1.5 shadow-[0_0_15px_rgba(76,217,100,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-[#4CD964]"></span>
+                  Open Now
+                </span>
+              ) : (
+                <span className="bg-red-500/10 border border-red-500/25 text-red-500 text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  Closed
+                </span>
+              )}
+            </div>
+            <div className="hidden sm:block w-[1px] h-6 bg-white/10" />
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-[#4CD964]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Operating Hours:</span>
+              <span className="text-white text-xs font-black italic tracking-wide">{formatTime12h(settings.openTime)} – {formatTime12h(settings.closeTime)}</span>
+            </div>
+          </div>
         </div>
       </div>
 

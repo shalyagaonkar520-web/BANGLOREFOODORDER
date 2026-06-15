@@ -18,6 +18,42 @@ export default function OperatingHoursGate({ children }: { children: React.React
                           !location.pathname.startsWith('/about') &&
                           !(isBulkOrder && (location.pathname === '/checkout' || location.pathname === '/cart'));
 
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    if (isOpen) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const [openH, openM] = settings.openTime.split(':').map(Number);
+      
+      let targetDate = new Date(now);
+      targetDate.setHours(openH, openM, 0, 0);
+
+      // If target time is in the past for today, target is tomorrow
+      if (now >= targetDate) {
+        targetDate.setDate(targetDate.getDate() + 1);
+      }
+
+      const diffMs = targetDate.getTime() - now.getTime();
+      const secs = Math.floor((diffMs / 1000) % 60);
+      const mins = Math.floor((diffMs / (1000 * 60)) % 60);
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+
+      const formatted = [
+        hours.toString().padStart(2, '0'),
+        mins.toString().padStart(2, '0'),
+        secs.toString().padStart(2, '0')
+      ].join(':');
+
+      setTimeLeft(formatted);
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen, settings.openTime]);
+
   useEffect(() => {
     const checkTime = () => {
       const now = new Date();
@@ -114,25 +150,41 @@ export default function OperatingHoursGate({ children }: { children: React.React
         </motion.div>
 
         {/* Title */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="text-4xl md:text-5xl font-black italic tracking-tighter text-white uppercase leading-none"
           >
-            <>Sorry, We're <br /><span className="text-brand">Closed</span> Now</>
+            <>🔴 Mom's Magic is <br /><span className="text-brand">Currently Closed</span></>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="text-white/40 text-sm md:text-base font-bold italic max-w-xs mx-auto leading-relaxed"
+            className="text-white/60 text-sm md:text-base font-bold italic max-w-sm mx-auto leading-relaxed"
           >
-            "We're currently not accepting orders. Please come back during our operating hours!"
+            "Orders are accepted only between 12:30 PM and 10:30 PM. Please visit again during business hours."
           </motion.p>
         </div>
+
+        {/* Countdown Timer */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-white/5 rounded-[28px] p-6 border border-white/10 space-y-3 backdrop-blur-md"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-brand animate-ping" />
+            <span className="text-white/40 font-black uppercase tracking-[4px] text-[10px]">Next Opening In</span>
+          </div>
+          <div className="text-4xl md:text-5xl font-mono font-black tracking-widest text-[#4CD964] drop-shadow-[0_0_15px_rgba(76,217,100,0.3)]">
+            {timeLeft}
+          </div>
+        </motion.div>
 
         {/* Operating Hours Info */}
         <motion.div

@@ -62,6 +62,37 @@ export default function Checkout() {
   // Load saved user data and scroll to top
   React.useEffect(() => {
     window.scrollTo(0, 0);
+
+    const adminToken = localStorage.getItem('moms_magic_admin_token');
+    const userPhone = localStorage.getItem('moms_magic_user_phone');
+    const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
+                    userPhone === '+917483187572' || 
+                    userPhone === '+919606001790' || 
+                    userPhone === '7483187572' || 
+                    userPhone === '9606001790';
+    
+    const isStoreOpen = () => {
+      if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+        return false;
+      }
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const currentTimeStr = `${hours}:${minutes}`;
+
+      if (settings.openTime <= settings.closeTime) {
+        return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+      } else {
+        return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+      }
+    };
+
+    if (!isStoreOpen() && !isAdmin) {
+      toast.error('Ordering is closed! Redirecting to menu.', { id: 'ordering-closed' });
+      navigate('/food');
+      return;
+    }
+
     const savedName = localStorage.getItem('moms_magic_user_name');
     const savedPhone = localStorage.getItem('moms_magic_user_phone');
     if (savedName || savedPhone) {
@@ -71,7 +102,7 @@ export default function Checkout() {
         phone: savedPhone || ''
       }));
     }
-  }, []);
+  }, [settings, navigate]);
 
   // Force Pay Online for distances > 5km
   React.useEffect(() => {
@@ -107,8 +138,32 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check system status
-    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+    const adminToken = localStorage.getItem('moms_magic_admin_token');
+    const userPhone = localStorage.getItem('moms_magic_user_phone');
+    const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
+                    userPhone === '+917483187572' || 
+                    userPhone === '+919606001790' || 
+                    userPhone === '7483187572' || 
+                    userPhone === '9606001790';
+
+    const isStoreOpen = () => {
+      if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+        return false;
+      }
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const currentTimeStr = `${hours}:${minutes}`;
+
+      if (settings.openTime <= settings.closeTime) {
+        return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+      } else {
+        return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+      }
+    };
+
+    // Check system status and timing bounds
+    if ((!isStoreOpen() || settings.websiteStatus === 'OFF' || settings.emergencyStop) && !isAdmin) {
       toast.error('Ordering is temporarily closed! Please try again during open hours.', {
         style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
       });

@@ -9,6 +9,7 @@ import { PARTY_ITEMS, SNACKS, ICE_CAKES, NORMAL_CAKES } from '../data/partyItems
 import { MENU_ITEMS } from '../data/menuItems';
 import { Product } from '../types';
 import { useSEO } from '../utils/seo';
+import { useSystemStore } from '../store/systemStore';
 
 // NOTE: Party Specials label swap (names only):
 // - Ice Cakes  -> Normal
@@ -21,6 +22,33 @@ export default function BulkOrderPage() {
   const { addItem, items } = useCartStore();
   const [activeCategory, setActiveCategory] = useState<Category>('Normal');
   const [showUpsell, setShowUpsell] = useState(false);
+  const settings = useSystemStore(state => state.settings);
+
+  const adminToken = localStorage.getItem('moms_magic_admin_token');
+  const userPhone = localStorage.getItem('moms_magic_user_phone');
+  const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
+                  userPhone === '+917483187572' || 
+                  userPhone === '+919606001790' || 
+                  userPhone === '7483187572' || 
+                  userPhone === '9606001790';
+
+  const isStoreOpen = () => {
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+      return false;
+    }
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    if (settings.openTime <= settings.closeTime) {
+      return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+    } else {
+      return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+    }
+  };
+
+  const isClosed = !isStoreOpen() && !isAdmin;
 
   useEffect(() => {
     localStorage.setItem('moms_magic_order_type', 'bulk');
@@ -41,6 +69,12 @@ export default function BulkOrderPage() {
 
 
   const handleAddToCart = (product: Product, category: Category) => {
+    if (isClosed) {
+      toast.error('Ordering is currently closed! Please check operating hours.', {
+        style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
+      });
+      return;
+    }
     addItem(product, undefined, 1);
 
     toast.success(`${product.name} Added! 🎈`, {
@@ -204,9 +238,14 @@ export default function BulkOrderPage() {
                         </div>
                         <button 
                           onClick={() => handleAddToCart(item, activeCategory)}
-                          className="w-full py-3 bg-white/10 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-brand transition-colors active:scale-95"
+                          disabled={isClosed}
+                          className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${
+                            isClosed
+                              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                              : 'bg-white/10 hover:bg-brand active:scale-95 transition-transform'
+                          }`}
                         >
-                          Add Item
+                          {isClosed ? 'Closed' : 'Add Item'}
                         </button>
                       </div>
                     </div>

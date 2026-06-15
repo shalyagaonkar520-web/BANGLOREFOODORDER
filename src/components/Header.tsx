@@ -24,6 +24,22 @@ export default function Header() {
     }
   };
 
+  const isStoreOpen = () => {
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+      return false;
+    }
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    if (settings.openTime <= settings.closeTime) {
+      return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+    } else {
+      return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+    }
+  };
+
   return (
     <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
       <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-3">
@@ -34,6 +50,15 @@ export default function Header() {
             <span className="bg-[#4CD964]/10 text-[#4CD964] text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1">
               ⚡ 10 Minutes
             </span>
+            {isStoreOpen() ? (
+              <span className="bg-[#4CD964]/10 border border-[#4CD964]/20 text-[#4CD964] text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5 animate-pulse">
+                🟢 Open Now
+              </span>
+            ) : (
+              <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5">
+                🔴 Closed
+              </span>
+            )}
             <span className="bg-white/5 border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5">
               <Clock className="w-3 h-3 text-[#4CD964]" /> {formatTime12h(settings.openTime)} - {formatTime12h(settings.closeTime)}
             </span>

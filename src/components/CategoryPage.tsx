@@ -51,6 +51,32 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   const navigate = useNavigate();
   const { addItem, items: cartItems, updateQuantity } = useCartStore();
   const settings = useSystemStore(state => state.settings);
+
+  const adminToken = localStorage.getItem('moms_magic_admin_token');
+  const userPhone = localStorage.getItem('moms_magic_user_phone');
+  const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
+                  userPhone === '+917483187572' || 
+                  userPhone === '+919606001790' || 
+                  userPhone === '7483187572' || 
+                  userPhone === '9606001790';
+
+  const isStoreOpen = () => {
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
+      return false;
+    }
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    if (settings.openTime <= settings.closeTime) {
+      return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
+    } else {
+      return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+    }
+  };
+
+  const isClosed = !isStoreOpen() && !isAdmin;
   
   // States
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -83,6 +109,12 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   }
 
   const handledAddWithToast = (product: any) => {
+    if (isClosed) {
+      toast.error('Ordering is currently closed! Please check operating hours.', {
+        style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
+      });
+      return;
+    }
     playSound(SOUNDS.ADD_TO_CART);
     addItem(product);
     toast.success(`${product.name} added to cravings plate! 🍳`, {
@@ -194,9 +226,14 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
             ) : (
               <button 
                 onClick={() => handledAddWithToast(product)}
-                className="w-full bg-[#4CD964] hover:bg-[#3AC152] text-black font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-transform active:scale-95"
+                disabled={isClosed}
+                className={`w-full font-black text-[10px] sm:text-xs uppercase tracking-wider py-2 rounded-xl shadow-sm transition-all ${
+                  isClosed
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    : 'bg-[#4CD964] hover:bg-[#3AC152] text-black active:scale-95 transition-transform'
+                }`}
               >
-                Order Now
+                {isClosed ? 'Closed' : 'Order Now'}
               </button>
             )}
           </div>
@@ -326,8 +363,16 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
                     <button onClick={() => { playSound(SOUNDS.QUANTITY_TICK); updateQuantity(product.id, inCart.quantity + 1); }} className="font-black text-xs px-2 py-1"><Plus className="w-4 h-4"/></button>
                   </div>
                 ) : (
-                  <button onClick={() => handledAddWithToast(product)} className="w-full mt-4 bg-[#facc15] hover:bg-yellow-500 text-black font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-[#facc15]/20 active:scale-95 transition-transform">
-                    Add +
+                  <button 
+                    onClick={() => handledAddWithToast(product)}
+                    disabled={isClosed}
+                    className={`w-full mt-4 py-3 rounded-2xl text-[10px] uppercase tracking-widest font-black transition-all ${
+                      isClosed
+                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-none'
+                        : 'bg-[#facc15] hover:bg-yellow-500 text-black shadow-lg shadow-[#facc15]/20 active:scale-95 transition-transform'
+                    }`}
+                  >
+                    {isClosed ? 'Closed' : 'Add +'}
                   </button>
                 )}
               </article>
