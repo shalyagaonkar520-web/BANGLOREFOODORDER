@@ -114,15 +114,7 @@ export default function Checkout() {
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   const distanceKm = deliveryLocation?.distance ?? 0;
-  let deliveryCharge = 0;
-  if (distanceKm > 0) {
-    if (distanceKm <= 5) {
-      deliveryCharge = distanceKm <= 2 ? 20 : 20 + Math.ceil(distanceKm - 2) * 10;
-    } else {
-      deliveryCharge = 50 + Math.ceil(distanceKm - 5) * 20;
-    }
-  }
-  if (isBulkOrder) deliveryCharge = 0;
+  const deliveryCharge = 0; // 🎉 Free delivery
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -397,7 +389,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <div className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black uppercase text-text-muted border border-white/5">{distanceKm} KM DISTANCE</div>
-                  <div className="px-4 py-2 bg-gold/10 rounded-xl text-[10px] font-black uppercase text-gold border border-gold/20">{isBulkOrder ? 'FREE DELIVERY' : `₹${deliveryCharge} LOGISTICS`}</div>
+                  <div className="px-4 py-2 bg-gold/10 rounded-xl text-[10px] font-black uppercase text-gold border border-gold/20">🎉 FREE DELIVERY</div>
                 </div>
                 <button 
                   type="button" 
@@ -481,8 +473,8 @@ export default function Checkout() {
                  <Truck className="w-4 h-4 text-gold" />
                  <span>Delivery Fee</span>
               </div>
-              <span className="text-white text-xl font-black">
-                {isBulkOrder ? <span className="text-[#4CD964]">FREE</span> : `₹${deliveryCharge}`}
+              <span className="text-[#4CD964] text-xl font-black">
+                FREE 🎉
               </span>
             </div>
           </div>
