@@ -80,8 +80,19 @@ export interface CartItem extends Product {
 
 // ═══════════════════════════════════════════════════════════════
 // DELIVERY CHARGE CALCULATION
-// ₹20 per km (rounded up)
+// 0-2 km  = ₹20 (base)
+// 2-5 km  = +₹10 per km beyond 2km
+// 5+ km   = +₹20 per km beyond 5km
 // ═══════════════════════════════════════════════════════════════
 export function calculateDeliveryCharge(distanceKm: number): number {
-  return Math.ceil(distanceKm) * 20; // ₹20 per km
+  const km = Math.ceil(distanceKm);
+  let charge = 20; // base charge for 0-2 km
+  if (km > 2) {
+    const midKm = Math.min(km, 5) - 2; // km between 2 and 5
+    charge += midKm * 10;
+  }
+  if (km > 5) {
+    charge += (km - 5) * 20;
+  }
+  return charge;
 }

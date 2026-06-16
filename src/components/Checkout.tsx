@@ -115,7 +115,7 @@ export default function Checkout() {
   // ═══ DELIVERY CHARGE LOGIC ═══
   // ₹20 per km
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = Math.ceil(distanceKm) * 20;
+  const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {

@@ -17,7 +17,7 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = Math.ceil(distanceKm) * 20;
+  const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const grandTotal = total + deliveryCharge;
   
   const adminToken = localStorage.getItem('moms_magic_admin_token');
