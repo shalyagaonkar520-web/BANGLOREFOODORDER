@@ -11,9 +11,7 @@ import { Product } from '../types';
 import { useSEO } from '../utils/seo';
 import { useSystemStore } from '../store/systemStore';
 
-// NOTE: Party Specials label swap (names only):
-// - Ice Cakes  -> Normal
-// - Normal Cakes -> Ice Cake
+// Category tabs for Party Specials
 type Category = 'Normal' | 'Ice Cake' | 'Party Items' | 'Snacks';
 
 export default function BulkOrderPage() {
@@ -202,14 +200,14 @@ export default function BulkOrderPage() {
             transition={{ duration: 0.3 }}
           >
 
-            {/* Normal (Ice Cakes), Ice Cake (Normal Cakes), Party Items & Snacks */}
+            {/* Normal, Ice Cake, Party Items & Snacks */}
             {(activeCategory === 'Normal' || activeCategory === 'Ice Cake' || activeCategory === 'Party Items' || activeCategory === 'Snacks') && (
               <div className="space-y-6">
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {(
-                    activeCategory === 'Normal' ? ICE_CAKES :
-                    activeCategory === 'Ice Cake' ? NORMAL_CAKES :
+                    activeCategory === 'Normal' ? NORMAL_CAKES :
+                    activeCategory === 'Ice Cake' ? ICE_CAKES :
                     activeCategory === 'Party Items' ? PARTY_ITEMS :
                     SNACKS
                   ).map(item => (
