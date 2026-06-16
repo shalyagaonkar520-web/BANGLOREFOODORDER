@@ -80,22 +80,8 @@ export interface CartItem extends Product {
 
 // ═══════════════════════════════════════════════════════════════
 // DELIVERY CHARGE CALCULATION
-// Under 5 km = FREE 🎉
-// Above 5 km = ₹20 per km beyond 5km
+// ₹20 per km (rounded up)
 // ═══════════════════════════════════════════════════════════════
-export function isFreeDeliveryTimeActive(): boolean {
-  return false;
-}
-
 export function calculateDeliveryCharge(distanceKm: number): number {
-  if (distanceKm <= 5) return 0; // Free delivery under 5km
-  return Math.ceil(distanceKm - 5) * 20; // ₹20 per km above 5km
-}
-
-export function shouldWaiveDelivery(_items: CartItem[], _cartTotal: number, distanceKm: number): boolean {
-  return distanceKm <= 5;
-}
-
-export function isGlobalFreeDeliveryActive(): boolean {
-  return false;
+  return Math.ceil(distanceKm) * 20; // ₹20 per km
 }

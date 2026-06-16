@@ -113,9 +113,9 @@ export default function Checkout() {
   }, [deliveryLocation]);
 
   // ═══ DELIVERY CHARGE LOGIC ═══
-  // Free under 5km, ₹20/km above 5km
+  // ₹20 per km
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = distanceKm <= 5 ? 0 : Math.ceil(distanceKm - 5) * 20;
+  const deliveryCharge = Math.ceil(distanceKm) * 20;
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -226,7 +226,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ${isBulkOrder ? 'FREE' : `₹${deliveryCharge}`}`,
+        `🚚 *Delivery:* ₹${deliveryCharge}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -390,7 +390,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <div className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black uppercase text-text-muted border border-white/5">{distanceKm} KM DISTANCE</div>
-                  <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border ${deliveryCharge === 0 ? 'bg-[#4CD964]/10 text-[#4CD964] border-[#4CD964]/20' : 'bg-gold/10 text-gold border-gold/20'}`}>{deliveryCharge === 0 ? '🎉 FREE DELIVERY' : `₹${deliveryCharge} DELIVERY`}</div>
+                  <div className="px-4 py-2 rounded-xl text-[10px] font-black uppercase border bg-gold/10 text-gold border-gold/20">₹{deliveryCharge} DELIVERY</div>
                 </div>
                 <button 
                   type="button" 
@@ -474,8 +474,8 @@ export default function Checkout() {
                  <Truck className="w-4 h-4 text-gold" />
                  <span>Delivery Fee</span>
               </div>
-              <span className={`text-xl font-black ${deliveryCharge === 0 ? 'text-[#4CD964]' : 'text-white'}`}>
-                {deliveryCharge === 0 ? 'FREE 🎉' : `₹${deliveryCharge}`}
+              <span className="text-xl font-black text-white">
+                ₹{deliveryCharge}
               </span>
             </div>
           </div>
