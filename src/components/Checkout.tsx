@@ -272,10 +272,68 @@ export default function Checkout() {
       }
       // --------------------------------
 
+      // --- Telegram message (HTML format for reliability) ---
+      const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      let tgOrderDetails = '';
+      if (isBulkOrder) {
+        const selectedDecos = [
+          decoration.balloons > 0 && `${decoration.balloons}x Balloons`,
+          decoration.spray > 0 && `${decoration.spray}x Spray`,
+          decoration.candles > 0 && `${decoration.candles}x Candles`
+        ].filter(Boolean).join(', ');
+
+        tgOrderDetails = [
+          `🛒 <b>FOOD ITEMS:</b>`,
+          bulkItems.map(i => `• ${escHtml(i.name)} (${i.finalQuantity} units)`).join('\n'),
+          ``,
+          cake.required ? `🎂 <b>Cake:</b> ${escHtml(cake.size)} - "${escHtml(cake.text)}"` : '',
+          selectedDecos ? `🎈 <b>Decorations:</b> ${escHtml(selectedDecos)}` : '',
+          additionalServices.disposablePlates ? `🍽️ Disposable plates added` : '',
+          additionalServices.setupServing ? `👨‍🍳 Setup & Serving team added` : '',
+        ].filter(Boolean).join('\n');
+      } else {
+        tgOrderDetails = `🛒 <b>ITEMS:</b>\n` + cartItems.map(item => {
+          let line = `• ${item.quantity}x ${escHtml(item.name)}`;
+          if (item.items && item.items.length > 0) {
+            line += `\n  (Constituents: ${item.items.map(escHtml).join(', ')})`;
+          }
+          return line;
+        }).join('\n');
+      }
+
+      const tgNoteSection = formData.additionalMessage.trim() ? `📝 <b>Note:</b> ${escHtml(formData.additionalMessage.trim())}` : '';
+
+      const tgMessage = [
+        isBulkOrder ? `🎉 <b>NEW BULK / PARTY ORDER!</b> 🎉` : `📦 <b>NEW ORDER!</b> 📦`,
+        ``,
+        `👤 <b>Name:</b> ${escHtml(formData.name.trim())}`,
+        `📞 <b>Phone:</b> ${escHtml(formData.phone.trim())}`,
+        `📍 <b>City:</b> ${escHtml(selectedCity?.name || 'Unknown')}`,
+        `🏠 <b>Address:</b> ${escHtml(deliveryLocation.address)}`,
+        `📏 <b>Distance:</b> ${distanceKm}km`,
+        ``,
+        tgOrderDetails,
+        ``,
+        `💰 <b>Subtotal:</b> ₹${subtotal}`,
+        `🚚 <b>Delivery:</b> ₹${deliveryCharge}`,
+        `💵 <b>GRAND TOTAL:</b> ₹${grandTotal}`,
+        paymentId ? `✅ <b>PAYMENT DONE:</b> ${escHtml(paymentId)}` : `⚠️ <b>PAYMENT:</b> Cash on Delivery`,
+        ``,
+        `🗺️ <b>View Map:</b> ${mapsViewLink}`,
+        `🚗 <b>Navigate:</b> ${mapsNavLink}`,
+        tgNoteSection,
+        ``,
+        `━━━━━━━━━━━━━━━━`,
+        `🚀 <b>WANT TO ORDER AGAIN?</b>`,
+        `👉 https://momsmagic.shop`,
+        `━━━━━━━━━━━━━━━━`
+      ].filter(line => line !== '').join('\n');
+
       fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: waMessage, parse_mode: 'Markdown' })
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
       }).catch(err => console.error("Telegram error:", err));
 
       if (isBulkOrder) {
