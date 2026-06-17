@@ -433,12 +433,17 @@ export default function Checkout() {
             {activeItems.map(item => (
               <div key={item.id} className="flex items-center justify-between gap-6 p-6 bg-matte-black/30 rounded-[30px] border border-white/5">
                 <div className="flex items-center gap-5">
+                  {item.image && (
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 shrink-0">
                     <img src={item.image} className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
                   </div>
+                  )}
                   <div>
                     <h4 className="font-black text-base text-white italic uppercase tracking-tighter">{item.name}</h4>
                     <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">{isBulkOrder ? (item as any).finalQuantity : (item as any).quantity} Unit(s)</p>
+                    {item.id?.startsWith('free-') && (
+                      <span className="inline-block mt-1 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-black uppercase tracking-[2px] text-emerald-400">🎁 Complimentary</span>
+                    )}
                     {item.items && item.items.length > 0 && (
                       <ul className="mt-2 space-y-0.5 text-left">
                         {item.items.map((subItem, sIdx) => (
@@ -452,7 +457,11 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-black text-gold italic">₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}</p>
+                  {item.id?.startsWith('free-') ? (
+                    <p className="text-lg font-black text-emerald-400 italic">FREE</p>
+                  ) : (
+                    <p className="text-xl font-black text-gold italic">₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}</p>
+                  )}
                 </div>
               </div>
             ))}

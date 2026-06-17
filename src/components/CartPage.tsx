@@ -111,15 +111,20 @@ export default function CartPage() {
                     transition={{ delay: idx * 0.1 }}
                     className="relative group luxury-card rounded-[50px] p-8 flex flex-col md:flex-row items-center gap-10 border-white/5 hover:border-gold/30"
                   >
+                    {item.image && (
                     <div className="w-40 h-40 rounded-[40px] overflow-hidden border border-white/10 shadow-2xl relative shrink-0 group-hover:scale-105 transition-transform duration-700">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-gradient-to-t from-matte-black via-transparent to-transparent opacity-80" />
                     </div>
+                    )}
 
                     <div className="flex-1 space-y-6 text-center md:text-left min-w-0">
                       <div>
                         <span className="text-gold/40 text-[10px] font-black uppercase tracking-[4px]">{item.category}</span>
                         <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white truncate drop-shadow-sm">{item.name}</h3>
+                        {item.id?.startsWith('free-') && (
+                          <span className="inline-block mt-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-[3px] text-emerald-400">🎁 Complimentary</span>
+                        )}
                         {item.items && item.items.length > 0 && (
                           <ul className="mt-3 space-y-1.5 text-left inline-block md:block">
                             {item.items.map((subItem, sIdx) => (
@@ -132,6 +137,7 @@ export default function CartPage() {
                         )}
                       </div>
 
+                      {!item.id?.startsWith('free-') && (
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-10">
                         <div className="flex items-center gap-5 bg-white/5 p-2 rounded-2xl border border-white/10 h-16">
                           <button 
@@ -156,10 +162,15 @@ export default function CartPage() {
                           <Trash2 className="w-5 h-5" /> Remove
                         </button>
                       </div>
+                      )}
                     </div>
 
                     <div className="text-center md:text-right space-y-2">
-                      <p className="text-5xl font-black italic text-gold drop-shadow-lg">₹{item.price * item.quantity}</p>
+                      {item.id?.startsWith('free-') ? (
+                        <p className="text-4xl font-black italic text-emerald-400 drop-shadow-lg">FREE</p>
+                      ) : (
+                        <p className="text-5xl font-black italic text-gold drop-shadow-lg">₹{item.price * item.quantity}</p>
+                      )}
                     </div>
                   </motion.div>
                 );

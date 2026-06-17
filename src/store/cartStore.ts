@@ -20,8 +20,9 @@ const getMultiplier = (plan: SubscriptionPlan) => {
 };
 
 const applyOffers = (items: CartItem[]): CartItem[] => {
-  const baseItems = items.filter(i => i.id !== 'free-coke');
+  const baseItems = items.filter(i => i.id !== 'free-coke' && i.id !== 'free-juice');
   
+  // Free Coke offer: 1 free coke for every 2 eligible biryanis
   const eligibleIds = ['br-5', 'br-5-full', 'rn-2'];
   const eligibleCount = baseItems
     .filter(i => eligibleIds.includes(i.id))
@@ -38,6 +39,21 @@ const applyOffers = (items: CartItem[]): CartItem[] => {
       type: 'food',
       image: '/coke_range.png',
       quantity: freeCokes,
+      subscriptionPlan: null as any
+    } as CartItem);
+  }
+
+  // 🎁 Free Juice offer: 1 free Mango Juice with every order
+  const realItemCount = baseItems.reduce((sum, i) => sum + i.quantity, 0);
+  if (realItemCount > 0) {
+    baseItems.push({
+      id: 'free-juice',
+      name: '🎁 Free Juice',
+      price: 0,
+      category: 'Drinks',
+      type: 'food',
+      image: '',
+      quantity: 1,
       subscriptionPlan: null as any
     } as CartItem);
   }
