@@ -13,8 +13,7 @@ import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
 
 
-const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
-const TELEGRAM_CHAT_ID = '-1003803637741';
+
 const WHATSAPP_NUMBER = '917483187572';
 
 const DECORATION_PRICES = {
@@ -330,19 +329,13 @@ export default function Checkout() {
         `━━━━━━━━━━━━━━━━`
       ].filter(line => line !== '').join('\n');
 
-      try {
-        const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
-        });
-        if (!tgRes.ok) {
-          const errBody = await tgRes.text();
-          console.error("Telegram API error:", tgRes.status, errBody);
-        }
-      } catch (tgErr) {
-        console.error("Telegram network error:", tgErr);
-      }
+      // Send via server-side proxy (avoids CORS, non-blocking so WhatsApp redirect is instant)
+      fetch('/api/send-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: tgMessage }),
+        keepalive: true
+      }).catch(err => console.error('Telegram proxy error:', err));
 
       if (isBulkOrder) {
         resetBulkOrder();
