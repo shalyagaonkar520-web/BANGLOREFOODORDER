@@ -330,11 +330,19 @@ export default function Checkout() {
         `━━━━━━━━━━━━━━━━`
       ].filter(line => line !== '').join('\n');
 
-      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
-      }).catch(err => console.error("Telegram error:", err));
+      try {
+        const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
+        });
+        if (!tgRes.ok) {
+          const errBody = await tgRes.text();
+          console.error("Telegram API error:", tgRes.status, errBody);
+        }
+      } catch (tgErr) {
+        console.error("Telegram network error:", tgErr);
+      }
 
       if (isBulkOrder) {
         resetBulkOrder();
