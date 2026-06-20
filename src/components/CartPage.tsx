@@ -122,9 +122,7 @@ export default function CartPage() {
                       <div>
                         <span className="text-gold/40 text-[10px] font-black uppercase tracking-[4px]">{item.category}</span>
                         <h3 className="text-3xl font-black italic tracking-tighter uppercase text-white truncate drop-shadow-sm">{item.name}</h3>
-                        {item.id?.startsWith('free-') && (
-                          <span className="inline-block mt-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-[3px] text-emerald-400">🎁 Complimentary</span>
-                        )}
+
                         {item.items && item.items.length > 0 && (
                           <ul className="mt-3 space-y-1.5 text-left inline-block md:block">
                             {item.items.map((subItem, sIdx) => (
@@ -137,7 +135,6 @@ export default function CartPage() {
                         )}
                       </div>
 
-                      {!item.id?.startsWith('free-') && (
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-10">
                         <div className="flex items-center gap-5 bg-white/5 p-2 rounded-2xl border border-white/10 h-16">
                           <button 
@@ -162,15 +159,10 @@ export default function CartPage() {
                           <Trash2 className="w-5 h-5" /> Remove
                         </button>
                       </div>
-                      )}
                     </div>
 
                     <div className="text-center md:text-right space-y-2">
-                      {item.id?.startsWith('free-') ? (
-                        <p className="text-4xl font-black italic text-emerald-400 drop-shadow-lg">FREE</p>
-                      ) : (
                         <p className="text-5xl font-black italic text-gold drop-shadow-lg">₹{item.price * item.quantity}</p>
-                      )}
                     </div>
                   </motion.div>
                 );

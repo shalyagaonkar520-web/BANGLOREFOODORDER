@@ -59,15 +59,7 @@ export default function OperatingHoursGate({ children }: { children: React.React
       const now = new Date();
       setCurrentTime(now);
       
-      const adminToken = localStorage.getItem('moms_magic_admin_token');
-      const userPhone = localStorage.getItem('moms_magic_user_phone');
-      const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
-                      userPhone === '+917483187572' || 
-                      userPhone === '+919606001790' || 
-                      userPhone === '7483187572' || 
-                      userPhone === '9606001790';
-
-      const isBypassed = location.pathname.startsWith('/admin') || isAdmin;
+      const isBypassed = location.pathname.startsWith('/admin');
       if (isBypassed || !isConsumerRoute) {
         setIsOpen(true);
         return;
@@ -166,7 +158,7 @@ export default function OperatingHoursGate({ children }: { children: React.React
             transition={{ delay: 0.6 }}
             className="text-white/60 text-sm md:text-base font-bold italic max-w-sm mx-auto leading-relaxed"
           >
-            "Orders are accepted only between 12:30 PM and 10:30 PM. Please visit again during business hours."
+            "Orders are accepted only between {openTimeFormatted.time} {openTimeFormatted.ampm} and {closeTimeFormatted.time} {closeTimeFormatted.ampm}. Please visit again during business hours."
           </motion.p>
         </div>
 

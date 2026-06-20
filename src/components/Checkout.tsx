@@ -48,6 +48,19 @@ export default function Checkout() {
   const [selectedDrink, setSelectedDrink] = useState<'Coca-Cola' | 'Sprite'>('Coca-Cola');
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
   
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
+  
+  const handleApplyCoupon = () => {
+    if (couponInput.trim().toUpperCase() === 'WINNER') {
+      setAppliedCoupon('WINNER');
+      toast.success('WINNER promo applied! Free Delivery!');
+    } else {
+      setAppliedCoupon('');
+      toast.error('Invalid promo code');
+    }
+  };
+  
   // Removed Razorpay States
 
 
@@ -58,10 +71,13 @@ export default function Checkout() {
 
 
 
-  // Load saved user data and scroll to top
+  // Scroll to top on mount
   React.useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
 
+  // Load saved user data and validate operating hours
+  React.useEffect(() => {
     const adminToken = localStorage.getItem('moms_magic_admin_token');
     const userPhone = localStorage.getItem('moms_magic_user_phone');
     const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
@@ -103,18 +119,22 @@ export default function Checkout() {
     }
   }, [settings, navigate]);
 
-  // Force Pay Online for distances > 5km
+  // Enforce payment method constraints based on distance
   React.useEffect(() => {
     const distanceKm = deliveryLocation?.distance ?? 0;
     if (distanceKm > 5) {
       setPaymentMethod('online');
+    } else {
+      setPaymentMethod('cod');
     }
   }, [deliveryLocation]);
 
   // ═══ DELIVERY CHARGE LOGIC ═══
   // ₹20 per km
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = calculateDeliveryCharge(distanceKm);
+  const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
+  const isFreeDelivery = appliedCoupon === 'WINNER';
+  const deliveryCharge = isFreeDelivery ? 0 : baseDeliveryCharge;
   const grandTotal = subtotal + deliveryCharge;
 
   const handleFinishAnimation = () => {
@@ -131,12 +151,7 @@ export default function Checkout() {
     e.preventDefault();
 
     const adminToken = localStorage.getItem('moms_magic_admin_token');
-    const userPhone = localStorage.getItem('moms_magic_user_phone');
-    const isAdmin = adminToken === 'mock-jwt-admin-token-123456' || 
-                    userPhone === '+917483187572' || 
-                    userPhone === '+919606001790' || 
-                    userPhone === '7483187572' || 
-                    userPhone === '9606001790';
+    const isAdmin = adminToken === 'mock-jwt-admin-token-123456';
 
     const isStoreOpen = () => {
       if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
@@ -155,7 +170,7 @@ export default function Checkout() {
     };
 
     // Check system status and timing bounds
-    if ((!isStoreOpen() || settings.websiteStatus === 'OFF' || settings.emergencyStop) && !isAdmin) {
+    if ((!isStoreOpen() || settings.websiteStatus === 'OFF' || settings.emergencyStop)) {
       toast.error('Ordering is temporarily closed! Please try again during open hours.', {
         style: { background: '#161A22', color: '#fff', border: '1px solid #FF4D00' }
       });
@@ -169,6 +184,10 @@ export default function Checkout() {
     
     if (distanceKm > 5 && paymentMethod === 'cod') {
       toast.error('Cash on Delivery is not available for deliveries above 5km. Please select Pay Online.');
+      return;
+    }
+    if (distanceKm <= 5 && paymentMethod === 'online') {
+      toast.error('Online payment is only available for deliveries above 5km. Please select Cash on Delivery.');
       return;
     }
 
@@ -225,7 +244,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ₹${deliveryCharge}`,
+        `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (Free - WINNER Promo)` : `₹${deliveryCharge}`}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -315,7 +334,7 @@ export default function Checkout() {
         tgOrderDetails,
         ``,
         `💰 <b>Subtotal:</b> ₹${subtotal}`,
-        `🚚 <b>Delivery:</b> ₹${deliveryCharge}`,
+        `🚚 <b>Delivery:</b> ${isFreeDelivery ? `₹0 (Free - WINNER Promo)` : `₹${deliveryCharge}`}`,
         `💵 <b>GRAND TOTAL:</b> ₹${grandTotal}`,
         paymentId ? `✅ <b>PAYMENT DONE:</b> ${escHtml(paymentId)}` : `⚠️ <b>PAYMENT:</b> Cash on Delivery`,
         ``,
@@ -453,22 +472,21 @@ export default function Checkout() {
                 </div>
                 <button 
                   type="button" 
-                  onClick={detectLocation} 
-                  disabled={isLoading}
+                  onClick={openLocationPicker} 
                   className="w-full py-4 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gold/10 hover:text-gold transition-all flex items-center justify-center gap-2 text-text-muted"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Locate className="w-4 h-4" />}
-                  {isLoading ? 'Detecting...' : 'Detect My Location'}
+                  <MapPin className="w-4 h-4" />
+                  Change Location
                 </button>
               </div>
             ) : (
               <button 
                 type="button" 
-                onClick={detectLocation} 
+                onClick={openLocationPicker} 
                 className="w-full py-12 bg-matte-black/50 rounded-[35px] border-2 border-dashed border-gold/10 hover:border-gold/30 transition-all flex flex-col items-center gap-4"
               >
-                {isLoading ? <Loader2 className="w-10 h-10 text-gold animate-spin" /> : <Locate className="w-10 h-10 text-gold" />}
-                <span className="text-[10px] font-black uppercase tracking-[4px] text-gold">{isLoading ? 'Tracing Location...' : 'Auto Trace Location'}</span>
+                <MapPin className="w-10 h-10 text-gold" />
+                <span className="text-[10px] font-black uppercase tracking-[4px] text-gold">Choose Delivery Location</span>
               </button>
             )}
           </div>
@@ -500,9 +518,7 @@ export default function Checkout() {
                   <div>
                     <h4 className="font-black text-base text-white italic uppercase tracking-tighter">{item.name}</h4>
                     <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">{isBulkOrder ? (item as any).finalQuantity : (item as any).quantity} Unit(s)</p>
-                    {item.id?.startsWith('free-') && (
-                      <span className="inline-block mt-1 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-black uppercase tracking-[2px] text-emerald-400">🎁 Complimentary</span>
-                    )}
+
                     {item.items && item.items.length > 0 && (
                       <ul className="mt-2 space-y-0.5 text-left">
                         {item.items.map((subItem, sIdx) => (
@@ -516,11 +532,7 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div className="text-right">
-                  {item.id?.startsWith('free-') ? (
-                    <p className="text-lg font-black text-emerald-400 italic">FREE</p>
-                  ) : (
-                    <p className="text-xl font-black text-gold italic">₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}</p>
-                  )}
+                  <p className="text-xl font-black text-gold italic">₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}</p>
                 </div>
               </div>
             ))}
@@ -532,6 +544,30 @@ export default function Checkout() {
 
         {/* Total Summary */}
         <div className="luxury-card p-12 md:p-16 rounded-[60px] border-gold/5 relative overflow-hidden">
+          {/* Coupon Code Selector */}
+          <div className="space-y-4 mb-10 pb-8 border-b border-white/5">
+            <h3 className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Promo Code</h3>
+            <div className="flex gap-4">
+              <input 
+                type="text" 
+                className="flex-1 px-6 py-4 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white uppercase transition-all placeholder:text-white/20" 
+                placeholder="ENTER CODE" 
+                value={couponInput} 
+                onChange={e => setCouponInput(e.target.value.toUpperCase())}
+              />
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                className="px-8 py-4 bg-gold/10 text-gold rounded-2xl border border-gold/20 font-black uppercase tracking-widest text-[11px] hover:bg-gold/20 transition-all"
+              >
+                Apply
+              </button>
+            </div>
+            {appliedCoupon === 'WINNER' && (
+               <p className="text-emerald-400 text-xs font-bold italic ml-2">Promo applied: Free Delivery!</p>
+            )}
+          </div>
+
           <div className="space-y-6 mb-10 border-b border-white/5 pb-8">
             <div className="flex justify-between items-center text-text-muted font-bold text-[11px] uppercase tracking-[4px]">
               <span>Subtotal</span>
@@ -543,7 +579,14 @@ export default function Checkout() {
                  <span>Delivery Fee</span>
               </div>
               <span className="text-xl font-black text-white">
-                ₹{deliveryCharge}
+                {isFreeDelivery ? (
+                  <>
+                    <span className="line-through text-white/30 mr-2">₹{baseDeliveryCharge}</span>
+                    <span className="text-emerald-400">FREE</span>
+                  </>
+                ) : (
+                  `₹${deliveryCharge}`
+                )}
               </span>
             </div>
           </div>
@@ -561,8 +604,15 @@ export default function Checkout() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => setPaymentMethod('online')}
+                onClick={() => {
+                  if (distanceKm <= 5) {
+                    toast.error('Online payment is only available for deliveries above 5km.');
+                    return;
+                  }
+                  setPaymentMethod('online');
+                }}
                 className={`py-5 rounded-2xl border font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-3 ${
+                  distanceKm <= 5 ? 'opacity-40 cursor-not-allowed bg-matte-black/50 border-white/5 text-white/20' :
                   paymentMethod === 'online'
                     ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(212,175,55,0.2)]'
                     : 'bg-matte-black/50 border-white/10 text-white/40 hover:border-white/30'

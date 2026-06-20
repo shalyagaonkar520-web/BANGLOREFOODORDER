@@ -7,7 +7,18 @@ import toast from 'react-hot-toast';
 export default function OffersPage() {
   const navigate = useNavigate();
 
-  const offers = [
+  const offers: Array<{
+    id: number;
+    title: string;
+    description: string;
+    oldPrice?: number;
+    newPrice?: number;
+    badge: string;
+    icon: any;
+    color: string;
+    image: string;
+    code?: string;
+  }> = [
     {
       id: 1,
       title: "CHICKEN CRISPY MEAL",

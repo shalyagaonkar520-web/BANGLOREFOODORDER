@@ -18,6 +18,7 @@ interface Order {
   status: string;
   items: OrderItem[];
   orderType: string;
+  trackingLink?: string;
 }
 
 export default function OrdersPage() {
@@ -109,7 +110,13 @@ export default function OrdersPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-[#4CD964] font-black italic text-xl">₹{order.grandTotal}</p>
-                    <span className="inline-block px-3 py-1 bg-white/10 rounded-full text-[8px] font-black uppercase tracking-widest text-white mt-2">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mt-2 border ${
+                      order.status === 'Confirmed' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                      order.status === 'Preparing' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                      order.status === 'Out For Delivery' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                      order.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      'bg-white/10 text-white border-white/10'
+                    }`}>
                       {order.status || 'Pending'}
                     </span>
                   </div>
@@ -125,6 +132,19 @@ export default function OrdersPage() {
                     <p className="text-[#4CD964]/70 text-[10px] font-bold italic mt-2">+ {order.items.length - 3} more items</p>
                   )}
                 </div>
+
+                {order.trackingLink && (
+                  <div className="mt-6 pt-4 border-t border-white/5">
+                    <a 
+                      href={order.trackingLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full block text-center py-3 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                    >
+                      📍 Track Order Live
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>

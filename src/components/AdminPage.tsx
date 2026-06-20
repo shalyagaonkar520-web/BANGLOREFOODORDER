@@ -12,13 +12,7 @@ import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
-// Define simulated live orders to populate feed
-const MOCK_LIVE_ORDERS = [
-  { id: 'MM-4029', name: 'Shalya Gaonkar', items: '2x Donne Biryani, 1x Kiwi Cake', total: 640, time: 'Just now', status: 'Pending' },
-  { id: 'MM-4028', name: 'Akshata N.', items: '1x Kaju Masala, 2x Butter Kulcha', total: 320, time: '3 mins ago', status: 'Preparing' },
-  { id: 'MM-4027', name: 'Rohit Shenoy', items: '1x Blue Curacao, 1x Classic Mojito', total: 460, time: '10 mins ago', status: 'Ready' },
-  { id: 'MM-4026', name: 'Priya K.', items: '1x Triple Schezwan Rice, 1x Gobi Manchurian', total: 420, time: '18 mins ago', status: 'Delivered' }
-];
+// Real Orders fetched from localStorage
 
 export default function AdminPage() {
   useSEO("Admin Panel", "Manage operations, menu availability, and systems for Moms Magic.");
@@ -33,10 +27,14 @@ export default function AdminPage() {
   // Form local editing states (to prevent lag during typing, saved to store on Save)
   const [localSettings, setLocalSettings] = useState({ ...settings });
   const [isSaving, setIsSaving] = useState(false);
-  const [liveOrders, setLiveOrders] = useState(MOCK_LIVE_ORDERS);
+  
+  // Real Orders State
+  const [realOrders, setRealOrders] = useState<any[]>([]);
+  const [trackingModalOrder, setTrackingModalOrder] = useState<string | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'system' | 'bar'>('system');
+  const [activeTab, setActiveTab] = useState<'orders' | 'system' | 'bar'>('orders');
   const [adminDrinks, setAdminDrinks] = useState<any[]>([]);
   const [drinksLoading, setDrinksLoading] = useState(false);
   const [editingDrink, setEditingDrink] = useState<any | null>(null);
@@ -230,27 +228,74 @@ export default function AdminPage() {
     setLocalSettings(settings);
   }, [settings]);
 
-  // Simulated live feed additions
+  // Fetch real orders from localStorage periodically
   useEffect(() => {
-    if (!user || settings.websiteStatus === 'OFF') return;
-    const interval = setInterval(() => {
-      const names = ['Vivek Bhat', 'Sneha M.', 'Girish R.', 'Kavya Hegde', 'Prasanna P.'];
-      const items = ['1x Black Forest Cake', '2x Chapati, 1x Dal Tadka', '1x Paneer Chilli, 1x Veg Noodles', '2x Donne Biryani', '1x Strawberry Mojito'];
-      const price = [230, 290, 310, 410, 220];
-      const newOrder = {
-        id: `MM-${Math.floor(Math.random() * 900) + 4100}`,
-        name: names[Math.floor(Math.random() * names.length)],
-        items: items[Math.floor(Math.random() * items.length)],
-        total: price[Math.floor(Math.random() * price.length)],
-        time: 'Just now',
-        status: 'Pending'
-      };
-      setLiveOrders(prev => [newOrder, ...prev.slice(0, 4)]);
-      toast.success(`New order received: ${newOrder.id}! 📦`, { duration: 2500 });
-    }, 45000); // add simulated orders periodically
-
+    if (!user) return;
+    const fetchOrders = () => {
+      try {
+        const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+        // Sort by newest first
+        storedOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setRealOrders(storedOrders);
+      } catch (err) {
+        console.error('Error parsing orders', err);
+      }
+    };
+    
+    fetchOrders(); // initial fetch
+    const interval = setInterval(fetchOrders, 5000); // refresh every 5 seconds
     return () => clearInterval(interval);
-  }, [user, settings.websiteStatus]);
+  }, [user]);
+
+  // Handle Order Status Update
+  const handleUpdateOrderStatus = (orderId: string, newStatus: string, phone: string, trackingLink?: string) => {
+    try {
+      const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      const updatedOrders = storedOrders.map((o: any) => {
+        if (o.id === orderId) {
+          return { ...o, status: newStatus, trackingLink: trackingLink !== undefined ? trackingLink : o.trackingLink };
+        }
+        return o;
+      });
+      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedOrders));
+      setRealOrders(updatedOrders);
+      
+      // Auto open WhatsApp for status change
+      let message = '';
+      if (newStatus === 'Out For Delivery') {
+        message = `🚚 Your Moms Magic order is on the way!\\n\\nTrack your order live:\\n${trackingLink || updatedOrders.find((o: any) => o.id === orderId)?.trackingLink}\\n\\nThank you for ordering from Moms Magic ❤️`;
+      } else {
+        message = `*Moms Magic Update* 🍲\\n\\nYour order (ID: ${orderId.slice(0,8)}) is now *${newStatus.toUpperCase()}*.\\n\\nThank you for ordering from Moms Magic ❤️`;
+      }
+      
+      // Clean phone number (remove +91 if user added it manually, as we append 91)
+      let cleanPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+      
+      const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      
+      toast.success(`Status updated! Redirecting to WhatsApp...`);
+      setTimeout(() => {
+        window.location.href = waUrl;
+      }, 500);
+    } catch (err) {
+      toast.error('Failed to update order');
+    }
+  };
+
+  // Handle Share Location Save
+  const handleSaveTrackingLink = () => {
+    if (!trackingModalOrder || !trackingUrl.trim()) {
+      toast.error('Please enter a valid link');
+      return;
+    }
+    const order = realOrders.find(o => o.id === trackingModalOrder);
+    if (order) {
+      handleUpdateOrderStatus(order.id, 'Out For Delivery', order.userPhone, trackingUrl.trim());
+      setTrackingModalOrder(null);
+      setTrackingUrl('');
+    }
+  };
 
   // Handle Authentication
   const handleLogin = async (e: React.FormEvent) => {
@@ -278,7 +323,20 @@ export default function AdminPage() {
         toast.error(data.message || 'Invalid admin credentials');
       }
     } catch (err) {
-      toast.error('Network error during authentication');
+      // Local development fallback since /api/login won't run natively in Vite without Vercel CLI
+      if (email === 'shalyagaonkar@gmail.com' && password === 'Shalya@2004') {
+        const mockUser = {
+          id: 'admin-1',
+          name: 'Shalya Gaonkar',
+          email: 'shalyagaonkar@gmail.com',
+          role: 'super_admin'
+        };
+        setUser(mockUser);
+        localStorage.setItem('moms_magic_admin_token', 'mock-jwt-admin-token-123456');
+        toast.success(`Welcome back, ${mockUser.name}! (Local Dev Mode)`);
+      } else {
+        toast.error('Invalid admin credentials');
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -503,13 +561,26 @@ export default function AdminPage() {
       </header>
 
       {/* Tab Switcher */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 flex gap-4 relative z-25 text-left">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 flex gap-4 relative z-25 text-left overflow-x-auto no-scrollbar pb-2">
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('orders');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'orders'
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-matte-black border-emerald-400 shadow-[0_10px_20px_rgba(16,185,129,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          📦 Live Orders
+        </button>
         <button
           onClick={() => {
             playSound(SOUNDS.CLICK);
             setActiveTab('system');
           }}
-          className={`px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'system'
               ? 'bg-gradient-to-r from-[#FF4D00] to-[#FFB700] text-matte-black border-[#FFB700] shadow-[0_10px_20px_rgba(255,77,0,0.15)]'
               : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
@@ -522,7 +593,7 @@ export default function AdminPage() {
             playSound(SOUNDS.CLICK);
             setActiveTab('bar');
           }}
-          className={`px-8 h-14 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'bar'
               ? 'bg-gradient-to-r from-[#FFB700] to-[#FFD166] text-matte-black border-[#FFD166] shadow-[0_10px_20px_rgba(255,183,0,0.15)] animate-gold-blink'
               : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
@@ -533,7 +604,107 @@ export default function AdminPage() {
       </div>
 
       {/* Main Content Layout */}
-      {activeTab === 'system' ? (
+      {activeTab === 'orders' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter">Live Order Tracker</h2>
+            <div className="px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> Live Sync Active
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {realOrders.length === 0 ? (
+              <div className="col-span-full py-20 text-center bg-white/5 border border-white/10 rounded-3xl">
+                <PackageSearch className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/40 font-bold uppercase tracking-widest text-sm">No Orders Yet</p>
+              </div>
+            ) : (
+              realOrders.map((order) => {
+                const statusColor = 
+                  order.status === 'Confirmed' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                  order.status === 'Preparing' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
+                  order.status === 'Out For Delivery' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+                  order.status === 'Delivered' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                  'text-gray-400 bg-gray-500/10 border-gray-500/20';
+
+                return (
+                  <div key={order.id} className="bg-[#121624] border border-white/5 rounded-[30px] p-6 space-y-4 hover:border-white/10 transition-colors">
+                    <div className="flex items-start justify-between border-b border-white/5 pb-4">
+                      <div>
+                        <p className="text-xs font-black uppercase text-emerald-400 tracking-widest">ID: {order.id.slice(0,8)}</p>
+                        <h3 className="text-lg font-black text-white italic truncate mt-1">{order.userName}</h3>
+                        <p className="text-xs font-bold text-white/40 tracking-widest mt-1">{order.userPhone}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black italic text-brand">₹{order.grandTotal}</p>
+                        <span className={`inline-block mt-2 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${statusColor}`}>
+                          {order.status || 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Order Items:</p>
+                      {order.items.slice(0,3).map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-xs font-medium text-white/80">
+                          <span>{item.finalQuantity || item.quantity || 1}x {item.name}</span>
+                        </div>
+                      ))}
+                      {order.items.length > 3 && <p className="text-[10px] text-white/40 italic">+{order.items.length - 3} more</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-4 border-t border-white/5">
+                      <button onClick={() => handleUpdateOrderStatus(order.id, 'Confirmed', order.userPhone)} className="py-2.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-[9px] font-black uppercase tracking-widest transition-colors">
+                        ✅ Confirmed
+                      </button>
+                      <button onClick={() => handleUpdateOrderStatus(order.id, 'Preparing', order.userPhone)} className="py-2.5 rounded-xl bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20 text-[9px] font-black uppercase tracking-widest transition-colors">
+                        👨‍🍳 Preparing
+                      </button>
+                      <button onClick={() => setTrackingModalOrder(order.id)} className="py-2.5 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 text-[9px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1">
+                        📍 Live Track Link
+                      </button>
+                      <button onClick={() => handleUpdateOrderStatus(order.id, 'Delivered', order.userPhone)} className="py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest transition-colors">
+                        🎉 Delivered
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Tracking Link Modal */}
+          {trackingModalOrder && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#121620] w-full max-w-md rounded-[30px] p-8 border border-white/10 shadow-2xl relative">
+                <button onClick={() => setTrackingModalOrder(null)} className="absolute top-4 right-4 p-2 text-white/40 hover:text-white">✕</button>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xl font-black italic uppercase tracking-tight text-purple-400 flex items-center gap-2">
+                      📍 Share Live Location
+                    </h3>
+                    <p className="text-xs font-semibold text-white/50 mt-1">Provide the Google Maps tracking link to the customer.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Tracking Link URL</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://maps.google.com/..." 
+                      value={trackingUrl}
+                      onChange={(e) => setTrackingUrl(e.target.value)}
+                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-purple-500/50 transition-all text-xs"
+                    />
+                  </div>
+                  <button onClick={handleSaveTrackingLink} className="w-full h-14 bg-purple-500 hover:bg-purple-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2">
+                    Set Out For Delivery & Notify
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </main>
+      ) : activeTab === 'system' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
         
         {/* LEFT COLUMN: PRIMARY TOGGLES & CORE CONTROLS */}
@@ -1101,60 +1272,6 @@ export default function AdminPage() {
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-matte-black" /> : <Save className="w-4 h-4 text-matte-black" />}
               Update Banner Announcements
             </button>
-          </div>
-
-          {/* LIVE ORDER LOG MONITOR */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <h3 className="text-lg font-black italic uppercase tracking-tight flex items-center gap-2">
-                <Activity className="w-5 h-5 text-emerald-400 animate-pulse" /> Live Order Stream
-              </h3>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
-            </div>
-
-            <div className="space-y-4">
-              {settings.emergencyStop ? (
-                <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 text-center space-y-3">
-                  <ShieldAlert className="w-10 h-10 text-red-500 mx-auto animate-bounce" />
-                  <p className="text-xs font-black uppercase text-red-400 tracking-wider">Stream Suspended</p>
-                  <p className="text-white/40 text-[10px] leading-relaxed">No new checkouts will be processed while emergency lock is activated.</p>
-                </div>
-              ) : settings.websiteStatus === 'OFF' ? (
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-6 text-center space-y-3">
-                  <Moon className="w-10 h-10 text-white/30 mx-auto" />
-                  <p className="text-xs font-black uppercase text-white/40 tracking-wider">Website Offline</p>
-                  <p className="text-white/30 text-[10px] leading-relaxed">The restaurant ordering services are closed. Ordering is disabled.</p>
-                </div>
-              ) : (
-                liveOrders.map(order => (
-                  <div key={order.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4.5 space-y-2 transition-all hover:bg-white/[0.04]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-[#FFB700] uppercase tracking-wider">{order.id}</span>
-                      <span className="text-[8px] font-bold text-white/30 tracking-widest uppercase">{order.time}</span>
-                    </div>
-                    <p className="text-sm font-black uppercase italic tracking-tighter text-white">{order.name}</p>
-                    <p className="text-[10px] font-semibold text-white/50 leading-relaxed truncate">{order.items}</p>
-                    
-                    <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-1">
-                      <span className="text-xs font-black text-[#FFB700] italic">₹{order.total}</span>
-                      
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          order.status === 'Pending' ? 'bg-amber-400' :
-                          order.status === 'Preparing' ? 'bg-blue-400' :
-                          order.status === 'Ready' ? 'bg-purple-400' : 'bg-emerald-400'
-                        }`} />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-white/40">{order.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="pt-2 border-t border-white/5 text-center">
-              <span className="text-white/20 text-[9px] font-bold uppercase tracking-widest">Last updated: {formatDate(settings.lastUpdated)}</span>
-            </div>
           </div>
 
         </div>
