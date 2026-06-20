@@ -446,7 +446,7 @@ export default function Checkout() {
 
       <form onSubmit={handleSubmit} className="space-y-12">
         {/* User Info */}
-        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">
+        <div className="luxury-card p-6 md:p-14 rounded-[30px] md:rounded-[50px] border-white/5 space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <label className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Guest Name</label>
@@ -500,7 +500,7 @@ export default function Checkout() {
         </div>
 
         {/* Order Details */}
-        <div className="luxury-card p-10 md:p-14 rounded-[50px] border-white/5 space-y-10">
+        <div className="luxury-card p-6 md:p-14 rounded-[30px] md:rounded-[50px] border-white/5 space-y-10">
           <div className="flex items-center justify-between">
              <h2 className="text-2xl font-black italic uppercase flex items-center gap-4"><Ticket className="w-6 h-6 text-gold" /> {isBulkOrder ? 'Event' : 'Selection'} Content</h2>
              {isBulkOrder && <div className="flex items-center gap-3 px-4 py-2 bg-gold/10 rounded-full text-[10px] font-black uppercase text-gold border border-gold/20"><Calendar className="w-4 h-4" /> Bulk Order</div>}
@@ -543,11 +543,11 @@ export default function Checkout() {
 
 
         {/* Total Summary */}
-        <div className="luxury-card p-12 md:p-16 rounded-[60px] border-gold/5 relative overflow-hidden">
+        <div className="luxury-card p-6 sm:p-12 md:p-16 rounded-[30px] md:rounded-[60px] border-gold/5 relative overflow-hidden">
           {/* Coupon Code Selector */}
           <div className="space-y-4 mb-10 pb-8 border-b border-white/5">
             <h3 className="text-[10px] font-black text-gold/40 uppercase tracking-[4px] ml-1">Promo Code</h3>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input 
                 type="text" 
                 className="flex-1 px-6 py-4 bg-matte-black/50 rounded-2xl border border-white/10 focus:border-gold/30 outline-none font-bold text-white uppercase transition-all placeholder:text-white/20" 
@@ -558,7 +558,7 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={handleApplyCoupon}
-                className="px-8 py-4 bg-gold/10 text-gold rounded-2xl border border-gold/20 font-black uppercase tracking-widest text-[11px] hover:bg-gold/20 transition-all"
+                className="px-8 py-4 bg-gold/10 text-gold rounded-2xl border border-gold/20 font-black uppercase tracking-widest text-[11px] hover:bg-gold/20 transition-all w-full sm:w-auto text-center"
               >
                 Apply
               </button>
