@@ -1,4 +1,4 @@
-const TELEGRAM_BOT_TOKEN = '8776724714:AAHJXpKyRWvVcXJQgBGH6DRq5WWijIfFH_Y';
+const TELEGRAM_BOT_TOKEN = '8828362126:AAGbOzb8Q9Jhi29Bp6sQ_Q6hRo4Xj2SGfQg';
 const TELEGRAM_CHAT_ID = '-1003803637741';
 
 export default async function handler(req, res) {
@@ -15,7 +15,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text } = req.body;
+    let text;
+    if (typeof req.body === 'string') {
+      try {
+        const parsed = JSON.parse(req.body);
+        text = parsed.text;
+      } catch (e) {}
+    } else if (req.body && typeof req.body === 'object') {
+      text = req.body.text;
+    }
+
     if (!text) {
       return res.status(400).json({ error: 'Missing message text' });
     }

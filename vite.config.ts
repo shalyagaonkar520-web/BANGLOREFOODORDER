@@ -184,6 +184,25 @@ export default defineConfig(({mode}) => {
               return;
             }
 
+            // Handle POST Send Telegram (LOCAL DEV MOCK)
+            // The dev machine's network blocks api.telegram.org from Node.js.
+            // Return 503 immediately so the browser's built-in direct fallback
+            // in Checkout.tsx takes over — it calls Telegram directly from the
+            // browser, which is NOT blocked. No error logging needed here.
+            if (req.url && req.url.includes('/api/send-telegram') && req.method === 'POST') {
+              let body = '';
+              req.on('data', chunk => { body += chunk.toString(); });
+              req.on('end', () => {
+                // Drain the body so the socket isn't left hanging
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  success: false,
+                  error: 'Local dev: proxy unavailable – browser direct call will handle this'
+                }));
+              });
+              return;
+            }
+
             next();
           });
         }
