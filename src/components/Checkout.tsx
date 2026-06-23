@@ -148,7 +148,12 @@ export default function Checkout() {
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
   const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
-  const isFreeDelivery  = appliedCoupon === 'WINNER';
+
+  // Free delivery before 2:00 PM every day
+  const now = new Date();
+  const isBeforeTwo = now.getHours() < 14;
+  const isFreeDelivery  = appliedCoupon === 'WINNER' || isBeforeTwo;
+  const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const grandTotal      = subtotal + deliveryCharge;
 
@@ -224,7 +229,7 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
-        `🚚 *Delivery:* ${isFreeDelivery ? '₹0 (Free - WINNER Promo)' : `₹${deliveryCharge}`}`,
+        `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (Free - ${freeDeliveryReason})` : `₹${deliveryCharge}`}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
@@ -546,6 +551,16 @@ export default function Checkout() {
 
         {/* ── Summary, Coupon, Payment ── */}
         <div className="luxury-card p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6">
+          {/* Free Delivery Before 2 PM Banner */}
+          {isBeforeTwo && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+              <span className="text-xl">🎉</span>
+              <div>
+                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest">Free Delivery Active!</p>
+                <p className="text-emerald-300/70 text-[11px] font-medium">Orders before 2:00 PM get free delivery today</p>
+              </div>
+            </div>
+          )}
           {/* Promo Code */}
           <div className="space-y-3 pb-6 border-b border-white/5">
             <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Promo Code</h3>
@@ -565,8 +580,8 @@ export default function Checkout() {
                 Apply
               </button>
             </div>
-            {appliedCoupon === 'WINNER' && (
-              <p className="text-emerald-400 text-xs font-bold">✅ Free Delivery applied!</p>
+            {isFreeDelivery && (
+              <p className="text-emerald-400 text-xs font-bold">✅ Free Delivery — {freeDeliveryReason}</p>
             )}
           </div>
 
@@ -583,10 +598,13 @@ export default function Checkout() {
               </div>
               <span className="text-lg font-black text-white">
                 {isFreeDelivery ? (
-                  <>
-                    <span className="line-through text-white/30 mr-2 text-sm">₹{baseDeliveryCharge}</span>
-                    <span className="text-emerald-400">FREE</span>
-                  </>
+                  <div className="text-right">
+                    <div>
+                      <span className="line-through text-white/30 mr-2 text-sm">₹{baseDeliveryCharge}</span>
+                      <span className="text-emerald-400">FREE</span>
+                    </div>
+                    <p className="text-emerald-400/60 text-[10px] font-bold">{freeDeliveryReason}</p>
+                  </div>
                 ) : `₹${deliveryCharge}`}
               </span>
             </div>
