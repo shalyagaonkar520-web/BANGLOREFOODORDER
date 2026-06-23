@@ -158,7 +158,7 @@ export default function OperatingHoursGate({ children }: { children: React.React
             transition={{ delay: 0.6 }}
             className="text-white/60 text-sm md:text-base font-bold italic max-w-sm mx-auto leading-relaxed"
           >
-            "Orders are accepted only between {openTimeFormatted.time} {openTimeFormatted.ampm} and {closeTimeFormatted.time} {closeTimeFormatted.ampm}. Please visit again during business hours."
+            Orders are accepted only between {openTimeFormatted.time} {openTimeFormatted.ampm} and {closeTimeFormatted.time} {closeTimeFormatted.ampm}. Please visit again during business hours.
           </motion.p>
         </div>
 
