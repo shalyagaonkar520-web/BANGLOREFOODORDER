@@ -131,7 +131,7 @@ function Particles() {
 export default function SpecialThreeSection() {
   const { addItem } = useCartStore();
   const [isMobile] = useState(window.innerWidth < 768);
-  const mangoShake = MENU_ITEMS.find(i => i.id === 'drink-special-1');
+  const mangoShake = undefined;
   const otherShakes = MENU_ITEMS.filter(i => ['drink-special-2', 'drink-special-3'].includes(i.id!));
 
   const handleAdd = (item: any) => {

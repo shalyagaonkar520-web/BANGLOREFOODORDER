@@ -41,6 +41,46 @@ const ROTATING_SEARCH_PLACEHOLDERS = [
   'Search "Butter Chicken"'
 ];
 
+function CountdownTimer() {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const difference = tomorrow.getTime() - now.getTime();
+      
+      if (difference <= 0) {
+        return '00:00:00';
+      }
+      
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+      
+      return [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        seconds.toString().padStart(2, '0')
+      ].join(':');
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#facc15] bg-[#facc15]/10 px-2.5 py-1 rounded-xl border border-[#facc15]/20 w-fit mt-2 animate-pulse shrink-0">
+      <span>⏳ Ends:</span>
+      <span className="font-mono tracking-wider">{timeLeft}</span>
+    </div>
+  );
+}
+
 export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   useSEO(
     type === 'food' ? 'Food Menu' : 'Grocery Menu',
@@ -139,8 +179,12 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
     return matchesCategory && matchesSearch;
   });
 
-  // Sort by price low to high
-  const displayedProducts = filteredProducts.sort((a, b) => a.price - b.price);
+  // Sort by highlight first, then by price low to high
+  const displayedProducts = filteredProducts.sort((a, b) => {
+    if (a.royalHighlight && !b.royalHighlight) return -1;
+    if (!a.royalHighlight && b.royalHighlight) return 1;
+    return a.price - b.price;
+  });
 
   // Split into Veg and Non-Veg columns so all products are organized cleanly
   const vegProducts = displayedProducts.filter(product => product.isVeg);
@@ -338,13 +382,23 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
           {(activeDietTab === 'all' ? displayedProducts : activeDietTab === 'veg' ? vegProducts : nonVegProducts).map((product: any) => {
             const inCart = cartItems.find(i => i.id === product.id);
             return (
-              <article key={product.id} className="bg-[#1a1a1a] rounded-[2.5rem] p-3 border border-[#262626] shadow-[0_4px_20px_rgba(250,204,21,0.05)] relative overflow-hidden flex flex-col justify-between">
+              <article 
+                key={product.id} 
+                className={`rounded-[2.5rem] p-3 border relative overflow-hidden flex flex-col justify-between transition-all duration-300 ${
+                  product.royalHighlight 
+                    ? 'bg-gradient-to-br from-yellow-500/10 via-[#1a1a1a] to-[#1a1a1a] border-[#facc15]/40 shadow-[0_0_20px_rgba(250,204,21,0.25)] ring-1 ring-[#facc15]/20'
+                    : 'bg-[#1a1a1a] border-[#262626] shadow-[0_4px_20px_rgba(250,204,21,0.05)]'
+                }`}
+              >
                 <div>
                   <div className="relative rounded-3xl overflow-hidden aspect-square">
                     <img alt={product.name} className="w-full h-full object-cover" src={product.image} />
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
                       {product.isVeg && (
                         <span className="bg-emerald-400/20 text-emerald-400 text-[8px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30 backdrop-blur-md uppercase">Pure Veg</span>
+                      )}
+                      {product.royalHighlight && (
+                        <span className="bg-[#facc15] text-black text-[7px] font-black px-2 py-0.5 rounded-full border border-yellow-400/30 backdrop-blur-md uppercase tracking-wider">✨ Royal Deal</span>
                       )}
                     </div>
                   </div>
@@ -354,6 +408,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
                       <span className="text-[#facc15] text-[10px]">★ {getStableRating(product.id)}</span>
                       <span className="text-zinc-500 text-[10px]">₹{product.price}</span>
                     </div>
+                    {product.royalHighlight && <CountdownTimer />}
                   </div>
                 </div>
                 {inCart ? (

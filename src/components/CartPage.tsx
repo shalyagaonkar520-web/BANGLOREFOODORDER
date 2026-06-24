@@ -18,7 +18,9 @@ export default function CartPage() {
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
   const deliveryCharge = calculateDeliveryCharge(distanceKm);
-  const grandTotal = total + deliveryCharge;
+  const gst = Math.round(total * 0.05);
+  const rainySeasonFee = 5;
+  const grandTotal = total + deliveryCharge + gst + rainySeasonFee;
   
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
@@ -185,6 +187,14 @@ export default function CartPage() {
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
                   <span>Subtotal</span>
                   <span className="text-white text-2xl font-black italic tracking-tighter">₹{total}</span>
+                </div>
+                <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
+                  <span>GST (5%)</span>
+                  <span className="text-white text-2xl font-black italic tracking-tighter">₹{gst}</span>
+                </div>
+                <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
+                  <span>Rainy Season Fee</span>
+                  <span className="text-white text-2xl font-black italic tracking-tighter">₹{rainySeasonFee}</span>
                 </div>
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
                   <div className="flex items-center gap-3">

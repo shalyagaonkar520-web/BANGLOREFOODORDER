@@ -4,7 +4,7 @@ import {
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
   Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
-  Search, Wine
+  Search, Wine, PackageSearch
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
@@ -329,7 +329,7 @@ export default function AdminPage() {
           id: 'admin-1',
           name: 'Shalya Gaonkar',
           email: 'shalyagaonkar@gmail.com',
-          role: 'super_admin'
+          role: 'super_admin' as const
         };
         setUser(mockUser);
         localStorage.setItem('moms_magic_admin_token', 'mock-jwt-admin-token-123456');

@@ -43,7 +43,6 @@ const SNACK_SUGGESTION_ITEMS: Product[] = [
 const DRINK_SUGGESTION_IDS = [
   'drink-coke',       // Coke 500ml
   'drink-sprite',     // Sprite 500ml
-  'drink-special-1',  // Jaipur Mango Milkshake
   'drink-special-2',  // Butterscotch Milkshake
   'drink-special-3',  // Vanilla Milkshake
 ];
@@ -95,7 +94,6 @@ const CHICKEN_STARTER_IDS = [
   'st-1',   // Chicken Crispy
   'st-2',   // Chicken 65
   'st-4',   // Chicken Lollipop
-  'ff-samosa', // Chicken Samosa (2 pcs) ₹39
 ];
 
 // ─── VEG STARTER IDS ────────────────────────────────────────────────────────

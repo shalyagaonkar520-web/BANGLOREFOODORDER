@@ -49,19 +49,7 @@ export const MENU_ITEMS: Product[] = [
     fires: 1,
     isVeg: true
   },
-  {
-    id: 'drink-special-1',
-    name: 'Jaipur Mango Milkshake',
-    price: 99,
-    category: 'Drinks',
-    type: 'food',
-    image: '/mango_shake_user.png',
-    description: 'Freshly prepared royal mango milkshake with premium Jaipur mangoes. A classic favorite!',
-    isTopPick: true,
-    royalHighlight: true,
-    fires: 3,
-    isVeg: true
-  },
+
   // 🍟 FAST FOOD / SNACKS
   {
     id: 'ff-1',
@@ -97,17 +85,8 @@ export const MENU_ITEMS: Product[] = [
     description: 'Spicy minced meat served with buttered pav buns.',
     fires: 0,
     isVeg: false
-  },  {
-    id: 'ff-samosa',
-    name: 'Chicken Samosa (2 pcs)',
-    price: 39,
-    category: 'Fast Food',
-    type: 'food',
-    image: '/samosa.png',
-    description: 'Crispy golden-brown pastry filled with delicious, spiced minced chicken filling.',
-    fires: 1,
-    isVeg: false
   },
+
 
   // 🍜 RICE & NOODLES
   {
@@ -265,44 +244,48 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'br-1',
     name: 'Kushka',
-    price: 99,
+    price: 79,
     category: 'Biryani',
     type: 'food',
     image: '/kushka.png',
     description: 'Plain aromatic biryani rice served with raita.',
+    royalHighlight: true,
     fires: 1,
     isVeg: true
   },
   {
     id: 'br-2',
     name: 'Egg Biryani',
-    price: 149,
+    price: 129,
     category: 'Biryani',
     type: 'food',
     image: '/egg_biryani.png',
     description: 'Biryani rice served with boiled eggs and spices.',
     isTopPick: true,
-    fires: 1
-,  
-    isVeg: false},
+    royalHighlight: true,
+    fires: 1,
+    isVeg: false
+  },
   {
     id: 'br-4',
     name: 'Veg Biryani',
-    price: 160,
+    price: 139,
     category: 'Biryani',
     type: 'food',
     image: '/veg_biryani.png',
-    fires: 1
-,  
-    isVeg: true},
+    royalHighlight: true,
+    fires: 1,
+    isVeg: true
+  },
   {
     id: 'br-5',
     name: 'Chicken Biryani Half',
-    price: 149,
+    price: 109,
     category: 'Biryani',
     type: 'food',
     image: '/chicken_biryani_new.png',
     isTopPick: true,
+    royalHighlight: true,
     fires: 5,
     rating: 5.0,
     isVeg: false
@@ -310,11 +293,12 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'br-5-full',
     name: 'Chicken Biryani Full',
-    price: 189,
+    price: 159,
     category: 'Biryani',
     type: 'food',
     image: '/chicken_biryani_new.png',
     isTopPick: true,
+    royalHighlight: true,
     fires: 5,
     rating: 5.0,
     isVeg: false

@@ -155,7 +155,9 @@ export default function Checkout() {
   const isFreeDelivery  = appliedCoupon === 'WINNER' || isBeforeTwo;
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
-  const grandTotal      = subtotal + deliveryCharge;
+  const gst = Math.round(subtotal * 0.05);
+  const rainySeasonFee = 5;
+  const grandTotal      = subtotal + deliveryCharge + gst + rainySeasonFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +231,8 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
+        `📝 *GST (5%):* ₹${gst}`,
+        `🌧️ *Rainy Season Fee:* ₹${rainySeasonFee}`,
         `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (Free - ${freeDeliveryReason})` : `₹${deliveryCharge}`}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
@@ -279,6 +283,8 @@ export default function Checkout() {
         tgDetails,
         ``,
         `💰 <b>Subtotal:</b> ₹${subtotal}`,
+        `📝 <b>GST (5%):</b> ₹${gst}`,
+        `🌧️ <b>Rainy Season Fee:</b> ₹${rainySeasonFee}`,
         `🚚 <b>Delivery:</b> ${isFreeDelivery ? '₹0 (Free - WINNER Promo)' : `₹${deliveryCharge}`}`,
         `💵 <b>GRAND TOTAL:</b> ₹${grandTotal}`,
         paymentId ? `✅ <b>PAYMENT DONE:</b> ${escHtml(paymentId)}` : `⚠️ <b>PAYMENT:</b> Cash on Delivery`,
@@ -309,6 +315,8 @@ export default function Checkout() {
           orderType: isBulkOrder ? 'bulk' : 'regular',
           items: activeItems,
           subtotal,
+          gst,
+          rainySeasonFee,
           deliveryCharge,
           grandTotal,
           paymentMethod,
@@ -590,6 +598,14 @@ export default function Checkout() {
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <span>Subtotal</span>
               <span className="text-white text-lg font-black">₹{subtotal}</span>
+            </div>
+            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+              <span>GST (5%)</span>
+              <span className="text-white text-lg font-black">₹{gst}</span>
+            </div>
+            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+              <span>Rainy Season Fee</span>
+              <span className="text-white text-lg font-black">₹{rainySeasonFee}</span>
             </div>
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <div className="flex items-center gap-2">
