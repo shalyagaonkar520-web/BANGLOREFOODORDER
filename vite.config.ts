@@ -191,7 +191,8 @@ export default defineConfig(({mode}) => {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-motion': ['framer-motion'],
-            'vendor-lucide': ['lucide-react']
+            'vendor-lucide': ['lucide-react'],
+            'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth']
           }
         }
       }

@@ -142,7 +142,12 @@ export default function CelebrationDesign() {
       toast.success('Opening WhatsApp! 🎉', {
         style: { background: '#0E0E18', color: '#a78bfa', border: '1px solid #7c3aed' }
       });
-      window.open(waUrl, '_blank');
+      const newWindow = window.open(waUrl, '_blank');
+      if (!newWindow) {
+        window.location.href = waUrl;
+      } else {
+        navigate('/celebration');
+      }
     }, 800);
   };
 

@@ -369,8 +369,11 @@ export default function Checkout() {
           instructions: formData.additionalMessage.trim(),
         };
 
-        // Save to Firestore
-        await setDoc(doc(db, 'orders', orderId), order);
+        // Save to Firestore (max wait 1.5s so it doesn't block redirection on slow internet)
+        await Promise.race([
+          setDoc(doc(db, 'orders', orderId), order),
+          new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
 
         // Save locally
         const existing = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
