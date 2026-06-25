@@ -4,7 +4,7 @@ import {
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
   Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
-  Search, Wine, PackageSearch, Users, Wallet, Map
+  Search, PackageSearch, Users, Wallet, Map
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
@@ -49,7 +49,7 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'bar' | 'notifications'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'notifications'>('orders');
 
   // Extended Platform States
   const [ridersList, setRidersList] = useState<any[]>([]);
@@ -123,175 +123,6 @@ export default function AdminPage() {
       setSendingNotification(false);
     }
   };
-  const [adminDrinks, setAdminDrinks] = useState<any[]>([]);
-  const [drinksLoading, setDrinksLoading] = useState(false);
-  const [editingDrink, setEditingDrink] = useState<any | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  
-  const [barSearch, setBarSearch] = useState('');
-  const [barFilterCategory, setBarFilterCategory] = useState('All');
-
-  const [drinkForm, setDrinkForm] = useState({
-    name: '',
-    brand: '',
-    category: 'Beer',
-    size: '750ml',
-    price: 0,
-    image: '',
-    isAvailable: true
-  });
-
-  const IMAGE_PRESETS = [
-    { name: 'Cold Beer', url: 'https://images.unsplash.com/photo-1600788886242-5c96aabe3757?w=600&q=80' },
-    { name: 'Beer Bottle', url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80' },
-    { name: 'Amber Whisky', url: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=600&q=80' },
-    { name: 'Whisky Glass', url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80' },
-    { name: 'Dark Rum', url: 'https://images.unsplash.com/photo-1614313511387-1436a4480feb?w=600&q=80' },
-    { name: 'Rum Cocktail', url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=80' },
-    { name: 'Chilled Vodka', url: 'https://images.unsplash.com/photo-1550985543-f47f38aeee65?w=600&q=80' },
-    { name: 'Vodka Splash', url: 'https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?w=600&q=80' },
-    { name: 'Red Wine', url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80' },
-    { name: 'Wine Bottles', url: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80' },
-    { name: 'Brandy Cognac', url: 'https://images.unsplash.com/photo-1510626176961-4b57d4fbad03?w=600&q=80' },
-    { name: 'Champagne Sparkle', url: 'https://images.unsplash.com/photo-1516600171743-c9717e87b184?w=600&q=80' },
-    { name: 'Bombay Sapphire', url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80' },
-    { name: 'Gin & Tonic', url: 'https://images.unsplash.com/photo-1607622750671-6cd9a99eabd1?w=600&q=80' }
-  ];
-
-  // Fetch drinks for admin
-  const fetchAdminDrinks = async () => {
-    setDrinksLoading(true);
-    try {
-      const response = await fetch(`/api/drinks?t=${Date.now()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAdminDrinks(data);
-      }
-    } catch (e) {
-      toast.error('Failed to load drinks list.');
-    } finally {
-      setDrinksLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user && activeTab === 'bar') {
-      fetchAdminDrinks();
-    }
-  }, [user, activeTab]);
-
-  // Save drink (create or update)
-  const handleSaveDrink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!drinkForm.name || !drinkForm.brand || drinkForm.price <= 0) {
-      toast.error('Please fill in name, brand, and valid price.');
-      return;
-    }
-    
-    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
-    toast.loading('Saving drink...', { id: 'drink-save' });
-    
-    try {
-      const payload = editingDrink ? { ...drinkForm, id: editingDrink.id } : drinkForm;
-      const response = await fetch('/api/drinks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await response.json();
-      if (response.ok && data.success) {
-        toast.success(editingDrink ? 'Drink updated successfully!' : 'Drink added successfully!', { id: 'drink-save' });
-        setEditingDrink(null);
-        setShowAddForm(false);
-        setDrinkForm({
-          name: '',
-          brand: '',
-          category: 'Beer',
-          size: '750ml',
-          price: 0,
-          image: '',
-          isAvailable: true
-        });
-        fetchAdminDrinks();
-      } else {
-        toast.error(data.message || 'Failed to save drink.', { id: 'drink-save' });
-      }
-    } catch (err) {
-      toast.error('Network error saving drink.', { id: 'drink-save' });
-    }
-  };
-
-  // Toggle availability of drink directly
-  const handleToggleDrinkStock = async (drink: any) => {
-    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
-    const updatedDrink = { ...drink, isAvailable: !drink.isAvailable };
-    
-    // Optimistic UI update
-    setAdminDrinks(prev => prev.map(d => d.id === drink.id ? updatedDrink : d));
-    
-    try {
-      const response = await fetch('/api/drinks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedDrink)
-      });
-      if (response.ok) {
-        toast.success(`${drink.name} is now ${updatedDrink.isAvailable ? 'In Stock' : 'Out of Stock'}`);
-      } else {
-        toast.error('Sync failed.');
-        fetchAdminDrinks();
-      }
-    } catch (e) {
-      toast.error('Network error during sync.');
-      fetchAdminDrinks();
-    }
-  };
-
-  // Delete drink
-  const handleDeleteDrink = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this drink?')) return;
-    
-    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
-    toast.loading('Deleting drink...', { id: 'drink-delete' });
-    
-    try {
-      const response = await fetch(`/api/drinks?id=${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        toast.success('Drink deleted successfully!', { id: 'drink-delete' });
-        fetchAdminDrinks();
-      } else {
-        toast.error(data.message || 'Failed to delete drink.', { id: 'drink-delete' });
-      }
-    } catch (e) {
-      toast.error('Network error deleting drink.', { id: 'drink-delete' });
-    }
-  };
-
-  // Filtered drinks for inventory search
-  const filteredAdminDrinks = adminDrinks.filter(drink => {
-    const matchesSearch = 
-      drink.name.toLowerCase().includes(barSearch.toLowerCase()) ||
-      drink.brand.toLowerCase().includes(barSearch.toLowerCase());
-    
-    const matchesCategory = 
-      barFilterCategory === 'All' || 
-      drink.category.toLowerCase() === barFilterCategory.toLowerCase();
-
-    return matchesSearch && matchesCategory;
-  });
 
   // Daily Schedule state (Mock database schema details)
   const [schedule, setSchedule] = useState({
@@ -984,19 +815,7 @@ export default function AdminPage() {
         >
           ⚙️ System Controls
         </button>
-        <button
-          onClick={() => {
-            playSound(SOUNDS.CLICK);
-            setActiveTab('bar');
-          }}
-          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
-            activeTab === 'bar'
-              ? 'bg-gradient-to-r from-[#FFB700] to-[#FFD166] text-matte-black border-[#FFD166] shadow-[0_10px_20px_rgba(255,183,0,0.15)] animate-gold-blink'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
-          }`}
-        >
-          🍸 Bar Inventory
-        </button>
+
         <button
           onClick={() => {
             playSound(SOUNDS.CLICK);

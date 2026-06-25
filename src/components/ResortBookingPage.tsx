@@ -414,7 +414,7 @@ export default function ResortBookingPage() {
                     ✓ A WhatsApp confirmation message carrying your QR code has been dispatched. Present this code at the resort main gate.
                   </p>
                   <p>
-                    ✓ Rooms are ready for check-in by **12:00 PM** local time. Premium Bar keys will be handed to you at arrival.
+                    ✓ Rooms are ready for check-in by **12:00 PM** local time. Room keys will be handed to you at arrival.
                   </p>
                 </div>
 
@@ -423,11 +423,11 @@ export default function ResortBookingPage() {
                   <button
                     onClick={() => {
                       playSound(SOUNDS.CLICK);
-                      navigate('/bar-menu');
+                      navigate('/food');
                     }}
                     className="flex-1 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg"
                   >
-                    Browse Bar Menu 🔒
+                    Browse Food Menu
                   </button>
                   <button
                     onClick={() => {
