@@ -98,23 +98,27 @@ export default function Checkout() {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
 
+  const activeItems = isBulkOrder
+    ? [...bulkItems, ...cartItems.map((item) => ({ ...item, finalQuantity: item.quantity } as any))]
+    : cartItems;
+  const subtotal = isBulkOrder ? getBulkTotal() + cartTotal : cartTotal;
+
   const handleApplyCoupon = () => {
     if (couponInput.trim().toUpperCase() === 'WINNER') {
       setAppliedCoupon('WINNER');
       toast.success('WINNER promo applied! Free Delivery!');
     } else if (couponInput.trim().toUpperCase() === 'APPUSER') {
-      setAppliedCoupon('APPUSER');
-      toast.success('APPUSER promo applied! ₹30 off!');
+      if (subtotal > 100) {
+        setAppliedCoupon('APPUSER');
+        toast.success('APPUSER promo applied! ₹30 off!');
+      } else {
+        toast.error('APPUSER coupon is valid only for orders above ₹100');
+      }
     } else {
       setAppliedCoupon('');
       toast.error('Invalid promo code');
     }
   };
-
-  const activeItems = isBulkOrder
-    ? [...bulkItems, ...cartItems.map((item) => ({ ...item, finalQuantity: item.quantity } as any))]
-    : cartItems;
-  const subtotal = isBulkOrder ? getBulkTotal() + cartTotal : cartTotal;
 
   React.useEffect(() => { window.scrollTo(0, 0); }, []);
 
