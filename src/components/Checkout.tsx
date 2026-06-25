@@ -102,6 +102,9 @@ export default function Checkout() {
     if (couponInput.trim().toUpperCase() === 'WINNER') {
       setAppliedCoupon('WINNER');
       toast.success('WINNER promo applied! Free Delivery!');
+    } else if (couponInput.trim().toUpperCase() === 'APPUSER') {
+      setAppliedCoupon('APPUSER');
+      toast.success('APPUSER promo applied! ₹30 off!');
     } else {
       setAppliedCoupon('');
       toast.error('Invalid promo code');
@@ -163,7 +166,8 @@ export default function Checkout() {
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
-  const grandTotal      = subtotal + deliveryCharge + rainySeasonFee;
+  const couponDiscount = appliedCoupon === 'APPUSER' ? 30 : 0;
+  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
   
@@ -711,6 +715,12 @@ export default function Checkout() {
                 ) : `₹${deliveryCharge}`}
               </span>
             </div>
+            {couponDiscount > 0 && (
+              <div className="flex justify-between items-center text-emerald-400 font-bold text-xs uppercase tracking-[3px]">
+                <span>Coupon Discount</span>
+                <span className="text-lg font-black">-₹{couponDiscount}</span>
+              </div>
+            )}
             {walletDeduction > 0 && (
               <div className="flex justify-between items-center text-[#4CD964] font-bold text-xs uppercase tracking-[3px]">
                 <span>Wallet Discount</span>
