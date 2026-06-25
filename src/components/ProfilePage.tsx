@@ -37,7 +37,7 @@ interface WalletTransaction {
 export default function ProfilePage() {
   useSEO("My Profile", "Manage your profile, saved addresses, reward points, and check your wallet balance at Mom's Magic.");
   const navigate = useNavigate();
-  const { user, profile, logout, addAddress, deleteAddress } = useAuthStore();
+  const { user, profile, loading, logout, addAddress, deleteAddress } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'orders' | 'wallet' | 'addresses' | 'rewards' | 'notifications'>('orders');
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -58,7 +58,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) {
       navigate('/');
-      toast.error('Please log in to access this portal.');
     }
   }, [user, navigate]);
 
@@ -96,7 +95,7 @@ export default function ProfilePage() {
         
         // Filter orders by phone number or userId (for logged in placements)
         const userOrders = stored.filter((o: any) => {
-          const isPhoneMatch = phone ? clean(o.userPhone) === clean(phone) : false;
+          const isPhoneMatch = (phone && typeof o.userPhone === 'string') ? clean(o.userPhone) === clean(phone) : false;
           const isUserMatch = o.userId === user.uid;
           return isPhoneMatch || isUserMatch;
         });
@@ -154,7 +153,33 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user || !profile) return null;
+
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
+        <span className="w-10 h-10 border-4 border-[#4CD964] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[#4CD964] mt-4 font-black uppercase tracking-widest text-xs">Loading Profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-xl font-black uppercase text-red-400 mb-4">Profile Sync Error</h2>
+        <p className="text-sm text-white/50 mb-8 max-w-sm">We couldn't load your profile data. Please check your connection and try again.</p>
+        <button
+          onClick={handleLogout}
+          className="bg-red-600/10 border border-red-600/30 text-red-400 px-6 py-3 rounded-xl font-black uppercase text-xs hover:bg-red-600/20 transition-all cursor-pointer"
+        >
+          Force Logout
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-white pt-24 pb-48 px-4 md:px-6">
