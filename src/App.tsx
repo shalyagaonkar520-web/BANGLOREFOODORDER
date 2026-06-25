@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { useEffect, Suspense, lazy } from 'react';
+import { requestForToken, onMessageListener } from './firebase';
 
 // Components
 const LandingPage = lazy(() => import('./components/LandingPage'));
@@ -17,6 +18,7 @@ import MaintenanceGate from './components/MaintenanceGate';
 import CityGateway from './components/CityGateway';
 import LocationPicker from './components/LocationPicker';
 import UndoManager from './components/UndoManager';
+import InstallPrompt from './components/InstallPrompt';
 const FeedbackPage = lazy(() => import('./components/FeedbackPage'));
 const AboutFounder = lazy(() => import('./components/AboutFounder'));
 const CelebrationHub = lazy(() => import('./components/CelebrationHub'));
@@ -99,6 +101,63 @@ export default function App() {
     return () => clearInterval(interval);
   }, [loadSettings]);
 
+  // Request notification permissions, register service worker, and setup foreground listener on mount
+  useEffect(() => {
+    // Request permission & save token to Firestore
+    requestForToken();
+
+    // Listen for foreground push notifications
+    const unsubscribe = onMessageListener((payload) => {
+      console.log('Foreground FCM notification received:', payload);
+      
+      // Render premium Swish-themed notification Toast matching app styles
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+            } transition-all duration-300 max-w-md w-full bg-[#0B0E14] border border-[#4CD964]/20 shadow-[0_12px_45px_rgba(76,217,100,0.15)] rounded-[20px] pointer-events-auto flex p-4 backdrop-blur-[10px]`}
+          >
+            <div className="flex-1 w-0">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 pt-0.5">
+                  <img
+                    className="h-10 w-10 rounded-full object-cover border border-[#4CD964]/20"
+                    src={payload.notification?.image || '/logo.png'}
+                    alt="Notification Icon"
+                  />
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-bold text-[#4CD964]">
+                    {payload.notification?.title || 'Order Update'}
+                  </p>
+                  <p className="mt-1 text-xs text-white/80 font-medium">
+                    {payload.notification?.body || 'You have a new notification.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-[#4CD964]/10 pl-3 ml-3 items-center">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="text-xs font-bold text-text-muted hover:text-[#4CD964] transition-colors uppercase tracking-[1px]"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: 6000 }
+      );
+    });
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
+
   return (
     <Router>
       <Toaster 
@@ -117,6 +176,7 @@ export default function App() {
       />
       <LocationPicker />
       <UndoManager />
+      <InstallPrompt />
       
       <MaintenanceGate>
         <OperatingHoursGate>

@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import fs from 'fs';
 import {defineConfig, loadEnv} from 'vite';
@@ -11,6 +12,49 @@ export default defineConfig(({mode}) => {
     plugins: [
       react(), 
       tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'robots.txt', 'logo.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
+        manifest: {
+          name: "Mom's Magic",
+          short_name: "Mom's Magic",
+          description: "Order fresh food online from Mom's Magic. Fast delivery in Yellapur, Dandeli and nearby areas.",
+          theme_color: "#050505",
+          background_color: "#050505",
+          display: "standalone",
+          orientation: "portrait",
+          start_url: ".",
+          scope: "/",
+          icons: [
+            {
+              src: "pwa-icon-192.png",
+              sizes: "192x192",
+              type: "image/png"
+            },
+            {
+              src: "pwa-icon-512.png",
+              sizes: "512x512",
+              type: "image/png"
+            },
+            {
+              src: "pwa-icon-512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any maskable"
+            }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,ico,json}'],
+          // Import the Firebase Cloud Messaging service worker script
+          // to combine FCM background push alerts with PWA offline caching!
+          importScripts: ['/firebase-messaging-sw.js']
+        },
+        devOptions: {
+          enabled: true,
+          type: 'module'
+        }
+      }),
       {
         name: 'api-mock-server',
         configureServer(server) {
