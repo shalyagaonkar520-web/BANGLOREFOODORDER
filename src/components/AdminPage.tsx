@@ -332,6 +332,20 @@ export default function AdminPage() {
     }
   };
 
+  // Handle Delete Order
+  const handleDeleteOrder = (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
+      const updatedOrders = storedOrders.filter((o: any) => o.id !== orderId);
+      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedOrders));
+      setRealOrders(updatedOrders);
+      toast.success('Order deleted successfully');
+    } catch (err) {
+      toast.error('Failed to delete order');
+    }
+  };
+
   // Handle Share Location Save
   const handleSaveTrackingLink = () => {
     if (!trackingModalOrder || !trackingUrl.trim()) {
@@ -694,7 +708,16 @@ export default function AdminPage() {
                   <div key={order.id} className="bg-[#121624] border border-white/5 rounded-[30px] p-6 space-y-4 hover:border-white/10 transition-colors">
                     <div className="flex items-start justify-between border-b border-white/5 pb-4">
                       <div>
-                        <p className="text-xs font-black uppercase text-emerald-400 tracking-widest">ID: {order.id.slice(0,8)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-black uppercase text-emerald-400 tracking-widest">ID: {order.id.slice(0,8)}</p>
+                          <button
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="text-red-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 text-xs font-semibold cursor-pointer shrink-0"
+                            title="Delete Order Record"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                         <h3 className="text-lg font-black text-white italic truncate mt-1">{order.userName}</h3>
                         <p className="text-xs font-bold text-white/40 tracking-widest mt-1">{order.userPhone}</p>
                       </div>
