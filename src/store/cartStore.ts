@@ -46,12 +46,14 @@ export const useCartStore = create<CartStore>((set, get) => {
       updateCart(newItems);
     },
     removeItem: (productId) => {
-      const itemToRemove = get().items.find(i => i.id === productId);
-      if (itemToRemove) {
-        const newItems = get().items.filter(i => i.id !== productId);
-        set({ lastRemovedItem: itemToRemove });
-        updateCart(newItems);
-      }
+      const items = get().items;
+      const itemToRemove = items.find(i => i.id === productId);
+      const newItems = items.filter(i => i.id !== productId);
+      set({ 
+        lastRemovedItem: itemToRemove || null,
+        items: newItems,
+        total: calculateTotal(newItems)
+      });
     },
     undoRemove: () => {
       const lastItem = get().lastRemovedItem;

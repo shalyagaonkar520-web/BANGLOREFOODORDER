@@ -1,16 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
   Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
-  Search, Wine, PackageSearch
+  Search, Wine, PackageSearch, Users, Wallet, Map
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { db } from '../firebase';
+import { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  updateDoc, 
+  addDoc, 
+  deleteDoc,
+  runTransaction,
+  query,
+  orderBy,
+  where
+} from 'firebase/firestore';
 
 // Real Orders fetched from localStorage
 
@@ -34,7 +49,31 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'system' | 'bar' | 'notifications'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'bar' | 'notifications'>('orders');
+
+  // Extended Platform States
+  const [ridersList, setRidersList] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [walletLogs, setWalletLogs] = useState<any[]>([]);
+  const [pwaInstallsList, setPwaInstallsList] = useState<any[]>([]);
+
+  // Customer Management - Wallet Adjustment Form States
+  const [adjustingUser, setAdjustingUser] = useState<any | null>(null);
+  const [adjustAmount, setAdjustAmount] = useState<string>('');
+  const [adjustReason, setAdjustReason] = useState<string>('');
+  const [adjustingLoading, setAdjustingLoading] = useState<boolean>(false);
+
+  // Customer List Search Filter
+  const [customerSearch, setCustomerSearch] = useState<string>('');
+
+  // Wallet Logs Search Filter
+  const [walletSearch, setWalletSearch] = useState<string>('');
+  const [walletTypeFilter, setWalletTypeFilter] = useState<string>('All');
+
+  // Leaflet map refs for rider tracking
+  const riderMapRef = useRef<HTMLDivElement>(null);
+  const riderMapInstance = useRef<L.Map | null>(null);
+  const riderMarkersRef = useRef<{ [key: string]: L.Marker }>({});
 
   // Push notifications broadcast state
   const [notificationForm, setNotificationForm] = useState({
@@ -277,47 +316,292 @@ export default function AdminPage() {
     setLocalSettings(settings);
   }, [settings]);
 
-  // Fetch real orders from localStorage periodically
+  // ── Firestore real-time queries for Orders, Riders, Customers, and Wallet Logs ──
   useEffect(() => {
     if (!user) return;
-    const fetchOrders = () => {
-      try {
-        const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        // Sort by newest first
-        storedOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setRealOrders(storedOrders);
-      } catch (err) {
-        console.error('Error parsing orders', err);
-      }
+
+    // 1. Listen to all orders
+    const ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+      const fetchedOrders: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedOrders.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setRealOrders(fetchedOrders);
+    }, (err) => console.error("Error fetching orders:", err));
+
+    // 2. Listen to all riders
+    const ridersQuery = collection(db, 'riders');
+    const unsubscribeRiders = onSnapshot(ridersQuery, (snapshot) => {
+      const fetchedRiders: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedRiders.push({ uid: docSnap.id, ...docSnap.data() });
+      });
+      setRidersList(fetchedRiders);
+    }, (err) => console.error("Error fetching riders:", err));
+
+    // 3. Listen to all users
+    const usersQuery = collection(db, 'users');
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const fetchedUsers: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedUsers.push({ uid: docSnap.id, ...docSnap.data() });
+      });
+      setUsersList(fetchedUsers);
+    }, (err) => console.error("Error fetching users:", err));
+
+    // 4. Listen to all wallet transactions
+    const walletLogsQuery = query(collection(db, 'walletTransactions'), orderBy('createdAt', 'desc'));
+    const unsubscribeWalletLogs = onSnapshot(walletLogsQuery, (snapshot) => {
+      const fetchedLogs: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedLogs.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setWalletLogs(fetchedLogs);
+    }, (err) => console.error("Error fetching wallet logs:", err));
+
+    // 5. Listen to all PWA installs
+    const installsQuery = collection(db, 'pwaInstalls');
+    const unsubscribeInstalls = onSnapshot(installsQuery, (snapshot) => {
+      const fetchedInstalls: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedInstalls.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setPwaInstallsList(fetchedInstalls);
+    }, (err) => console.error("Error fetching PWA installs:", err));
+
+    return () => {
+      unsubscribeOrders();
+      unsubscribeRiders();
+      unsubscribeUsers();
+      unsubscribeWalletLogs();
+      unsubscribeInstalls();
     };
-    
-    fetchOrders(); // initial fetch
-    const interval = setInterval(fetchOrders, 5000); // refresh every 5 seconds
-    return () => clearInterval(interval);
   }, [user]);
 
-  // Handle Order Status Update
-  const handleUpdateOrderStatus = (orderId: string, newStatus: string, phone: string, trackingLink?: string) => {
-    try {
-      const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-      const updatedOrders = storedOrders.map((o: any) => {
-        if (o.id === orderId) {
-          return { ...o, status: newStatus, trackingLink: trackingLink !== undefined ? trackingLink : o.trackingLink };
-        }
-        return o;
+  // ── Leaflet Interactive Map for Rider Tracking ──
+  useEffect(() => {
+    if (activeTab === 'riders' && riderMapRef.current && !riderMapInstance.current) {
+      riderMapInstance.current = L.map(riderMapRef.current, {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([14.9643, 74.7121], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(riderMapInstance.current);
+
+      const kitchenIcon = L.divIcon({
+        html: '<div class="w-8 h-8 rounded-full bg-orange-600 border-2 border-white flex items-center justify-center shadow-lg font-bold text-sm">🍳</div>',
+        className: 'custom-div-icon',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
       });
-      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedOrders));
-      setRealOrders(updatedOrders);
+      L.marker([14.9643, 74.7121], { icon: kitchenIcon }).addTo(riderMapInstance.current)
+        .bindPopup('<b>Mom\'s Magic Kitchen (Base)</b>');
+    }
+
+    return () => {
+      if (riderMapInstance.current) {
+        riderMapInstance.current.remove();
+        riderMapInstance.current = null;
+        riderMarkersRef.current = {};
+      }
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    const map = riderMapInstance.current;
+    if (!map || activeTab !== 'riders') return;
+
+    const onlineWithCoords = ridersList.filter(r => 
+      r.status === 'online' && 
+      r.currentLocation?.lat && 
+      r.currentLocation?.lng
+    );
+
+    const currentRiderIds = new Set(onlineWithCoords.map(r => r.uid));
+
+    // Remove markers of riders who went offline or no coordinates
+    Object.keys(riderMarkersRef.current).forEach(uid => {
+      if (!currentRiderIds.has(uid)) {
+        riderMarkersRef.current[uid].remove();
+        delete riderMarkersRef.current[uid];
+      }
+    });
+
+    const riderIcon = L.divIcon({
+      html: '<div class="w-9 h-9 rounded-full bg-[#4CD964] border-2 border-white flex items-center justify-center shadow-2xl font-bold text-sm shadow-[#4CD964]/50 animate-pulse">🛵</div>',
+      className: 'custom-div-icon',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    onlineWithCoords.forEach(rider => {
+      const latlng: [number, number] = [rider.currentLocation.lat, rider.currentLocation.lng];
       
-      // Auto open WhatsApp for status change
+      const activeOrdersCount = realOrders.filter(o => 
+        o.riderId === rider.uid && 
+        o.status !== 'delivered' && 
+        o.status !== 'completed' && 
+        o.status !== 'cancelled'
+      ).length;
+
+      const popupContent = `
+        <div class="text-xs text-left p-1 text-black">
+          <h4 class="font-bold uppercase tracking-tight text-sm">${rider.name}</h4>
+          <p class="mt-0.5"><b>Phone:</b> ${rider.phone}</p>
+          <p><b>Active orders:</b> ${activeOrdersCount}</p>
+          <p><b>Today's Earnings:</b> ₹${rider.earnings || 0}</p>
+        </div>
+      `;
+
+      if (!riderMarkersRef.current[rider.uid]) {
+        riderMarkersRef.current[rider.uid] = L.marker(latlng, { icon: riderIcon }).addTo(map)
+          .bindPopup(popupContent);
+      } else {
+        const marker = riderMarkersRef.current[rider.uid];
+        marker.setLatLng(latlng);
+        marker.setPopupContent(popupContent);
+      }
+    });
+
+    if (onlineWithCoords.length > 0) {
+      const points: Array<[number, number]> = [[14.9643, 74.7121]];
+      onlineWithCoords.forEach(r => points.push([r.currentLocation.lat, r.currentLocation.lng]));
+      map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 16 });
+    }
+  }, [ridersList, activeTab, realOrders]);
+
+  // ── Manual & Auto Rider Assignment ──
+  const handleAssignRider = async (orderId: string, riderId: string) => {
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      if (!riderId) {
+        await updateDoc(orderRef, {
+          riderId: '',
+          riderStatus: ''
+        });
+        toast.success('Rider unassigned');
+      } else {
+        await updateDoc(orderRef, {
+          riderId: riderId,
+          riderStatus: 'assigned'
+        });
+        const selectedRider = ridersList.find(r => r.uid === riderId);
+        toast.success(`Assigned to ${selectedRider?.name || 'Rider'}`);
+      }
+    } catch (err) {
+      toast.error('Failed to assign rider');
+    }
+  };
+
+  const handleAutoAssignRider = async (orderId: string) => {
+    const onlineRiders = ridersList.filter(r => r.status === 'online');
+    if (onlineRiders.length === 0) {
+      toast.error('No riders are currently online!');
+      return;
+    }
+
+    try {
+      const activeCounts: { [key: string]: number } = {};
+      onlineRiders.forEach(r => {
+        activeCounts[r.uid] = 0;
+      });
+
+      realOrders.forEach(o => {
+        if (o.riderId && o.riderId in activeCounts) {
+          if (o.status !== 'delivered' && o.status !== 'completed' && o.status !== 'cancelled') {
+            activeCounts[o.riderId]++;
+          }
+        }
+      });
+
+      let minRiderId = onlineRiders[0].uid;
+      let minCount = activeCounts[minRiderId];
+
+      onlineRiders.forEach(r => {
+        if (activeCounts[r.uid] < minCount) {
+          minCount = activeCounts[r.uid];
+          minRiderId = r.uid;
+        }
+      });
+
+      const bestRider = onlineRiders.find(r => r.uid === minRiderId);
+      await updateDoc(doc(db, 'orders', orderId), {
+        riderId: minRiderId,
+        riderStatus: 'assigned'
+      });
+
+      toast.success(`Auto-assigned to ${bestRider?.name} (active: ${minCount} orders)`);
+    } catch (err) {
+      toast.error('Failed to auto-assign rider');
+    }
+  };
+
+  // ── Customer Wallet balance adjustments ──
+  const handleAdjustWallet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adjustingUser) return;
+    const amount = parseFloat(adjustAmount);
+    if (isNaN(amount) || amount === 0) {
+      toast.error('Please enter a valid non-zero amount');
+      return;
+    }
+    if (!adjustReason.trim()) {
+      toast.error('Please enter a description for the audit logs');
+      return;
+    }
+
+    setAdjustingLoading(true);
+    try {
+      const userRef = doc(db, 'users', adjustingUser.uid);
+      const nextBalance = Math.max(0, (adjustingUser.walletBalance || 0) + amount);
+
+      await runTransaction(db, async (transaction) => {
+        transaction.update(userRef, {
+          walletBalance: nextBalance
+        });
+
+        const newTransRef = doc(collection(db, 'walletTransactions'));
+        transaction.set(newTransRef, {
+          userId: adjustingUser.uid,
+          amount: amount,
+          type: 'admin_adjustment',
+          description: adjustReason.trim(),
+          createdAt: new Date().toISOString()
+        });
+      });
+
+      toast.success(`Wallet balance updated to ₹${nextBalance}!`);
+      setAdjustingUser(null);
+      setAdjustAmount('');
+      setAdjustReason('');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update wallet balance');
+    } finally {
+      setAdjustingLoading(false);
+    }
+  };
+
+  // ── Handle Order Status Update (Firestore + WhatsApp) ──
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string, phone: string, trackingLink?: string) => {
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      const updateData: any = { status: newStatus };
+      if (trackingLink !== undefined) {
+        updateData.trackingLink = trackingLink;
+      }
+      await updateDoc(orderRef, updateData);
+      
       let message = '';
       if (newStatus === 'Out For Delivery') {
-        message = `🚚 Your Moms Magic order is on the way!\\n\\nTrack your order live:\\n${trackingLink || updatedOrders.find((o: any) => o.id === orderId)?.trackingLink}\\n\\nThank you for ordering from Moms Magic ❤️`;
+        message = `🚚 Your Moms Magic order is on the way!\\n\\nTrack your order live:\\n${trackingLink || `https://momsmagic.shop/track/${orderId}`}\\n\\nThank you for ordering from Moms Magic ❤️`;
       } else {
         message = `*Moms Magic Update* 🍲\\n\\nYour order (ID: ${orderId.slice(0,8)}) is now *${newStatus.toUpperCase()}*.\\n\\nThank you for ordering from Moms Magic ❤️`;
       }
       
-      // Clean phone number (remove +91 if user added it manually, as we append 91)
       let cleanPhone = phone.replace(/[^0-9]/g, '');
       if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
       
@@ -328,25 +612,22 @@ export default function AdminPage() {
         window.location.href = waUrl;
       }, 500);
     } catch (err) {
-      toast.error('Failed to update order');
+      toast.error('Failed to update order status');
     }
   };
 
-  // Handle Delete Order
-  const handleDeleteOrder = (orderId: string) => {
+  // ── Handle Delete Order (Firestore) ──
+  const handleDeleteOrder = async (orderId: string) => {
     if (!confirm('Are you sure you want to delete this order?')) return;
     try {
-      const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-      const updatedOrders = storedOrders.filter((o: any) => o.id !== orderId);
-      localStorage.setItem('moms_magic_orders', JSON.stringify(updatedOrders));
-      setRealOrders(updatedOrders);
+      await deleteDoc(doc(db, 'orders', orderId));
       toast.success('Order deleted successfully');
     } catch (err) {
       toast.error('Failed to delete order');
     }
   };
 
-  // Handle Share Location Save
+  // ── Handle Share Location Save (Firestore) ──
   const handleSaveTrackingLink = () => {
     if (!trackingModalOrder || !trackingUrl.trim()) {
       toast.error('Please enter a valid link');
@@ -641,6 +922,58 @@ export default function AdminPage() {
         <button
           onClick={() => {
             playSound(SOUNDS.CLICK);
+            setActiveTab('analytics');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'analytics'
+              ? 'bg-gradient-to-r from-blue-500 to-blue-400 text-matte-black border-blue-400 shadow-[0_10px_20px_rgba(59,130,246,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          📊 Analytics
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('riders');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'riders'
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-400 text-matte-black border-indigo-400 shadow-[0_10px_20px_rgba(99,102,241,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          🛵 Riders Map
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('customers');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'customers'
+              ? 'bg-gradient-to-r from-pink-500 to-pink-400 text-matte-black border-pink-400 shadow-[0_10px_20px_rgba(236,72,153,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          👥 Customers
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('walletLogs');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'walletLogs'
+              ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-matte-black border-teal-400 shadow-[0_10px_20px_rgba(20,184,166,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          💳 Wallet Logs
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
             setActiveTab('system');
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
@@ -739,6 +1072,48 @@ export default function AdminPage() {
                       {order.items.length > 3 && <p className="text-[10px] text-white/40 italic">+{order.items.length - 3} more</p>}
                     </div>
 
+                    {/* Rider Assignment section */}
+                    <div className="pt-3 border-t border-white/5 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-white/45 uppercase tracking-wider text-[9px]">Delivery Partner</span>
+                        {order.riderId ? (
+                          <span className="font-black text-[#4CD964] uppercase text-[9px] tracking-wide flex items-center gap-1">
+                            🛵 {ridersList.find(r => r.uid === order.riderId)?.name || 'Assigned'}
+                            <span className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-white/50 lowercase">
+                              ({order.riderStatus || 'assigned'})
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="font-black text-red-400 uppercase text-[9px] tracking-wide">
+                            ❌ Unassigned
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={order.riderId || ''}
+                          onChange={(e) => handleAssignRider(order.id, e.target.value)}
+                          className="flex-1 bg-[#050505] border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white/80 outline-none focus:border-[#4CD964]/40"
+                        >
+                          <option value="">MANUAL ASSIGN...</option>
+                          {ridersList.map(r => (
+                            <option key={r.uid} value={r.uid}>
+                              {r.name} ({r.status === 'online' ? '🟢 online' : '🔴 offline'})
+                            </option>
+                          ))}
+                        </select>
+
+                        <button
+                          onClick={() => handleAutoAssignRider(order.id)}
+                          className="px-3.5 py-2 rounded-xl bg-[#4CD964]/10 hover:bg-[#4CD964]/20 border border-[#4CD964]/20 text-[#4CD964] font-black text-[9px] uppercase tracking-wider transition-colors shrink-0"
+                          title="Auto-Assign Rider"
+                        >
+                          ⚡ Auto
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2 pt-4 border-t border-white/5">
                       <button onClick={() => handleUpdateOrderStatus(order.id, 'Confirmed', order.userPhone)} className="py-2.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-[9px] font-black uppercase tracking-widest transition-colors">
                         ✅ Confirmed
@@ -788,6 +1163,476 @@ export default function AdminPage() {
               </motion.div>
             </div>
           )}
+        </main>
+      ) : activeTab === 'analytics' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-10">
+          <div>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Platform Analytics</h2>
+            <p className="text-white/40 text-xs mt-1 font-semibold">Real-time business performance overview metrics.</p>
+          </div>
+
+          {/* Grid Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* PWA Installs Card */}
+            <div className="bg-[#121620]/60 border border-[#4CD964]/20 p-6 rounded-[25px] relative overflow-hidden col-span-2 lg:col-span-4 text-left">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#4CD964]/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="p-3 bg-[#4CD964]/10 text-[#4CD964] rounded-xl text-lg">📲</span>
+                  <div>
+                    <h4 className="font-extrabold text-white text-base">PWA Installation Analytics</h4>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">App install tracking & user signups</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#4CD964] animate-pulse" />
+                  <span className="text-[10px] text-white/60 font-black uppercase tracking-wider">Live Tracking Active</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6">
+                <div>
+                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Total PWA Installs</p>
+                  <h3 className="text-3xl font-black italic text-white mt-3">{pwaInstallsList.length}</h3>
+                </div>
+                <div>
+                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
+                  <h3 className="text-3xl font-black italic text-[#4CD964] mt-3">{usersList.length}</h3>
+                </div>
+                <div>
+                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Daily Installs (Today)</p>
+                  <h3 className="text-3xl font-black italic text-blue-400 mt-3">
+                    {pwaInstallsList.filter(inst => inst.installedAt && new Date(inst.installedAt).toDateString() === new Date().toDateString()).length}
+                  </h3>
+                </div>
+                <div>
+                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Monthly Installs</p>
+                  <h3 className="text-3xl font-black italic text-pink-400 mt-3">
+                    {pwaInstallsList.filter(inst => {
+                      if (!inst.installedAt) return false;
+                      const d = new Date(inst.installedAt);
+                      const now = new Date();
+                      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    }).length}
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+              <div className="flex items-center gap-3">
+                <span className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">📦</span>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Total Orders</p>
+              </div>
+              <h3 className="text-3xl font-black italic text-white mt-4">{realOrders.length}</h3>
+            </div>
+
+            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+              <div className="flex items-center gap-3">
+                <span className="p-3 bg-blue-500/10 text-blue-400 rounded-xl">💵</span>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Delivered Revenue</p>
+              </div>
+              <h3 className="text-3xl font-black italic text-emerald-400 mt-4">
+                ₹{realOrders.filter(o => o.status === 'delivered' || o.status === 'completed').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}
+              </h3>
+            </div>
+
+            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+              <div className="flex items-center gap-3">
+                <span className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">🛵</span>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Active Riders</p>
+              </div>
+              <h3 className="text-3xl font-black italic text-white mt-4">{ridersList.filter(r => r.status === 'online').length} <span className="text-xs text-white/30 font-bold">online</span></h3>
+            </div>
+
+            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+              <div className="flex items-center gap-3">
+                <span className="p-3 bg-pink-500/10 text-pink-400 rounded-xl">👥</span>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
+              </div>
+              <h3 className="text-3xl font-black italic text-white mt-4">{usersList.length}</h3>
+            </div>
+          </div>
+
+          {/* Revenue and Orders Analytics Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-[#121620]/50 border border-white/5 p-8 rounded-[35px] space-y-6">
+              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-white/5 pb-4">Revenue Breakdown</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm font-semibold">
+                  <span className="text-white/60">Delivered Orders Revenue:</span>
+                  <span className="text-emerald-400 font-extrabold">₹{realOrders.filter(o => o.status === 'delivered' || o.status === 'completed').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-semibold">
+                  <span className="text-white/60">In-progress Orders Value:</span>
+                  <span className="text-blue-400 font-extrabold">₹{realOrders.filter(o => o.status === 'pending' || o.status === 'Preparing' || o.status === 'Out For Delivery').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-semibold">
+                  <span className="text-white/60">Cancelled Orders Value:</span>
+                  <span className="text-red-400 font-extrabold">₹{realOrders.filter(o => o.status === 'cancelled').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
+                </div>
+                <div className="h-px bg-white/5 my-2" />
+                <div className="flex justify-between items-center text-base font-black uppercase">
+                  <span>Gross Sales Total:</span>
+                  <span className="text-white">₹{realOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#121620]/50 border border-white/5 p-8 rounded-[35px] space-y-6">
+              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-white/5 pb-4">Order Pipeline Volume</h3>
+              <div className="space-y-4">
+                {['pending', 'Preparing', 'Out For Delivery', 'delivered', 'cancelled'].map(status => {
+                  const count = realOrders.filter(o => o.status === status).length;
+                  const percentage = realOrders.length ? Math.round((count / realOrders.length) * 100) : 0;
+                  return (
+                    <div key={status} className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-white/70">
+                        <span>{status === 'pending' ? 'Pending Confirmation' : status}</span>
+                        <span>{count} ({percentage}%)</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${
+                            status === 'pending' ? 'bg-blue-500' :
+                            status === 'Preparing' ? 'bg-orange-500' :
+                            status === 'Out For Delivery' ? 'bg-purple-500' :
+                            status === 'delivered' ? 'bg-emerald-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </main>
+      ) : activeTab === 'riders' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Delivery Partner Operations</h2>
+              <p className="text-white/40 text-xs mt-1 font-semibold">Monitor active riders, earnings, and real-time geolocations.</p>
+            </div>
+            <div className="px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-emerald-500/50 animate-pulse" />
+              {ridersList.filter(r => r.status === 'online').length} Riders Online
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Riders List */}
+            <div className="lg:col-span-1 space-y-4">
+              <h3 className="text-xs font-black uppercase text-white/50 tracking-widest">Riders Directory</h3>
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 no-scrollbar">
+                {ridersList.length === 0 ? (
+                  <div className="py-12 text-center bg-white/5 border border-white/5 rounded-2xl">
+                    <p className="text-xs text-white/30 font-bold uppercase tracking-wider">No registered riders found</p>
+                  </div>
+                ) : (
+                  ridersList.map(rider => (
+                    <div key={rider.uid} className="bg-[#121620]/60 border border-white/5 p-4.5 rounded-2xl flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 font-sans">
+                        <div className={`w-3 h-3 rounded-full shrink-0 ${rider.status === 'online' ? 'bg-[#4CD964] shadow-[0_0_10px_#4CD964]' : 'bg-red-500'}`} />
+                        <div>
+                          <h4 className="font-extrabold text-white text-sm">{rider.name}</h4>
+                          <p className="text-[10px] text-white/40 font-semibold">{rider.phone || 'No phone'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Commission</p>
+                        <p className="font-black italic text-[#4CD964] text-sm">₹{rider.earnings || 0}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Right: Live Rider Map */}
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-xs font-black uppercase text-white/50 tracking-widest flex items-center gap-2">
+                📍 Live Geolocation Tracking Map
+              </h3>
+              <div className="w-full h-[500px] rounded-[30px] overflow-hidden border border-white/10 relative z-10 bg-neutral-900 shadow-2xl">
+                <div ref={riderMapRef} className="w-full h-full absolute inset-0" />
+              </div>
+            </div>
+          </div>
+        </main>
+      ) : activeTab === 'customers' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Customer Database</h2>
+              <p className="text-white/40 text-xs mt-1 font-semibold">View user profiles, reward points, and manage wallet credits.</p>
+            </div>
+            
+            {/* Search Input */}
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={customerSearch}
+                onChange={e => setCustomerSearch(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-[#121620] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/30 transition-all text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Customers Table */}
+          <div className="bg-[#121620]/50 border border-white/5 rounded-[35px] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Customer</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Email & Phone</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Wallet Balance</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Reward Points</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Saved Addresses</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {usersList.filter(user => 
+                    user.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                    user.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                    user.phone?.includes(customerSearch)
+                  ).length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-16 text-white/30 text-xs font-bold uppercase tracking-widest">
+                        No matching customers found
+                      </td>
+                    </tr>
+                  ) : (
+                    usersList.filter(user => 
+                      user.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                      user.email?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                      user.phone?.includes(customerSearch)
+                    ).map(u => (
+                      <tr key={u.uid} className="hover:bg-white/[0.01] transition-colors">
+                        <td className="px-6 py-4.5">
+                          <h4 className="font-extrabold text-white text-sm">{u.name}</h4>
+                          <span className="text-[8px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/30 uppercase tracking-wider font-mono">
+                            ID: {u.uid.slice(0, 8)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4.5">
+                          <p className="text-xs text-white/80 font-bold">{u.email}</p>
+                          <p className="text-[10px] text-white/40 font-semibold mt-0.5">{u.phone || 'No phone number'}</p>
+                        </td>
+                        <td className="px-6 py-4.5">
+                          <span className="text-sm font-black text-[#4CD964] italic">₹{u.walletBalance || 0}</span>
+                        </td>
+                        <td className="px-6 py-4.5">
+                          <span className="text-xs font-bold text-amber-400">★ {u.rewardPoints || 0} pts</span>
+                        </td>
+                        <td className="px-6 py-4.5 text-xs text-white/60 font-semibold">
+                          {u.addresses?.length || 0} locations
+                        </td>
+                        <td className="px-6 py-4.5 text-right">
+                          <button
+                            onClick={() => {
+                              playSound(SOUNDS.CLICK);
+                              setAdjustingUser(u);
+                            }}
+                            className="bg-white/5 border border-white/10 hover:border-pink-500/30 text-white hover:text-pink-400 px-4.5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                          >
+                            Adjust Wallet
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Wallet Adjustment Dialog Modal */}
+          {adjustingUser && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-[#121620] w-full max-w-md rounded-[30px] p-8 border border-white/10 shadow-2xl relative text-left space-y-6"
+              >
+                <button 
+                  onClick={() => setAdjustingUser(null)} 
+                  className="absolute top-4 right-4 p-2 text-white/40 hover:text-white"
+                >
+                  ✕
+                </button>
+                <div>
+                  <h3 className="text-xl font-black italic uppercase tracking-tight text-pink-400">
+                    💳 Adjust User Wallet
+                  </h3>
+                  <p className="text-xs font-semibold text-white/50 mt-1">
+                    Credit or debit wallet balance for <b>{adjustingUser.name}</b>.
+                  </p>
+                </div>
+
+                <form onSubmit={handleAdjustWallet} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Amount (e.g. +100 to Add, -50 to Deduct)</label>
+                    <input
+                      type="number"
+                      placeholder="₹0.00"
+                      required
+                      value={adjustAmount}
+                      onChange={e => setAdjustAmount(e.target.value)}
+                      className="w-full px-5 py-4 bg-[#050505] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Adjustment Reason (Audit trail description)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Good-will gesture bonus credit"
+                      required
+                      value={adjustReason}
+                      onChange={e => setAdjustReason(e.target.value)}
+                      className="w-full px-5 py-4 bg-[#050505] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={adjustingLoading}
+                    className="w-full h-14 bg-pink-500 hover:bg-pink-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {adjustingLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                        Updating Database...
+                      </>
+                    ) : (
+                      <>Commit Transaction</>
+                    )}
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </main>
+      ) : activeTab === 'walletLogs' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Wallet Transaction Logs</h2>
+              <p className="text-white/40 text-xs mt-1 font-semibold">Audit trail database of all platform credits and debits.</p>
+            </div>
+
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Type Filter */}
+              <select
+                value={walletTypeFilter}
+                onChange={e => {
+                  playSound(SOUNDS.CLICK);
+                  setWalletTypeFilter(e.target.value);
+                }}
+                className="px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white/70 font-black outline-none focus:border-teal-500/30 transition-all text-xs uppercase tracking-wider"
+              >
+                <option value="All">All Types</option>
+                <option value="welcome_bonus">Welcome Bonus</option>
+                <option value="order_payment">Order Payment</option>
+                <option value="admin_adjustment">Admin Adjustment</option>
+              </select>
+
+              {/* Search Log Description */}
+              <div className="relative w-full sm:w-60">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  placeholder="Search transactions..."
+                  value={walletSearch}
+                  onChange={e => setWalletSearch(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-teal-500/30 transition-all text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Logs Table */}
+          <div className="bg-[#121620]/50 border border-white/5 rounded-[35px] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Transaction ID</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Customer</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Amount</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Type</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Description</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {walletLogs.filter(log => {
+                    const matchesSearch = log.description?.toLowerCase().includes(walletSearch.toLowerCase()) || log.userId?.toLowerCase().includes(walletSearch.toLowerCase());
+                    const matchesType = walletTypeFilter === 'All' || log.type === walletTypeFilter;
+                    return matchesSearch && matchesType;
+                  }).length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-16 text-white/30 text-xs font-bold uppercase tracking-widest">
+                        No transactions registered
+                      </td>
+                    </tr>
+                  ) : (
+                    walletLogs.filter(log => {
+                      const matchesSearch = log.description?.toLowerCase().includes(walletSearch.toLowerCase()) || log.userId?.toLowerCase().includes(walletSearch.toLowerCase());
+                      const matchesType = walletTypeFilter === 'All' || log.type === walletTypeFilter;
+                      return matchesSearch && matchesType;
+                    }).map(log => {
+                      const amountColor = log.amount > 0 ? 'text-[#4CD964]' : 'text-red-400';
+                      const typeLabel = 
+                        log.type === 'welcome_bonus' ? '🎁 Welcome Bonus' :
+                        log.type === 'order_payment' ? '🍽️ Order Payment' : '⚙️ Adjustment';
+                      
+                      const resolvedUser = usersList.find(u => u.uid === log.userId);
+
+                      return (
+                        <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
+                          <td className="px-6 py-4.5 font-mono text-[10px] text-white/60">
+                            #{log.id.slice(0, 8)}
+                          </td>
+                          <td className="px-6 py-4.5 text-xs text-white/80 font-bold">
+                            {resolvedUser ? (
+                              <div>
+                                <p>{resolvedUser.name}</p>
+                                <p className="text-[9px] text-white/40 font-semibold">{resolvedUser.email}</p>
+                              </div>
+                            ) : (
+                              <span>ID: {log.userId.slice(0, 8)}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4.5">
+                            <span className={`text-sm font-black italic ${amountColor}`}>{log.amount > 0 ? `+₹${log.amount}` : `-₹${Math.abs(log.amount)}`}</span>
+                          </td>
+                          <td className="px-6 py-4.5">
+                            <span className="text-[9px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/50 font-bold uppercase tracking-wider">
+                              {typeLabel}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4.5 text-xs text-white/80 font-medium">
+                            {log.description}
+                          </td>
+                          <td className="px-6 py-4.5 text-[10px] text-white/40 font-bold">
+                            {log.createdAt ? new Date(log.createdAt).toLocaleString() : 'Just now'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </main>
       ) : activeTab === 'system' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">

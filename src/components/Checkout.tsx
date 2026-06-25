@@ -11,6 +11,9 @@ import { calculateDeliveryCharge } from '../types';
 import { useSystemStore } from '../store/systemStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
+import { useAuthStore } from '../store/authStore';
+import { db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 import DeliveryAnimation from './DeliveryAnimation';
 
@@ -87,6 +90,10 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const settings = useSystemStore((s) => s.settings);
 
+  const { user, profile, deductWalletBalance } = useAuthStore();
+  const [useWallet, setUseWallet] = useState(false);
+  const [customWalletAmount, setCustomWalletAmount] = useState('');
+
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
@@ -157,6 +164,31 @@ export default function Checkout() {
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
   const grandTotal      = subtotal + deliveryCharge + rainySeasonFee;
+
+  const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
+  
+  // Calculate final wallet deduction used
+  let walletDeduction = 0;
+  if (user && profile && useWallet) {
+    const inputAmount = parseFloat(customWalletAmount);
+    if (!isNaN(inputAmount) && inputAmount > 0) {
+      walletDeduction = Math.min(inputAmount, maxWalletDeduction);
+    } else if (customWalletAmount === '') {
+      walletDeduction = maxWalletDeduction;
+    }
+  }
+
+  const payableAmount = Math.max(0, grandTotal - walletDeduction);
+
+  const handleUseWalletToggle = (checked: boolean) => {
+    setUseWallet(checked);
+    if (checked && profile) {
+      const maxPossible = Math.min(profile.walletBalance, grandTotal);
+      setCustomWalletAmount(maxPossible.toString());
+    } else {
+      setCustomWalletAmount('');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,6 +265,8 @@ export default function Checkout() {
         `🌧️ *Rainy Season Fee:* ₹${rainySeasonFee}`,
         `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (Free - ${freeDeliveryReason})` : `₹${deliveryCharge}`}`,
         `💵 *GRAND TOTAL:* ₹${grandTotal}`,
+        walletDeduction > 0 ? `🎁 *Wallet Discount:* -₹${walletDeduction}` : '',
+        walletDeduction > 0 ? `💳 *PAYABLE AMOUNT:* ₹${payableAmount}` : '',
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
         `🗺️ *View Map:* ${mapsViewLink}`,
@@ -284,6 +318,8 @@ export default function Checkout() {
         `🌧️ <b>Rainy Season Fee:</b> ₹${rainySeasonFee}`,
         `🚚 <b>Delivery:</b> ${isFreeDelivery ? '₹0 (Free - WINNER Promo)' : `₹${deliveryCharge}`}`,
         `💵 <b>GRAND TOTAL:</b> ₹${grandTotal}`,
+        walletDeduction > 0 ? `🎁 <b>Wallet Discount:</b> -₹${walletDeduction}` : '',
+        walletDeduction > 0 ? `💳 <b>PAYABLE AMOUNT:</b> ₹${payableAmount}` : '',
         paymentId ? `✅ <b>PAYMENT DONE:</b> ${escHtml(paymentId)}` : `⚠️ <b>PAYMENT:</b> Cash on Delivery`,
         ``,
         `🗺️ <b>View Map:</b> ${escHtml(mapsViewLink)}`,
@@ -298,15 +334,23 @@ export default function Checkout() {
     };
 
     const completeOrder = async (paymentId?: string) => {
+      const orderId = Date.now().toString();
+      
+      // Deduct from wallet if logged in and using wallet
+      if (user && walletDeduction > 0) {
+        await deductWalletBalance(walletDeduction, orderId);
+      }
+
       const waMsg    = buildWaMessage(paymentId);
       const tgMsg    = buildTgMessage(paymentId);
       const waNumber = isBulkOrder ? WHATSAPP_BULK_NUMBER : WHATSAPP_FOOD_NUMBER;
       const waUrl    = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
 
-      // Save order locally
+      // Save order locally and in Firestore
       try {
         const order = {
-          id: Date.now().toString(),
+          id: orderId,
+          userId: user?.uid || null,
           userName: formData.name.trim(),
           userPhone: formData.phone.trim(),
           orderType: isBulkOrder ? 'bulk' : 'regular',
@@ -315,18 +359,25 @@ export default function Checkout() {
           rainySeasonFee,
           deliveryCharge,
           grandTotal,
-          paymentMethod,
+          walletAmountUsed: walletDeduction,
+          payableAmount,
+          paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
           paymentId: paymentId || null,
           deliveryLocation,
           status: 'pending',
           createdAt: new Date().toISOString(),
           instructions: formData.additionalMessage.trim(),
         };
+
+        // Save to Firestore
+        await setDoc(doc(db, 'orders', orderId), order);
+
+        // Save locally
         const existing = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
         existing.push(order);
         localStorage.setItem('moms_magic_orders', JSON.stringify(existing));
       } catch (err) {
-        console.error('Failed to save order locally:', err);
+        console.error('Failed to save order:', err);
       }
 
       // Send Telegram (fire and don't block redirect)
@@ -347,7 +398,7 @@ export default function Checkout() {
       window.location.href = waUrl;
     };
 
-    if (paymentMethod === 'online') {
+    if (payableAmount > 0 && paymentMethod === 'online') {
       // Load Razorpay
       const loadRazorpay = () =>
         new Promise<boolean>((resolve) => {
@@ -368,7 +419,7 @@ export default function Checkout() {
 
       const options = {
         key: 'rzp_live_T1Y1yu09Jbjo6b',
-        amount: grandTotal * 100,
+        amount: Math.round(payableAmount * 100),
         currency: 'INR',
         name: 'Moms Magic',
         description: 'Elite Food Order',
@@ -589,6 +640,47 @@ export default function Checkout() {
             )}
           </div>
 
+          {/* Wallet Balance Integration */}
+          {user && profile && profile.walletBalance > 0 && (
+            <div className="space-y-4 pb-6 border-b border-white/5 text-left">
+              <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Wallet Balance</h3>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="use-wallet-cb"
+                    checked={useWallet}
+                    onChange={(e) => handleUseWalletToggle(e.target.checked)}
+                    className="w-4.5 h-4.5 accent-[#4CD964] cursor-pointer"
+                  />
+                  <label htmlFor="use-wallet-cb" className="text-xs font-black uppercase text-white select-none cursor-pointer tracking-wider">
+                    Use Wallet Cash (Available: <span className="text-[#4CD964]">₹{profile.walletBalance}</span>)
+                  </label>
+                </div>
+
+                {useWallet && (
+                  <div className="space-y-2 mt-1">
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Amount to Deduct (₹)</p>
+                    <input
+                      type="number"
+                      max={maxWalletDeduction}
+                      min={0}
+                      value={customWalletAmount}
+                      onChange={(e) => setCustomWalletAmount(e.target.value)}
+                      placeholder={`Max deduction: ₹${maxWalletDeduction}`}
+                      className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50"
+                    />
+                    {walletDeduction > 0 && (
+                      <p className="text-[#4CD964] text-[9px] font-black uppercase tracking-wider">
+                        Applied Wallet Deduction: -₹{walletDeduction}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Price Breakdown */}
           <div className="space-y-3 pb-6 border-b border-white/5">
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
@@ -616,53 +708,74 @@ export default function Checkout() {
                 ) : `₹${deliveryCharge}`}
               </span>
             </div>
+            {walletDeduction > 0 && (
+              <div className="flex justify-between items-center text-[#4CD964] font-bold text-xs uppercase tracking-[3px]">
+                <span>Wallet Discount</span>
+                <span className="text-lg font-black">-₹{walletDeduction}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between items-end pb-2">
             <div>
-              <p className="text-gold/40 text-[10px] font-black uppercase tracking-[4px] mb-1">Grand Total</p>
-              <p className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter text-white">₹{grandTotal}</p>
+              <p className="text-gold/40 text-[10px] font-black uppercase tracking-[4px] mb-1">
+                {walletDeduction > 0 ? 'Payable Amount' : 'Grand Total'}
+              </p>
+              <p className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter text-white">
+                ₹{payableAmount}
+              </p>
+              {walletDeduction > 0 && (
+                <p className="text-[9px] text-white/30 font-black uppercase tracking-wider mt-1 text-left">
+                  (Grand Total: ₹{grandTotal})
+                </p>
+              )}
             </div>
           </div>
 
           {/* Payment Method */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Payment Method</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (distanceKm <= 5) { toast.error('Online payment is only for deliveries above 5km.'); return; }
-                  setPaymentMethod('online');
-                }}
-                className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all ${
-                  distanceKm <= 5
-                    ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
-                    : paymentMethod === 'online'
-                    ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
-                    : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
-                }`}
-              >
-                Pay Online
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (distanceKm > 5) { toast.error('COD not available beyond 5km.'); return; }
-                  setPaymentMethod('cod');
-                }}
-                className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all ${
-                  distanceKm > 5
-                    ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
-                    : paymentMethod === 'cod'
-                    ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
-                    : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
-                }`}
-              >
-                Cash on Delivery
-              </button>
+          {payableAmount > 0 ? (
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Payment Method</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (distanceKm <= 5) { toast.error('Online payment is only for deliveries above 5km.'); return; }
+                    setPaymentMethod('online');
+                  }}
+                  className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all cursor-pointer ${
+                    distanceKm <= 5
+                      ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
+                      : paymentMethod === 'online'
+                      ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
+                      : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
+                  }`}
+                >
+                  Pay Online
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (distanceKm > 5) { toast.error('COD not available beyond 5km.'); return; }
+                    setPaymentMethod('cod');
+                  }}
+                  className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all cursor-pointer ${
+                    distanceKm > 5
+                      ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
+                      : paymentMethod === 'cod'
+                      ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
+                      : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
+                  }`}
+                >
+                  Cash on Delivery
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-3.5 rounded-2xl text-[#4CD964] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+              🎉 100% Covered By Wallet cash
+            </div>
+          )}
 
           {/* Submit */}
           <button

@@ -1,15 +1,5 @@
 [
   {
-    "id": "drink-1",
-    "name": "Kingfisher Strong",
-    "brand": "United Breweries",
-    "category": "Beer",
-    "size": "650ml",
-    "price": 180,
-    "image": "https://images.unsplash.com/photo-1542365883-75fd7f5fc5e3?w=600&q=80",
-    "isAvailable": true
-  },
-  {
     "id": "drink-2",
     "name": "Budweiser Magnum",
     "brand": "Anheuser-Busch InBev",

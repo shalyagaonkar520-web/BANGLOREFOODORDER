@@ -9,7 +9,9 @@ const LandingPage = lazy(() => import('./components/LandingPage'));
 const CategoryPage = lazy(() => import('./components/CategoryPage'));
 const CartPage = lazy(() => import('./components/CartPage'));
 const Checkout = lazy(() => import('./components/Checkout'));
-const OffersPage = lazy(() => import('./components/OffersPage'));
+const ProfilePage = lazy(() => import('./components/ProfilePage'));
+const TrackingPage = lazy(() => import('./components/TrackingPage'));
+const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard'));
 const BulkOrderPage = lazy(() => import('./components/BulkOrderPage'));
 import BottomNav from './components/BottomNav';
 import BottomCartBar from './components/BottomCartBar';
@@ -196,7 +198,9 @@ export default function App() {
                     <Route path="/grocery" element={<CategoryPage type="grocery" />} />
                     <Route path="/cart" element={<Navigate to="/checkout" replace />} />
                     <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/offers" element={<OffersPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/track/:orderId" element={<TrackingPage />} />
+                    <Route path="/delivery" element={<DeliveryDashboard />} />
                     <Route path="/bulk" element={<BulkOrderPage />} />
                     <Route path="/celebration" element={<CelebrationHub />} />
                     <Route path="/celebration/design" element={<CelebrationDesign />} />

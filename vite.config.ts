@@ -247,6 +247,22 @@ export default defineConfig(({mode}) => {
               return;
             }
 
+            // Handle POST Send Push Notification (LOCAL DEV MOCK)
+            if (req.url && req.url.includes('/api/send-push') && req.method === 'POST') {
+              let body = '';
+              req.on('data', chunk => { body += chunk.toString(); });
+              req.on('end', () => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  success: true,
+                  successCount: 3,
+                  failureCount: 0,
+                  message: 'Local dev mock: Broadcasted push alert to 3 active PWA installations.'
+                }));
+              });
+              return;
+            }
+
             next();
           });
         }

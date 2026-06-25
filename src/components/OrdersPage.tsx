@@ -35,10 +35,15 @@ export default function OrdersPage() {
       return;
     }
 
+    const normalizePhone = (phone: string) => {
+      if (!phone) return '';
+      return phone.replace(/\D/g, '').slice(-10);
+    };
+
     const fetchOrders = () => {
       try {
         const storedOrders = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
-        const userOrders = storedOrders.filter((o: any) => o.userPhone === userPhone);
+        const userOrders = storedOrders.filter((o: any) => normalizePhone(o.userPhone) === normalizePhone(userPhone));
         userOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setOrders(userOrders);
       } catch (err) {
