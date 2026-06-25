@@ -34,7 +34,56 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'system' | 'bar'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'system' | 'bar' | 'notifications'>('orders');
+
+  // Push notifications broadcast state
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    imageUrl: '',
+    deepLink: ''
+  });
+  const [sendingNotification, setSendingNotification] = useState(false);
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notificationForm.title || !notificationForm.message) {
+      toast.error('Title and message are required');
+      return;
+    }
+
+    setSendingNotification(true);
+    const token = localStorage.getItem('moms_magic_admin_token') || 'mock-jwt-admin-token-123456';
+    toast.loading('Broadcasting push notifications...', { id: 'push-broadcast' });
+
+    try {
+      const response = await fetch('/api/send-push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(notificationForm)
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success(`Successfully sent push alerts to ${data.successCount} devices!`, { id: 'push-broadcast' });
+        setNotificationForm({
+          title: '',
+          message: '',
+          imageUrl: '',
+          deepLink: ''
+        });
+      } else {
+        toast.error(data.error || 'Failed to broadcast notifications.', { id: 'push-broadcast' });
+      }
+    } catch (err) {
+      toast.error('Network error sending push notifications.', { id: 'push-broadcast' });
+    } finally {
+      setSendingNotification(false);
+    }
+  };
   const [adminDrinks, setAdminDrinks] = useState<any[]>([]);
   const [drinksLoading, setDrinksLoading] = useState(false);
   const [editingDrink, setEditingDrink] = useState<any | null>(null);
@@ -600,6 +649,19 @@ export default function AdminPage() {
           }`}
         >
           🍸 Bar Inventory
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('notifications');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'notifications'
+              ? 'bg-gradient-to-r from-[#4CD964] to-[#3AC152] text-white border-[#3AC152] shadow-[0_10px_20px_rgba(76,217,100,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          🔔 Send Notifications
         </button>
       </div>
 
@@ -1277,7 +1339,7 @@ export default function AdminPage() {
         </div>
 
       </main>
-      ) : (
+      ) : activeTab === 'bar' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
           
           {/* LEFT COLUMN: DRINKS INVENTORY LIST */}
@@ -1596,6 +1658,82 @@ export default function AdminPage() {
                 </div>
               </form>
             </div>
+          </div>
+        </main>
+      ) : (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Broadcast Push Notification</h2>
+              <p className="text-white/40 text-xs mt-1 font-semibold">Send a live push alert to all registered PWA client installations.</p>
+            </div>
+          </div>
+          <div className="max-w-2xl bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-6">
+            <form onSubmit={handleSendNotification} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1">Notification Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Special Discount! 🍲"
+                  value={notificationForm.title}
+                  onChange={e => setNotificationForm({ ...notificationForm, title: e.target.value })}
+                  className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1">Message Body</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="e.g. Get 20% off on all Chicken Biryani combos today only! Use code MAGIC20."
+                  value={notificationForm.message}
+                  onChange={e => setNotificationForm({ ...notificationForm, message: e.target.value })}
+                  className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm resize-none placeholder:text-white/20 leading-relaxed"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1">Optional Image URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/food-image.jpg"
+                    value={notificationForm.imageUrl}
+                    onChange={e => setNotificationForm({ ...notificationForm, imageUrl: e.target.value })}
+                    className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1">Optional Deep-Link URL</label>
+                  <input
+                    type="url"
+                    placeholder="e.g. https://momsmagic.shop/offers"
+                    value={notificationForm.deepLink}
+                    onChange={e => setNotificationForm({ ...notificationForm, deepLink: e.target.value })}
+                    className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={sendingNotification}
+                className="w-full h-16 rounded-2xl bg-gradient-to-r from-[#4CD964] to-[#3AC152] text-white font-black text-xs uppercase tracking-[3px] shadow-lg shadow-[#4CD964]/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3 disabled:opacity-50 cursor-pointer"
+              >
+                {sendingNotification ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    Broadcasting Push Alerts...
+                  </>
+                ) : (
+                  <>
+                    📢 Send to All Users
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </main>
       )}

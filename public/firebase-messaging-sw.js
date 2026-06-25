@@ -21,14 +21,46 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
-  const notificationTitle = payload.notification?.title || 'Moms Magic';
+  const notificationTitle = payload.notification?.title || 'Mom\'s Magic';
+  
+  // Resolve image from either standard notification or custom data payloads
+  const imageUrl = payload.notification?.image || payload.notification?.imageUrl || payload.data?.image || payload.data?.imageUrl || payload.data?.image_url;
+  
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new update.',
-    icon: '/logo.png',
-    badge: '/logo.png',
-    data: payload.data,
+    icon: '/pwa-icon-192.png',
+    badge: '/pwa-icon-192.png',
+    image: imageUrl || undefined,
+    data: {
+      url: payload.data?.url || payload.data?.click_action || '/'
+    },
     vibrate: [200, 100, 200]
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Handle notification click events (focus existing window client or open deep-link URL)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // Retrieve deep-link URL from payload metadata (defaults to root page)
+  const deepLinkUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // 1. If a window client is already open matching target URL, focus it
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === deepLinkUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      // 2. Otherwise open a new tab/window targeting deepLinkUrl
+      if (clients.openWindow) {
+        return clients.openWindow(deepLinkUrl);
+      }
+    })
+  );
 });
