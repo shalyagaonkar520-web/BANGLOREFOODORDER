@@ -80,14 +80,17 @@ export default function AdminMenuManager() {
           <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Menu <span className="text-[#FFB700]">Manager</span></h2>
           <p className="text-white/40 text-xs font-semibold tracking-wider mt-1">Manage all products directly from Firestore.</p>
         </div>
-
         <div className="flex items-center gap-4">
           <button
             onClick={async () => {
               const loadingToast = toast.loading('Seeding menu to database...');
-              await seedMenuIfEmpty();
+              const success = await seedMenuIfEmpty();
               toast.dismiss(loadingToast);
-              toast.success('Default Menu Seeded!');
+              if (success) {
+                toast.success('Default Menu Seeded!');
+              } else {
+                toast.error('Failed to seed menu! Database rules missing?');
+              }
             }}
             className="px-6 h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-[10px] uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2"
           >

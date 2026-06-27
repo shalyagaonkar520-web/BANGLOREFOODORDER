@@ -9,9 +9,9 @@ interface MenuState {
   isLoading: boolean;
   error: string | null;
   
-  // Operations
   listenToMenu: () => () => void;
-  seedMenuIfEmpty: () => Promise<void>;
+  seedMenuIfEmpty: () => Promise<boolean>;
+  addMenuItem: (item: Product) => Promise<boolean>;
   addMenuItem: (item: Product) => Promise<boolean>;
   updateMenuItem: (id: string, updates: Partial<Product>) => Promise<boolean>;
   deleteMenuItem: (id: string) => Promise<boolean>;
@@ -52,15 +52,16 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   seedMenuIfEmpty: async () => {
     try {
       const colRef = collection(db, 'menu');
-      const snapshot = await getDocs(colRef);
-        console.log("Seeding menu to Firestore...");
-        for (const item of FALLBACK_MENU) {
-          const docRef = doc(db, 'menu', item.id);
-          await setDoc(docRef, item, { merge: true });
-        }
-        console.log("Menu seeded successfully.");
+      console.log("Seeding menu to Firestore...");
+      for (const item of FALLBACK_MENU) {
+        const docRef = doc(db, 'menu', item.id);
+        await setDoc(docRef, item, { merge: true });
+      }
+      console.log("Menu seeded successfully.");
+      return true;
     } catch (error) {
       console.error("Failed to seed menu:", error);
+      return false;
     }
   },
 
