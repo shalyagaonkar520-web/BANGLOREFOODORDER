@@ -68,8 +68,8 @@ export default defineConfig(({mode}) => {
               req.on('end', () => {
                 try {
                   const data = JSON.parse(body);
-                  const { email, password } = data;
-                  if (email === 'shalyagaonkar@gmail.com' && password === 'Shalya@2004') {
+                  const { email = '', password = '' } = data;
+                  if (email.trim().toLowerCase() === 'shalyagaonkar@gmail.com' && password.trim() === 'Shalya@2004') {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                       success: true,

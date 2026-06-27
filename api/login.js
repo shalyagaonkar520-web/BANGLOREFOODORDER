@@ -13,11 +13,11 @@ export default function handler(req, res) {
   }
 
   try {
-    const { email, password } = req.body;
+    const { email = '', password = '' } = req.body;
     const adminEmail = process.env.ADMIN_EMAIL || 'shalyagaonkar@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Shalya@2004';
 
-    if (email === adminEmail && password === adminPassword) {
+    if (email.trim().toLowerCase() === adminEmail && password.trim() === adminPassword) {
       return res.status(200).json({
         success: true,
         token: 'mock-jwt-admin-token-123456',

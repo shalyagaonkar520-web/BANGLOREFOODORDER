@@ -573,7 +573,7 @@ export default function AdminPage() {
     setIsLoggingIn(true);
 
     // Hardcoded Admin Bypass
-    if (email.trim().toLowerCase() === 'shalyagaonkar@gmail.com' && password === 'Shalya@2004') {
+    if (email.trim().toLowerCase() === 'shalyagaonkar@gmail.com' && password.trim() === 'Shalya@2004') {
       const adminUser = {
         id: 'hardcoded-admin-123',
         name: 'Admin',

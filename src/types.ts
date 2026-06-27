@@ -96,11 +96,7 @@ export function calculateDeliveryCharge(distanceKm: number): number {
   const km = Math.ceil(distanceKm);
   let charge = 20; // base charge for 0-2 km
   if (km > 2) {
-    const midKm = Math.min(km, 5) - 2; // km between 2 and 5
-    charge += midKm * 10;
-  }
-  if (km > 5) {
-    charge += (km - 5) * 20;
+    charge += (km - 2) * 10;
   }
   return charge;
 }
