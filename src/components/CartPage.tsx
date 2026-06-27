@@ -17,7 +17,7 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = settings.deliveryFee ?? calculateDeliveryCharge(distanceKm);
+  const deliveryCharge = calculateDeliveryCharge(distanceKm);
   const rainySeasonFee = 5;
   const grandTotal = total + deliveryCharge + rainySeasonFee;
   

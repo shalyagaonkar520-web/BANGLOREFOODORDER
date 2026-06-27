@@ -166,7 +166,7 @@ export default function Checkout() {
   }, [deliveryLocation]);
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
-  const baseDeliveryCharge = settings.deliveryFee ?? calculateDeliveryCharge(distanceKm);
+  const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
 
   // Free delivery before 2:00 PM every day
   const now = new Date();
