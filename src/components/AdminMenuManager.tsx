@@ -83,7 +83,12 @@ export default function AdminMenuManager() {
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() => seedMenuIfEmpty()}
+            onClick={async () => {
+              const loadingToast = toast.loading('Seeding menu to database...');
+              await seedMenuIfEmpty();
+              toast.dismiss(loadingToast);
+              toast.success('Default Menu Seeded!');
+            }}
             className="px-6 h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-[10px] uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" /> Seed Default Menu

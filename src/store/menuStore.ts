@@ -53,14 +53,12 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     try {
       const colRef = collection(db, 'menu');
       const snapshot = await getDocs(colRef);
-      if (snapshot.empty) {
         console.log("Seeding menu to Firestore...");
         for (const item of FALLBACK_MENU) {
           const docRef = doc(db, 'menu', item.id);
-          await setDoc(docRef, item);
+          await setDoc(docRef, item, { merge: true });
         }
         console.log("Menu seeded successfully.");
-      }
     } catch (error) {
       console.error("Failed to seed menu:", error);
     }
