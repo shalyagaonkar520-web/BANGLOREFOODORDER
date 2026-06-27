@@ -51,7 +51,7 @@ export default defineConfig(({mode}) => {
           importScripts: ['/firebase-messaging-sw.js']
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module'
         }
       }),

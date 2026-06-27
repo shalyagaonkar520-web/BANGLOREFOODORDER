@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { CartItem, Product, SubscriptionPlan } from '../types';
 
 interface CartStore {
@@ -19,62 +20,68 @@ const getMultiplier = (plan: SubscriptionPlan) => {
   return 1;
 };
 
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => {
+      const calculateTotal = (items: CartItem[]) => 
+        items.reduce((acc, i) => acc + (i.price * i.quantity * getMultiplier(i.subscriptionPlan)), 0);
 
-export const useCartStore = create<CartStore>((set, get) => {
-  const calculateTotal = (items: CartItem[]) => 
-    items.reduce((acc, i) => acc + (i.price * i.quantity * getMultiplier(i.subscriptionPlan)), 0);
+      const updateCart = (newItems: CartItem[]) => {
+        set({ items: newItems, total: calculateTotal(newItems) });
+      };
 
-  const updateCart = (newItems: CartItem[]) => {
-    set({ items: newItems, total: calculateTotal(newItems) });
-  };
-
-  return {
-    items: [],
-    lastRemovedItem: null,
-    total: 0,
-    addItem: (product, subscriptionPlan = null, quantity = 1) => {
-      const items = get().items;
-      const existingIndex = items.findIndex(i => i.id === product.id);
-      let newItems;
-      if (existingIndex > -1) {
-        newItems = items.map((item, idx) => 
-          idx === existingIndex ? { ...item, quantity: item.quantity + quantity, subscriptionPlan } : item
-        );
-      } else {
-        newItems = [...items, { ...product, quantity, subscriptionPlan }];
-      }
-      updateCart(newItems);
+      return {
+        items: [],
+        lastRemovedItem: null,
+        total: 0,
+        addItem: (product, subscriptionPlan = null, quantity = 1) => {
+          const items = get().items;
+          const existingIndex = items.findIndex(i => i.id === product.id);
+          let newItems;
+          if (existingIndex > -1) {
+            newItems = items.map((item, idx) => 
+              idx === existingIndex ? { ...item, quantity: item.quantity + quantity, subscriptionPlan } : item
+            );
+          } else {
+            newItems = [...items, { ...product, quantity, subscriptionPlan }];
+          }
+          updateCart(newItems);
+        },
+        removeItem: (productId) => {
+          const items = get().items;
+          const itemToRemove = items.find(i => i.id === productId);
+          const newItems = items.filter(i => i.id !== productId);
+          set({ 
+            lastRemovedItem: itemToRemove || null,
+            items: newItems,
+            total: calculateTotal(newItems)
+          });
+        },
+        undoRemove: () => {
+          const lastItem = get().lastRemovedItem;
+          if (lastItem) {
+            const newItems = [...get().items, lastItem];
+            set({ lastRemovedItem: null });
+            updateCart(newItems);
+          }
+        },
+        updateQuantity: (productId, quantity) => {
+          if (quantity <= 0) {
+            get().removeItem(productId);
+            return;
+          }
+          const newItems = get().items.map(i => i.id === productId ? { ...i, quantity } : i);
+          updateCart(newItems);
+        },
+        updateSubscriptionPlan: (productId, plan) => {
+          const newItems = get().items.map(i => i.id === productId ? { ...i, subscriptionPlan: plan } : i);
+          updateCart(newItems);
+        },
+        clearCart: () => set({ items: [], total: 0 }),
+      };
     },
-    removeItem: (productId) => {
-      const items = get().items;
-      const itemToRemove = items.find(i => i.id === productId);
-      const newItems = items.filter(i => i.id !== productId);
-      set({ 
-        lastRemovedItem: itemToRemove || null,
-        items: newItems,
-        total: calculateTotal(newItems)
-      });
-    },
-    undoRemove: () => {
-      const lastItem = get().lastRemovedItem;
-      if (lastItem) {
-        const newItems = [...get().items, lastItem];
-        set({ lastRemovedItem: null });
-        updateCart(newItems);
-      }
-    },
-    updateQuantity: (productId, quantity) => {
-      if (quantity <= 0) {
-        get().removeItem(productId);
-        return;
-      }
-      const newItems = get().items.map(i => i.id === productId ? { ...i, quantity } : i);
-      updateCart(newItems);
-    },
-    updateSubscriptionPlan: (productId, plan) => {
-      const newItems = get().items.map(i => i.id === productId ? { ...i, subscriptionPlan: plan } : i);
-      updateCart(newItems);
-    },
-    clearCart: () => set({ items: [], total: 0 }),
-  };
-});
+    {
+      name: 'moms-magic-cart', // unique name
+    }
+  )
+);
