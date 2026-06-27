@@ -2160,9 +2160,8 @@ export default function AdminPage() {
               Update Banner Announcements
             </button>
           </div>
-
           </div>
-        </div>
+        </main>
       ) : activeTab === 'menu' ? (
         <AdminMenuManager />
       ) : activeTab === 'bar' ? (
