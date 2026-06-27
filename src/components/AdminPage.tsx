@@ -570,6 +570,22 @@ export default function AdminPage() {
     }
     
     setIsLoggingIn(true);
+
+    // Hardcoded Admin Bypass
+    if (email.trim().toLowerCase() === 'shalyagaonkar@gmail.com' && password === 'Shalya@2004') {
+      const adminUser = {
+        id: 'hardcoded-admin-123',
+        name: 'Admin',
+        email: 'shalyagaonkar@gmail.com',
+        role: 'super_admin' as const
+      };
+      
+      setUser(adminUser);
+      localStorage.setItem('moms_magic_admin_token', 'mock-jwt-admin-token-123456');
+      toast.success(`Welcome back, Admin!`);
+      setIsLoggingIn(false);
+      return;
+    }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
