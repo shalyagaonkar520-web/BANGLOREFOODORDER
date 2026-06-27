@@ -116,8 +116,12 @@ export default function Checkout() {
         toast.error('APPUSER coupon is valid only for orders above ₹100');
       }
     } else if (inputUpper === 'CODE-APPUSER') {
-      setAppliedCoupon('CODE-APPUSER');
-      toast.success('CODE-APPUSER promo applied! ₹25 off!');
+      if (subtotal > 100) {
+        setAppliedCoupon('CODE-APPUSER');
+        toast.success('CODE-APPUSER promo applied! ₹25 off!');
+      } else {
+        toast.error('CODE-APPUSER coupon is valid only for orders above ₹100');
+      }
     } else {
       setAppliedCoupon('');
       toast.error('Invalid promo code');
