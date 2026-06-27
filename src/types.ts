@@ -57,6 +57,14 @@ export interface ComboOffer {
   image?: string;
 }
 
+export interface Coupon {
+  code: string;
+  type: 'free_delivery' | 'fixed_discount' | 'percent_discount';
+  value: number; // e.g. 20 for fixed, 10 for 10%
+  minOrderValue: number;
+  isActive: boolean;
+}
+
 export interface Order {
   id?: string;
   hotelId: string;

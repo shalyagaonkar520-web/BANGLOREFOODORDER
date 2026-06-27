@@ -1,4 +1,4 @@
-import { ComboOffer } from '../types';
+import { ComboOffer, Coupon } from '../types';
 
 export interface AdminSettings {
   websiteStatus: 'ON' | 'OFF';
@@ -14,6 +14,7 @@ export interface AdminSettings {
   whatsappNumber: string;
   whatsappAlertsEnabled: boolean;
   comboOffers: ComboOffer[];
+  coupons: Coupon[];
   taxRate: number;
   deliveryFee: number;
   minOrderValue: number;
@@ -50,6 +51,11 @@ const DEFAULT_SETTINGS: AdminSettings = {
       expiryDate: "2026-06-30",
       image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=800&q=80"
     }
+  ],
+  coupons: [
+    { code: 'WINNER', type: 'free_delivery', value: 0, minOrderValue: 0, isActive: true },
+    { code: 'APPUSER', type: 'fixed_discount', value: 22, minOrderValue: 100, isActive: true },
+    { code: 'CODE-APPUSER', type: 'fixed_discount', value: 25, minOrderValue: 100, isActive: true }
   ],
   taxRate: 5,
   deliveryFee: 40,

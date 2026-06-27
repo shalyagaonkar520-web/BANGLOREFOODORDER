@@ -105,26 +105,23 @@ export default function Checkout() {
 
   const handleApplyCoupon = () => {
     const inputUpper = couponInput.trim().toUpperCase();
-    if (inputUpper === 'WINNER') {
-      setAppliedCoupon('WINNER');
-      toast.success('WINNER promo applied! Free Delivery!');
-    } else if (inputUpper === 'APPUSER') {
-      if (subtotal > 100) {
-        setAppliedCoupon('APPUSER');
-        toast.success('APPUSER promo applied! ₹22 off!');
+    const activeCoupons = settings.coupons || [];
+    const matchedCoupon = activeCoupons.find(c => c.code.toUpperCase() === inputUpper && c.isActive);
+
+    if (matchedCoupon) {
+      if (subtotal >= matchedCoupon.minOrderValue) {
+        setAppliedCoupon(matchedCoupon.code.toUpperCase());
+        let msg = `${matchedCoupon.code} applied! `;
+        if (matchedCoupon.type === 'free_delivery') msg += 'Free Delivery!';
+        else if (matchedCoupon.type === 'fixed_discount') msg += `₹${matchedCoupon.value} off!`;
+        else if (matchedCoupon.type === 'percent_discount') msg += `${matchedCoupon.value}% off!`;
+        toast.success(msg);
       } else {
-        toast.error('APPUSER coupon is valid only for orders above ₹100');
-      }
-    } else if (inputUpper === 'CODE-APPUSER') {
-      if (subtotal > 100) {
-        setAppliedCoupon('CODE-APPUSER');
-        toast.success('CODE-APPUSER promo applied! ₹25 off!');
-      } else {
-        toast.error('CODE-APPUSER coupon is valid only for orders above ₹100');
+        toast.error(`${matchedCoupon.code} is valid only for orders above ₹${matchedCoupon.minOrderValue}`);
       }
     } else {
       setAppliedCoupon('');
-      toast.error('Invalid promo code');
+      toast.error('Invalid or expired promo code');
     }
   };
 
@@ -174,11 +171,23 @@ export default function Checkout() {
   // Free delivery before 2:00 PM every day
   const now = new Date();
   const isBeforeTwo = now.getHours() < 14;
-  const isFreeDelivery  = appliedCoupon === 'WINNER' || isBeforeTwo;
-  const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
+  const activeCoupons = settings.coupons || [];
+  const appliedCouponDetails = appliedCoupon ? activeCoupons.find(c => c.code.toUpperCase() === appliedCoupon) : null;
+
+  const isFreeDelivery  = (appliedCouponDetails?.type === 'free_delivery') || isBeforeTwo;
+  const freeDeliveryReason = appliedCouponDetails?.type === 'free_delivery' ? `${appliedCouponDetails.code} Promo` : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
-  const couponDiscount = appliedCoupon === 'APPUSER' ? 22 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
+
+  let couponDiscount = 0;
+  if (appliedCouponDetails) {
+    if (appliedCouponDetails.type === 'fixed_discount') {
+      couponDiscount = appliedCouponDetails.value;
+    } else if (appliedCouponDetails.type === 'percent_discount') {
+      couponDiscount = (subtotal * appliedCouponDetails.value) / 100;
+    }
+  }
+
   const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;

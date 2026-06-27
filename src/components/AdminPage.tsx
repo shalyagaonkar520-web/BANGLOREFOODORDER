@@ -4,7 +4,7 @@ import {
   Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
   Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
   Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
-  Search, PackageSearch, Users, Wallet, Map
+  Search, PackageSearch, Users, Wallet, Map, Ticket
 } from 'lucide-react';
 import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
@@ -29,6 +29,7 @@ import {
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import AdminMenuManager from './AdminMenuManager';
+import AdminCouponManager from './AdminCouponManager';
 
 // Real Orders fetched from localStorage
 
@@ -52,7 +53,7 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'menu' | 'notifications' | 'luckyWheel'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'menu' | 'coupons' | 'notifications' | 'luckyWheel'>('orders');
 
   // Lucky Wheel States
   const [luckyCoupons, setLuckyCoupons] = useState<any[]>([]);
@@ -918,7 +919,19 @@ export default function AdminPage() {
         >
           🍔 Menu Manager
         </button>
-
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('coupons');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'coupons'
+              ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-fuchsia-400 shadow-[0_10px_20px_rgba(217,70,239,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          <Ticket className="w-4 h-4" /> Coupons
+        </button>
         <button
           onClick={() => {
             playSound(SOUNDS.CLICK);
@@ -2180,6 +2193,10 @@ export default function AdminPage() {
         </main>
       ) : activeTab === 'menu' ? (
         <AdminMenuManager />
+      ) : activeTab === 'coupons' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left">
+          <AdminCouponManager />
+        </main>
       ) : activeTab === 'bar' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
           
