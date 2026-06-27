@@ -8,9 +8,10 @@ interface SystemState {
   
   // Operations
   loadSettings: () => Promise<void>;
+  listenSettings: () => () => void;
   updateSettings: (newSettings: Partial<AdminSettings>, token?: string) => Promise<boolean>;
-  triggerEmergencyStop: (token: string) => Promise<boolean>;
-  resetEmergencyStop: (token: string) => Promise<boolean>;
+  triggerEmergencyStop: (token?: string) => Promise<boolean>;
+  resetEmergencyStop: (token?: string) => Promise<boolean>;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -47,6 +48,9 @@ const DEFAULT_SETTINGS: AdminSettings = {
   ]
 };
 
+import { db } from '../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+
 export const useSystemStore = create<SystemState>((set, get) => ({
   settings: { ...DEFAULT_SETTINGS },
   isLoading: false,
@@ -62,40 +66,52 @@ export const useSystemStore = create<SystemState>((set, get) => ({
     }
   },
 
-  updateSettings: async (newSettings, token) => {
+  listenSettings: () => {
+    const docRef = doc(db, 'system/settings');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as AdminSettings;
+        set({ settings: data });
+        localStorage.setItem('moms_magic_admin_settings', JSON.stringify(data));
+      }
+    }, (error) => {
+      console.error("Error listening to settings:", error);
+    });
+    return unsubscribe;
+  },
+
+  updateSettings: async (newSettings) => {
     const updatedSettings = { ...get().settings, ...newSettings };
     
     // Optimistically update frontend UI first for instant changes
     set({ settings: updatedSettings });
 
-    if (token) {
-      // Synchronize securely with backend
-      const success = await DbService.saveSettings(updatedSettings, token);
-      if (!success) {
-        // If save failed, reload settings from API to revert UI to server state
-        console.warn('System settings push failed, reverting local state.');
-        await get().loadSettings();
-        return false;
-      }
+    // Synchronize securely with backend
+    const success = await DbService.saveSettings(updatedSettings);
+    if (!success) {
+      // If save failed, reload settings from API to revert UI to server state
+      console.warn('System settings push failed, reverting local state.');
+      await get().loadSettings();
+      return false;
     }
     return true;
   },
 
-  triggerEmergencyStop: async (token) => {
+  triggerEmergencyStop: async () => {
     return get().updateSettings({
       emergencyStop: true,
       websiteStatus: 'OFF',
       deliveryPause: true,
       maintenanceMessage: "Mom's Magic order lines are currently locked down due to an emergency. We'll be back shortly! 🚨"
-    }, token);
+    });
   },
 
-  resetEmergencyStop: async (token) => {
+  resetEmergencyStop: async () => {
     return get().updateSettings({
       emergencyStop: false,
       websiteStatus: 'ON',
       deliveryPause: false,
       maintenanceMessage: "Mom's Magic is temporarily closed. We'll reopen soon ❤️"
-    }, token);
+    });
   }
 }));

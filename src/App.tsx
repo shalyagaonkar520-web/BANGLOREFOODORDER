@@ -27,6 +27,7 @@ const CelebrationHub = lazy(() => import('./components/CelebrationHub'));
 const CelebrationDesign = lazy(() => import('./components/CelebrationDesign'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
+const LuckyWheelPage = lazy(() => import('./components/LuckyWheelPage'));
 
 // Store
 import { useSystemStore } from './store/systemStore';
@@ -91,16 +92,13 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const loadSettings = useSystemStore(state => state.loadSettings);
+  const listenSettings = useSystemStore(state => state.listenSettings);
 
-  // Synchronize dynamic admin settings on app initialization and poll every 3s for real-time reflection
+  // Synchronize dynamic admin settings on app initialization
   useEffect(() => {
-    loadSettings();
-    const interval = setInterval(() => {
-      loadSettings();
-    }, 3000); // Poll every 3 seconds for instant reflection
-    return () => clearInterval(interval);
-  }, [loadSettings]);
+    const unsubscribe = listenSettings();
+    return () => unsubscribe();
+  }, [listenSettings]);
 
   // Request notification permissions, register service worker, and setup foreground listener on mount
   useEffect(() => {
@@ -207,6 +205,7 @@ export default function App() {
                     <Route path="/about" element={<AboutFounder />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="/orders" element={<OrdersPage />} />
+                    <Route path="/spin" element={<LuckyWheelPage />} />
                   </Routes>
                 </Suspense>
               </PageTransition>

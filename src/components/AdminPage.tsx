@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { 
   collection, 
   doc, 
@@ -24,8 +24,10 @@ import {
   runTransaction,
   query,
   orderBy,
-  where
+  where,
+  setDoc
 } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 // Real Orders fetched from localStorage
 
@@ -49,7 +51,13 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'notifications'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'notifications' | 'luckyWheel'>('orders');
+
+  // Lucky Wheel States
+  const [luckyCoupons, setLuckyCoupons] = useState<any[]>([]);
+  const [luckySpins, setLuckySpins] = useState<any[]>([]);
+  const [luckyConfig, setLuckyConfig] = useState<any>(null);
+  const [generatingOTP, setGeneratingOTP] = useState(false);
 
   // Extended Platform States
   const [ridersList, setRidersList] = useState<any[]>([]);
@@ -201,12 +209,52 @@ export default function AdminPage() {
       setPwaInstallsList(fetchedInstalls);
     }, (err) => console.error("Error fetching PWA installs:", err));
 
+    // 6. Listen to Lucky Wheel Coupons
+    const couponsQuery = query(collection(db, 'luckyWheelCoupons'), orderBy('createdAt', 'desc'));
+    const unsubscribeCoupons = onSnapshot(couponsQuery, (snapshot) => {
+      const fetchedCoupons: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedCoupons.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setLuckyCoupons(fetchedCoupons);
+    }, (err) => console.error("Error fetching lucky coupons:", err));
+
+    // 7. Listen to Lucky Wheel Spins
+    const spinsQuery = query(collection(db, 'luckyWheelSpins'), orderBy('timestamp', 'desc'));
+    const unsubscribeSpins = onSnapshot(spinsQuery, (snapshot) => {
+      const fetchedSpins: any[] = [];
+      snapshot.forEach((docSnap) => {
+        fetchedSpins.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setLuckySpins(fetchedSpins);
+    }, (err) => console.error("Error fetching lucky spins:", err));
+
+    // 8. Listen to Lucky Wheel Config
+    const configDocRef = doc(db, 'system/luckyWheelConfig');
+    const unsubscribeConfig = onSnapshot(configDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setLuckyConfig(docSnap.data());
+      } else {
+        // Default config if not exists
+        setLuckyConfig({
+          'Better Luck Next Time': 38,
+          'Free Delivery': 40,
+          'Shawarma @ ₹79': 10,
+          '₹50 OFF Coupon': 5,
+          'Chicken Biryani @ ₹99': 7
+        });
+      }
+    }, (err) => console.error("Error fetching lucky config:", err));
+
     return () => {
       unsubscribeOrders();
       unsubscribeRiders();
       unsubscribeUsers();
       unsubscribeWalletLogs();
       unsubscribeInstalls();
+      unsubscribeCoupons();
+      unsubscribeSpins();
+      unsubscribeConfig();
     };
   }, [user]);
 
@@ -472,6 +520,46 @@ export default function AdminPage() {
     }
   };
 
+  // ── Lucky Wheel Handlers ──
+  const handleGenerateOTP = async () => {
+    setGeneratingOTP(true);
+    try {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      await addDoc(collection(db, 'luckyWheelCoupons'), {
+        code,
+        status: 'unused',
+        createdAt: new Date().toISOString()
+      });
+      toast.success(`Generated new OTP: ${code}`);
+    } catch (err) {
+      toast.error('Failed to generate OTP');
+    } finally {
+      setGeneratingOTP(false);
+    }
+  };
+
+  const handleMarkRedeemed = async (spinId: string) => {
+    try {
+      await updateDoc(doc(db, 'luckyWheelSpins'), {
+        status: 'redeemed'
+      });
+      toast.success('Marked as redeemed!');
+    } catch (err) {
+      toast.error('Failed to mark redeemed');
+    }
+  };
+
+  const handleUpdateProbability = async (prize: string, value: number) => {
+    try {
+      await setDoc(doc(db, 'system/luckyWheelConfig'), {
+        [prize]: value
+      }, { merge: true });
+      toast.success('Probability updated!');
+    } catch (err) {
+      toast.error('Failed to update probability');
+    }
+  };
+
   // Handle Authentication
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,36 +570,21 @@ export default function AdminPage() {
     
     setIsLoggingIn(true);
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
       
-      if (response.ok && data.success) {
-        setUser(data.user);
-        // Save mock JWT token in localStorage for DB headers
-        localStorage.setItem('moms_magic_admin_token', data.token);
-        toast.success(`Welcome back, ${data.user.name}!`);
-      } else {
-        toast.error(data.message || 'Invalid admin credentials');
-      }
-    } catch (err) {
-      // Local development fallback since /api/login won't run natively in Vite without Vercel CLI
-      if (email === 'shalyagaonkar@gmail.com' && password === 'Shalya@2004') {
-        const mockUser = {
-          id: 'admin-1',
-          name: 'Shalya Gaonkar',
-          email: 'shalyagaonkar@gmail.com',
-          role: 'super_admin' as const
-        };
-        setUser(mockUser);
-        localStorage.setItem('moms_magic_admin_token', 'mock-jwt-admin-token-123456');
-        toast.success(`Welcome back, ${mockUser.name}! (Local Dev Mode)`);
-      } else {
-        toast.error('Invalid admin credentials');
-      }
+      const adminUser = {
+        id: firebaseUser.uid,
+        name: firebaseUser.displayName || 'Admin',
+        email: firebaseUser.email || '',
+        role: 'super_admin' as const
+      };
+      
+      setUser(adminUser);
+      localStorage.setItem('moms_magic_admin_token', await firebaseUser.getIdToken());
+      toast.success(`Welcome back, ${adminUser.name}!`);
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid admin credentials');
     } finally {
       setIsLoggingIn(false);
     }
@@ -814,6 +887,20 @@ export default function AdminPage() {
           }`}
         >
           ⚙️ System Controls
+        </button>
+
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('luckyWheel');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'luckyWheel'
+              ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-matte-black border-yellow-400 shadow-[0_10px_20px_rgba(234,179,8,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          🎡 Lucky Wheel
         </button>
 
         <button
@@ -2421,6 +2508,104 @@ export default function AdminPage() {
                 )}
               </button>
             </form>
+          </div>
+        </main>
+      )}
+
+      {activeTab === 'luckyWheel' && (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 space-y-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">🎡 Lucky Wheel Management</h2>
+              <p className="text-white/40 text-xs mt-1 font-semibold">Generate OTPs, manage prizes, and view spin history.</p>
+            </div>
+            <button
+              onClick={handleGenerateOTP}
+              disabled={generatingOTP}
+              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-matte-black rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-[0_10px_20px_rgba(234,179,8,0.15)] disabled:opacity-50"
+            >
+              {generatingOTP ? 'Generating...' : '+ Generate New OTP'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* OTPs and Spins */}
+            <div className="space-y-8">
+              {/* Generated OTPs Table */}
+              <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-4">
+                <h3 className="font-bold text-lg text-white">Active & Used OTPs</h3>
+                <div className="space-y-3">
+                  {luckyCoupons.slice(0, 10).map((coupon: any) => (
+                    <div key={coupon.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-xl font-bold tracking-widest text-yellow-400">{coupon.code}</p>
+                        <p className="text-[10px] text-white/40 mt-1 uppercase">Created: {new Date(coupon.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${coupon.status === 'unused' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                        {coupon.status}
+                      </div>
+                    </div>
+                  ))}
+                  {luckyCoupons.length === 0 && <p className="text-white/30 text-sm italic">No OTPs generated yet.</p>}
+                </div>
+              </div>
+
+              {/* Spin History */}
+              <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-4">
+                <h3 className="font-bold text-lg text-white">Recent Spins & Winners</h3>
+                <div className="space-y-3">
+                  {luckySpins.slice(0, 10).map((spin: any) => (
+                    <div key={spin.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-sm text-white">Prize: <span className="text-yellow-400">{spin.prize}</span></p>
+                        <p className="text-xs text-white/60">Phone: {spin.phone}</p>
+                        <p className="text-[10px] text-white/40 mt-1">Code Used: {spin.code}</p>
+                      </div>
+                      {spin.status === 'won' && spin.prize !== 'Better Luck Next Time' && (
+                        <button
+                          onClick={() => handleMarkRedeemed(spin.id)}
+                          className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl font-bold text-xs hover:bg-emerald-500/30 transition-all"
+                        >
+                          Mark Redeemed
+                        </button>
+                      )}
+                      {spin.status === 'redeemed' && (
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest px-3 py-1 bg-emerald-500/10 rounded-full">Redeemed</span>
+                      )}
+                    </div>
+                  ))}
+                  {luckySpins.length === 0 && <p className="text-white/30 text-sm italic">No spins yet.</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Probability Manager */}
+            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-6">
+              <div>
+                <h3 className="font-bold text-lg text-white">Prize Probabilities (%)</h3>
+                <p className="text-xs text-white/40 mt-1">Adjust win chances. Ensure total equals 100%.</p>
+              </div>
+              
+              <div className="space-y-4">
+                {luckyConfig && Object.entries(luckyConfig).map(([prize, chance]: any) => (
+                  <div key={prize} className="flex items-center justify-between gap-4">
+                    <label className="text-sm font-bold text-white/80 w-1/2">{prize}</label>
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={chance}
+                        onChange={(e) => handleUpdateProbability(prize, parseInt(e.target.value) || 0)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-yellow-400/50"
+                      />
+                      <span className="flex items-center text-white/40">%</span>
+                    </div>
+                  </div>
+                ))}
+                {!luckyConfig && <p className="text-white/30 text-sm">Loading config...</p>}
+              </div>
+            </div>
           </div>
         </main>
       )}

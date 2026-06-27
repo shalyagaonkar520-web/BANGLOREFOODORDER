@@ -50,29 +50,27 @@ const DEFAULT_SETTINGS: AdminSettings = {
   ]
 };
 
+import { db } from '../firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+
 export class DbService {
   private static STORAGE_KEY = 'moms_magic_admin_settings';
+  private static SETTINGS_DOC_REF = 'system/settings';
 
   /**
-   * Fetch current system settings from secure API with local storage backup.
+   * Fetch current system settings from Firestore with local storage fallback.
    */
   static async fetchSettings(): Promise<AdminSettings> {
     try {
-      const response = await fetch(`/api/settings?t=${Date.now()}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Save copy in localStorage for immediate offline access/hydration
+      const docRef = doc(db, this.SETTINGS_DOC_REF);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data() as AdminSettings;
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
         return data;
       }
     } catch (error) {
-      console.warn('Backend settings fetch failed, pulling from offline storage cache:', error);
+      console.warn('Firestore settings fetch failed, pulling from offline storage cache:', error);
     }
 
     // Fallback to localStorage cache
@@ -90,28 +88,18 @@ export class DbService {
   }
 
   /**
-   * Save settings securely via API, fallback to local cache.
+   * Save settings securely via Firestore, fallback to local cache.
    */
-  static async saveSettings(settings: AdminSettings, token: string): Promise<boolean> {
+  static async saveSettings(settings: AdminSettings): Promise<boolean> {
     // 1. Update offline cache immediately
     settings.lastUpdated = new Date().toISOString();
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
 
-    // 2. Perform backend secure push
+    // 2. Perform backend secure push to Firestore
     try {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(settings)
-      });
-
-      if (response.ok) {
-        return true;
-      }
-      console.error('Failed to save settings to backend server:', response.statusText);
+      const docRef = doc(db, this.SETTINGS_DOC_REF);
+      await setDoc(docRef, settings, { merge: true });
+      return true;
     } catch (error) {
       console.error('Error communicating settings update to backend:', error);
     }
