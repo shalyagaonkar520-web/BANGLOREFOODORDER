@@ -19,8 +19,7 @@ export default function CartPage() {
   const distanceKm = deliveryLocation?.distance ?? 0;
   const deliveryCharge = settings.deliveryFee ?? calculateDeliveryCharge(distanceKm);
   const rainySeasonFee = 5;
-  const taxAmount = (total * (settings.taxRate ?? 5)) / 100;
-  const grandTotal = total + deliveryCharge + rainySeasonFee + taxAmount;
+  const grandTotal = total + deliveryCharge + rainySeasonFee;
   
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');

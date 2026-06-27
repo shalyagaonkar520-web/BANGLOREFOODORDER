@@ -178,9 +178,8 @@ export default function Checkout() {
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
-  const taxAmount = (subtotal * (settings.taxRate ?? 5)) / 100;
   const couponDiscount = appliedCoupon === 'APPUSER' ? 22 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
-  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee + taxAmount - couponDiscount);
+  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
   
@@ -416,8 +415,19 @@ export default function Checkout() {
       playSound(SOUNDS.ORDER_SUCCESS);
       toast.success('🎉 Order placed! Opening WhatsApp...');
 
-      // Redirect to WhatsApp
-      window.location.href = waUrl;
+      // Redirect to WhatsApp using a safer method for mobile browsers
+      const link = document.createElement('a');
+      link.href = waUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Fallback redirect just in case
+      setTimeout(() => {
+        window.location.href = waUrl;
+      }, 500);
     };
 
     if (payableAmount > 0 && paymentMethod === 'online') {
@@ -708,10 +718,6 @@ export default function Checkout() {
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <span>Subtotal</span>
               <span className="text-white text-lg font-black">₹{subtotal}</span>
-            </div>
-            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
-              <span>Tax ({settings.taxRate ?? 5}%)</span>
-              <span className="text-white text-lg font-black">₹{taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <span>Rainy Season Fee</span>
