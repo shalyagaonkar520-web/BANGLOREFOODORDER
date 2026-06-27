@@ -111,7 +111,7 @@ export default function Checkout() {
     } else if (inputUpper === 'APPUSER') {
       if (subtotal > 100) {
         setAppliedCoupon('APPUSER');
-        toast.success('APPUSER promo applied! ₹30 off!');
+        toast.success('APPUSER promo applied! ₹22 off!');
       } else {
         toast.error('APPUSER coupon is valid only for orders above ₹100');
       }
@@ -178,7 +178,7 @@ export default function Checkout() {
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
-  const couponDiscount = appliedCoupon === 'APPUSER' ? 30 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
+  const couponDiscount = appliedCoupon === 'APPUSER' ? 22 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
   const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
