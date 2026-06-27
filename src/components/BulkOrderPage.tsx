@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { PARTY_ITEMS, SNACKS, ICE_CAKES, NORMAL_CAKES } from '../data/partyItems';
-import { MENU_ITEMS } from '../data/menuItems';
+import { useMenuStore } from '../store/menuStore';
 import { Product } from '../types';
 import { useSEO } from '../utils/seo';
 import { useSystemStore } from '../store/systemStore';
@@ -15,6 +15,7 @@ import { useSystemStore } from '../store/systemStore';
 type Category = 'Normal' | 'Ice Cake' | 'Party Items' | 'Snacks';
 
 export default function BulkOrderPage() {
+  const { menuItems } = useMenuStore();
   useSEO("Bulk & Party Orders", "Plan and customize your custom catering, cakes, and event setup options at Moms Magic.");
   const navigate = useNavigate();
   const { addItem, items } = useCartStore();

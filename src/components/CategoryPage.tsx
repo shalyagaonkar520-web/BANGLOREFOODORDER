@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Star, Plus, Minus, ShoppingBag } from 'lucide-react';
-import { MENU_ITEMS } from '../data/menuItems';
+import { useMenuStore } from '../store/menuStore';
 import { useCartStore } from '../store/cartStore';
 import { useSystemStore } from '../store/systemStore';
 import toast from 'react-hot-toast';
@@ -91,6 +91,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
   const navigate = useNavigate();
   const { addItem, items: cartItems, updateQuantity } = useCartStore();
   const settings = useSystemStore(state => state.settings);
+  const { menuItems } = useMenuStore();
 
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
@@ -170,7 +171,7 @@ export default function CategoryPage({ type }: { type: 'food' | 'grocery' }) {
     });
   };
 
-  const allProducts = [...MENU_ITEMS];
+  const allProducts = [...menuItems];
 
   // Filter items based on selected category and search query
   const filteredProducts = allProducts.filter(item => {

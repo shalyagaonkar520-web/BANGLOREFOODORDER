@@ -47,8 +47,8 @@ const DRINK_SUGGESTION_IDS = [
   'drink-special-3',  // Vanilla Milkshake
 ];
 
-function getById(id: string): Product | undefined {
-  return MENU_ITEMS.find(i => i.id === id);
+function getById(id: string, menuItems: Product[]): Product | undefined {
+  return menuItems.find(i => i.id === id);
 }
 
 export type RecommendationType = 'drinks' | 'chicken_combo';
@@ -110,12 +110,12 @@ function isChickenItem(product: Product): boolean {
 }
 
 // ─── MAIN RECOMMENDATION FUNCTION ──────────────────────────────────────────
-export function getRecommendations(product: Product, cartTotal: number): RecommendationResult | null {
+export function getRecommendations(product: Product, cartTotal: number, menuItems: Product[]): RecommendationResult | null {
   // Don't show popup when user already adds a drink
   if (product.category === 'Drinks') return null;
 
   const allDrinks = DRINK_SUGGESTION_IDS
-    .map(id => getById(id))
+    .map(id => getById(id, menuItems))
     .filter(Boolean) as Product[];
 
   const cartMsg = cartTotal >= 499 ? '🔥 Add a drink and complete your meal!' : undefined;
@@ -124,7 +124,7 @@ export function getRecommendations(product: Product, cartTotal: number): Recomme
   if (isChickenItem(product)) {
     const starterSuggestions = CHICKEN_STARTER_IDS
       .filter(id => id !== product.id)
-      .map(id => getById(id))
+      .map(id => getById(id, menuItems))
       .filter(Boolean) as Product[];
 
     const combined = [...starterSuggestions, ...allDrinks];
@@ -143,7 +143,7 @@ export function getRecommendations(product: Product, cartTotal: number): Recomme
   if (product.isVeg) {
     const vegStarterSuggestions = VEG_STARTER_IDS
       .filter(id => id !== product.id)
-      .map(id => getById(id))
+      .map(id => getById(id, menuItems))
       .filter(Boolean) as Product[];
 
     const combined = [...vegStarterSuggestions, ...allDrinks];

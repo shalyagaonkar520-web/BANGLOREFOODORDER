@@ -28,6 +28,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import AdminMenuManager from './AdminMenuManager';
 
 // Real Orders fetched from localStorage
 
@@ -51,7 +52,7 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'notifications' | 'luckyWheel'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'menu' | 'notifications' | 'luckyWheel'>('orders');
 
   // Lucky Wheel States
   const [luckyCoupons, setLuckyCoupons] = useState<any[]>([]);
@@ -601,9 +602,9 @@ export default function AdminPage() {
     const success = await updateSettings(activeUpdates, token);
     setIsSaving(false);
     if (success) {
-      toast.success('System settings saved successfully!');
+      toast.success('System settings saved to Cloud!');
     } else {
-      toast.error('Failed to save settings. Please try again.');
+      toast.error('Cloud Sync failed. Saved locally instead.');
     }
   };
 
@@ -616,9 +617,9 @@ export default function AdminPage() {
     const success = await updateSettings({ [key]: value }, token);
     
     if (success) {
-      toast.success(`${key.replace(/([A-Z])/g, ' $1')} updated!`);
+      toast.success(`${key.replace(/([A-Z])/g, ' $1')} updated on Cloud!`);
     } else {
-      toast.error('Sync failed.');
+      toast.error('Cloud Sync failed. Applied locally.');
     }
   };
 
@@ -887,6 +888,19 @@ export default function AdminPage() {
           }`}
         >
           ⚙️ System Controls
+        </button>
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('menu');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'menu'
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-matte-black border-amber-400 shadow-[0_10px_20px_rgba(245,158,11,0.15)]'
+              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+          }`}
+        >
+          🍔 Menu Manager
         </button>
 
         <button
@@ -1830,6 +1844,43 @@ export default function AdminPage() {
                     />
                   </div>
                 </div>
+
+                {/* Financial Settings */}
+                <h4 className="text-xs font-black text-[#FFB700] uppercase tracking-[3px] flex items-center gap-2 mt-6">
+                  <Sliders className="w-4 h-4 text-[#FFB700]" /> Financial Rules
+                </h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Tax (%)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={localSettings.taxRate ?? 5}
+                      onChange={e => setLocalSettings({ ...localSettings, taxRate: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Del. Fee (₹)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={localSettings.deliveryFee ?? 40}
+                      onChange={e => setLocalSettings({ ...localSettings, deliveryFee: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Min Order (₹)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={localSettings.minOrderValue ?? 150}
+                      onChange={e => setLocalSettings({ ...localSettings, minOrderValue: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2110,9 +2161,10 @@ export default function AdminPage() {
             </button>
           </div>
 
+          </div>
         </div>
-
-      </main>
+      ) : activeTab === 'menu' ? (
+        <AdminMenuManager />
       ) : activeTab === 'bar' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
           

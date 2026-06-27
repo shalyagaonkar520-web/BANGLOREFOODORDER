@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, ArrowRight, Star, ShoppingCart, Gift, Sparkles } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import toast from 'react-hot-toast';
-import { MENU_ITEMS } from '../data/menuItems';
+import { useMenuStore } from '../store/menuStore';
 
 export default function SpecialOfferBanner() {
   const { addItem } = useCartStore();
@@ -11,7 +11,8 @@ export default function SpecialOfferBanner() {
   const [isVisible, setIsVisible] = useState(true);
 
   // Today's Special Item
-  const specialItem = MENU_ITEMS.find(item => item.id === 'special-today');
+  const { menuItems } = useMenuStore();
+  const specialItem = menuItems.find(item => item.id === 'special-today');
 
   useEffect(() => {
     const timer = setInterval(() => {

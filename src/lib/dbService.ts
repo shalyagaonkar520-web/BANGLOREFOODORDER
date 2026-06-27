@@ -14,6 +14,9 @@ export interface AdminSettings {
   whatsappNumber: string;
   whatsappAlertsEnabled: boolean;
   comboOffers: ComboOffer[];
+  taxRate: number;
+  deliveryFee: number;
+  minOrderValue: number;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -47,7 +50,10 @@ const DEFAULT_SETTINGS: AdminSettings = {
       expiryDate: "2026-06-30",
       image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=800&q=80"
     }
-  ]
+  ],
+  taxRate: 5,
+  deliveryFee: 40,
+  minOrderValue: 150
 };
 
 import { db } from '../firebase';

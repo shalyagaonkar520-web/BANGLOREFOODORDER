@@ -169,7 +169,7 @@ export default function Checkout() {
   }, [deliveryLocation]);
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
-  const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
+  const baseDeliveryCharge = settings.deliveryFee ?? calculateDeliveryCharge(distanceKm);
 
   // Free delivery before 2:00 PM every day
   const now = new Date();
@@ -178,8 +178,9 @@ export default function Checkout() {
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
+  const taxAmount = (subtotal * (settings.taxRate ?? 5)) / 100;
   const couponDiscount = appliedCoupon === 'APPUSER' ? 22 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
-  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
+  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee + taxAmount - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
   
@@ -278,11 +279,12 @@ export default function Checkout() {
         orderDetails,
         ``,
         `💰 *Subtotal:* ₹${subtotal}`,
+        `📊 *Tax (${settings.taxRate ?? 5}%):* ₹${taxAmount.toFixed(2)}`,
         `🌧️ *Rainy Season Fee:* ₹${rainySeasonFee}`,
-        `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (Free - ${freeDeliveryReason})` : `₹${deliveryCharge}`}`,
-        `💵 *GRAND TOTAL:* ₹${grandTotal}`,
-        walletDeduction > 0 ? `🎁 *Wallet Discount:* -₹${walletDeduction}` : '',
-        walletDeduction > 0 ? `💳 *PAYABLE AMOUNT:* ₹${payableAmount}` : '',
+        `🚚 *Delivery:* ${isFreeDelivery ? `₹0 (${freeDeliveryReason})` : `₹${deliveryCharge}`}`,
+        couponDiscount > 0 ? `🎟️ *Coupon Discount:* -₹${couponDiscount}` : '',
+        walletDeduction > 0 ? `🎁 *Wallet Used:* -₹${walletDeduction.toFixed(2)}` : '',
+        `💵 *GRAND TOTAL:* ₹${payableAmount.toFixed(2)}`,
         paymentId ? `✅ *PAYMENT DONE:* ${paymentId}` : `⚠️ *PAYMENT:* Cash on Delivery`,
         ``,
         `🗺️ *View Map:* ${mapsViewLink}`,
@@ -330,12 +332,13 @@ export default function Checkout() {
         ``,
         tgDetails,
         ``,
-        `💰 <b>Subtotal:</b> ₹${subtotal}`,
-        `🌧️ <b>Rainy Season Fee:</b> ₹${rainySeasonFee}`,
-        `🚚 <b>Delivery:</b> ${isFreeDelivery ? '₹0 (Free - WINNER Promo)' : `₹${deliveryCharge}`}`,
-        `💵 <b>GRAND TOTAL:</b> ₹${grandTotal}`,
-        walletDeduction > 0 ? `🎁 <b>Wallet Discount:</b> -₹${walletDeduction}` : '',
-        walletDeduction > 0 ? `💳 <b>PAYABLE AMOUNT:</b> ₹${payableAmount}` : '',
+        `💰 <b>Subtotal:</b> ₹${subtotal}<br>`,
+        `📊 <b>Tax (${settings.taxRate ?? 5}%):</b> ₹${taxAmount.toFixed(2)}<br>`,
+        `🌧️ <b>Rainy Season Fee:</b> ₹${rainySeasonFee}<br>`,
+        `${isFreeDelivery ? `<b>Delivery Fee:</b> ₹0 (${freeDeliveryReason})<br>` : `<b>Delivery Fee:</b> ₹${deliveryCharge}<br>`}`,
+        `${couponDiscount ? `<b>Coupon Discount:</b> -₹${couponDiscount}<br>` : ''}`,
+        `${walletDeduction ? `<b>Wallet Used:</b> -₹${walletDeduction.toFixed(2)}<br>` : ''}`,
+        `💵 <b>GRAND TOTAL:</b> ₹${payableAmount.toFixed(2)}`,
         paymentId ? `✅ <b>PAYMENT DONE:</b> ${escHtml(paymentId)}` : `⚠️ <b>PAYMENT:</b> Cash on Delivery`,
         ``,
         `🗺️ <b>View Map:</b> ${escHtml(mapsViewLink)}`,
@@ -705,6 +708,10 @@ export default function Checkout() {
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <span>Subtotal</span>
               <span className="text-white text-lg font-black">₹{subtotal}</span>
+            </div>
+            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+              <span>Tax ({settings.taxRate ?? 5}%)</span>
+              <span className="text-white text-lg font-black">₹{taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
               <span>Rainy Season Fee</span>

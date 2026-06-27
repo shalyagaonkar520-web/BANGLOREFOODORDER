@@ -45,7 +45,10 @@ const DEFAULT_SETTINGS: AdminSettings = {
       expiryDate: "2026-06-30",
       image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=800&q=80"
     }
-  ]
+  ],
+  taxRate: 5,
+  deliveryFee: 40,
+  minOrderValue: 150
 };
 
 import { db } from '../firebase';
@@ -89,10 +92,10 @@ export const useSystemStore = create<SystemState>((set, get) => ({
     // Synchronize securely with backend
     const success = await DbService.saveSettings(updatedSettings);
     if (!success) {
-      // If save failed, reload settings from API to revert UI to server state
-      console.warn('System settings push failed, reverting local state.');
-      await get().loadSettings();
-      return false;
+      console.warn('System settings push failed (Likely missing Firestore rules). Falling back to Local Storage.');
+      // Do NOT revert state. Allow local app testing to continue.
+      // The settings are already saved in localStorage via dbService.saveSettings
+      return false; // Return false so UI can show a warning toast, but UI state won't revert
     }
     return true;
   },

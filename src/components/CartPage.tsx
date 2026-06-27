@@ -17,9 +17,10 @@ export default function CartPage() {
   const { deliveryLocation } = useLocationStore();
   const settings = useSystemStore(state => state.settings);
   const distanceKm = deliveryLocation?.distance ?? 0;
-  const deliveryCharge = calculateDeliveryCharge(distanceKm);
+  const deliveryCharge = settings.deliveryFee ?? calculateDeliveryCharge(distanceKm);
   const rainySeasonFee = 5;
-  const grandTotal = total + deliveryCharge + rainySeasonFee;
+  const taxAmount = (total * (settings.taxRate ?? 5)) / 100;
+  const grandTotal = total + deliveryCharge + rainySeasonFee + taxAmount;
   
   const adminToken = localStorage.getItem('moms_magic_admin_token');
   const userPhone = localStorage.getItem('moms_magic_user_phone');
@@ -186,6 +187,10 @@ export default function CartPage() {
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
                   <span>Subtotal</span>
                   <span className="text-white text-2xl font-black italic tracking-tighter">₹{total}</span>
+                </div>
+                <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
+                  <span>Tax ({settings.taxRate ?? 5}%)</span>
+                  <span className="text-white text-2xl font-black italic tracking-tighter">₹{taxAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-text-muted font-bold uppercase text-[11px] tracking-widest">
                   <span>Rainy Season Fee</span>

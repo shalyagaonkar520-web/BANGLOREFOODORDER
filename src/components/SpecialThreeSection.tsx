@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Plus, Zap, ArrowRight } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
-import { MENU_ITEMS } from '../data/menuItems';
+import { useMenuStore } from '../store/menuStore';
 import toast from 'react-hot-toast';
 
 function Milkshake3D() {
@@ -132,7 +132,8 @@ export default function SpecialThreeSection() {
   const { addItem } = useCartStore();
   const [isMobile] = useState(window.innerWidth < 768);
   const mangoShake = undefined;
-  const otherShakes = MENU_ITEMS.filter(i => ['drink-special-2', 'drink-special-3'].includes(i.id!));
+  const { menuItems } = useMenuStore();
+  const otherShakes = menuItems.filter(i => ['drink-special-2', 'drink-special-3'].includes(i.id!));
 
   const handleAdd = (item: any) => {
     if (item) {

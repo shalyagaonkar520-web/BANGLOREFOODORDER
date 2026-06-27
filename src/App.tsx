@@ -31,6 +31,7 @@ const LuckyWheelPage = lazy(() => import('./components/LuckyWheelPage'));
 
 // Store
 import { useSystemStore } from './store/systemStore';
+import { useMenuStore } from './store/menuStore';
 
 function GoldenParticles() {
   return (
@@ -93,12 +94,17 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const listenSettings = useSystemStore(state => state.listenSettings);
+  const listenToMenu = useMenuStore(state => state.listenToMenu);
 
-  // Synchronize dynamic admin settings on app initialization
+  // Synchronize dynamic admin settings and menu on app initialization
   useEffect(() => {
-    const unsubscribe = listenSettings();
-    return () => unsubscribe();
-  }, [listenSettings]);
+    const unsubscribeSettings = listenSettings();
+    const unsubscribeMenu = listenToMenu();
+    return () => {
+      unsubscribeSettings();
+      unsubscribeMenu();
+    };
+  }, [listenSettings, listenToMenu]);
 
   // Request notification permissions, register service worker, and setup foreground listener on mount
   useEffect(() => {
