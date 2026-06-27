@@ -13,23 +13,6 @@
   "whatsappAlertsEnabled": true,
   "comboOffers": [
     {
-      "id": "combo-chicken",
-      "name": "Chicken Feast Combo",
-      "regularPrice": 318,
-      "offerPrice": 279,
-      "savings": 39,
-      "items": [
-        "Half Chicken Biryani",
-        "Half Chicken Kabab",
-        "Coke"
-      ],
-      "badge": "BESTSELLER",
-      "isActive": true,
-      "isFeatured": true,
-      "expiryDate": "2026-06-30",
-      "image": "/chicken_biryani_new.png"
-    },
-    {
       "id": "combo-veg",
       "name": "Veg Delight Combo",
       "regularPrice": 379,

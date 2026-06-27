@@ -244,25 +244,23 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'br-1',
     name: 'Kushka',
-    price: 79,
+    price: 99,
     category: 'Biryani',
     type: 'food',
     image: '/kushka.png',
     description: 'Plain aromatic biryani rice served with raita.',
-    royalHighlight: true,
     fires: 1,
     isVeg: true
   },
   {
     id: 'br-2',
     name: 'Egg Biryani',
-    price: 129,
+    price: 149,
     category: 'Biryani',
     type: 'food',
     image: '/egg_biryani.png',
     description: 'Biryani rice served with boiled eggs and spices.',
     isTopPick: true,
-    royalHighlight: true,
     fires: 1,
     isVeg: false
   },
@@ -273,19 +271,17 @@ export const MENU_ITEMS: Product[] = [
     category: 'Biryani',
     type: 'food',
     image: '/veg_biryani.png',
-    royalHighlight: true,
     fires: 1,
     isVeg: true
   },
   {
     id: 'br-5',
     name: 'Chicken Biryani Half',
-    price: 109,
+    price: 129,
     category: 'Biryani',
     type: 'food',
     image: '/chicken_biryani_new.png',
     isTopPick: true,
-    royalHighlight: true,
     fires: 5,
     rating: 5.0,
     isVeg: false
@@ -293,12 +289,11 @@ export const MENU_ITEMS: Product[] = [
   {
     id: 'br-5-full',
     name: 'Chicken Biryani Full',
-    price: 159,
+    price: 179,
     category: 'Biryani',
     type: 'food',
     image: '/chicken_biryani_new.png',
     isTopPick: true,
-    royalHighlight: true,
     fires: 5,
     rating: 5.0,
     isVeg: false

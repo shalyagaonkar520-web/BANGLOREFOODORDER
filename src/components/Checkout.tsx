@@ -104,16 +104,20 @@ export default function Checkout() {
   const subtotal = isBulkOrder ? getBulkTotal() + cartTotal : cartTotal;
 
   const handleApplyCoupon = () => {
-    if (couponInput.trim().toUpperCase() === 'WINNER') {
+    const inputUpper = couponInput.trim().toUpperCase();
+    if (inputUpper === 'WINNER') {
       setAppliedCoupon('WINNER');
       toast.success('WINNER promo applied! Free Delivery!');
-    } else if (couponInput.trim().toUpperCase() === 'APPUSER') {
+    } else if (inputUpper === 'APPUSER') {
       if (subtotal > 100) {
         setAppliedCoupon('APPUSER');
         toast.success('APPUSER promo applied! ₹30 off!');
       } else {
         toast.error('APPUSER coupon is valid only for orders above ₹100');
       }
+    } else if (inputUpper === 'CODE-APPUSER') {
+      setAppliedCoupon('CODE-APPUSER');
+      toast.success('CODE-APPUSER promo applied! ₹25 off!');
     } else {
       setAppliedCoupon('');
       toast.error('Invalid promo code');
@@ -170,7 +174,7 @@ export default function Checkout() {
   const freeDeliveryReason = appliedCoupon === 'WINNER' ? 'WINNER Promo' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
-  const couponDiscount = appliedCoupon === 'APPUSER' ? 30 : 0;
+  const couponDiscount = appliedCoupon === 'APPUSER' ? 30 : appliedCoupon === 'CODE-APPUSER' ? 25 : 0;
   const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
