@@ -174,8 +174,9 @@ export default function Checkout() {
   const activeCoupons = settings.coupons || [];
   const appliedCouponDetails = appliedCoupon ? activeCoupons.find(c => c.code.toUpperCase() === appliedCoupon) : null;
 
-  const isFreeDelivery  = (appliedCouponDetails?.type === 'free_delivery') || isBeforeTwo;
-  const freeDeliveryReason = appliedCouponDetails?.type === 'free_delivery' ? `${appliedCouponDetails.code} Promo` : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
+  const isTillJuly1st = new Date() < new Date('2026-07-02T00:00:00');
+  const isFreeDelivery  = (appliedCouponDetails?.type === 'free_delivery') || isBeforeTwo || isTillJuly1st;
+  const freeDeliveryReason = appliedCouponDetails?.type === 'free_delivery' ? `${appliedCouponDetails.code} Promo` : isTillJuly1st ? 'Free Delivery till July 1st 🎉' : isBeforeTwo ? 'Free Before 2 PM 🎉' : '';
   const deliveryCharge  = isFreeDelivery ? 0 : baseDeliveryCharge;
   const rainySeasonFee = 5;
 
@@ -646,7 +647,15 @@ export default function Checkout() {
         {/* ── Summary, Coupon, Payment ── */}
         <div className="luxury-card p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6">
           {/* Free Delivery Before 2 PM Banner */}
-          {isBeforeTwo && (
+          {isTillJuly1st ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+              <span className="text-xl">🎉</span>
+              <div>
+                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest">Free Delivery Active!</p>
+                <p className="text-emerald-300/70 text-[11px] font-medium">Free delivery is on us till July 1st!</p>
+              </div>
+            </div>
+          ) : isBeforeTwo ? (
             <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
               <span className="text-xl">🎉</span>
               <div>
@@ -654,7 +663,7 @@ export default function Checkout() {
                 <p className="text-emerald-300/70 text-[11px] font-medium">Orders before 2:00 PM get free delivery today</p>
               </div>
             </div>
-          )}
+          ) : null}
           {/* Promo Code */}
           <div className="space-y-3 pb-6 border-b border-white/5">
             <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Promo Code</h3>

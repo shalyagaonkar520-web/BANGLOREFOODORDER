@@ -93,6 +93,11 @@ export interface CartItem extends Product {
 // 5+ km   = +₹20 per km beyond 5km
 // ═══════════════════════════════════════════════════════════════
 export function calculateDeliveryCharge(distanceKm: number): number {
+  // Free delivery till July 1st, 2026
+  if (new Date() < new Date('2026-07-02T00:00:00')) {
+    return 0;
+  }
+
   const km = Math.ceil(distanceKm);
   let charge = 20; // base charge for 0-2 km
   if (km > 2) {
