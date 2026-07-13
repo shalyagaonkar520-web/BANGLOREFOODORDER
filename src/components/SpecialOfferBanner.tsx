@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, ArrowRight, Star, ShoppingCart, Gift, Sparkles } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import toast from 'react-hot-toast';
 import { useMenuStore } from '../store/menuStore';
@@ -60,7 +59,7 @@ export default function SpecialOfferBanner() {
       <div className="relative group overflow-hidden bg-dark-surface rounded-[40px] md:rounded-[60px] border border-white/5 shadow-2xl">
         {/* Animated Background Gradients */}
         <div className="absolute inset-0 bg-gradient-to-br from-orange-600/20 via-transparent to-red-600/10 pointer-events-none" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 blur-[120px] rounded-full animate-pulse" />
         
         <div className="flex flex-col lg:flex-row items-center relative z-10">
           {/* Image Section */}
@@ -79,9 +78,9 @@ export default function SpecialOfferBanner() {
               <motion.div 
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="bg-brand text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest shadow-xl shadow-brand/40 flex items-center gap-2"
+                className="bg-primary text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest shadow-xl shadow-brand/40 flex items-center gap-2"
               >
-                <Zap className="w-3.5 h-3.5 fill-current" /> LIMITED OFFER
+                <span className="material-symbols-outlined w-3.5 h-3.5 fill-current">bolt</span> LIMITED OFFER
               </motion.div>
             </div>
           </div>
@@ -89,18 +88,18 @@ export default function SpecialOfferBanner() {
           {/* Content Section */}
           <div className="w-full lg:w-1/2 p-8 md:p-16 space-y-8">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-brand">
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
+              <div className="flex items-center gap-2 text-primary">
+                <span className="material-symbols-outlined w-4 h-4 fill-current">star</span>
+                <span className="material-symbols-outlined w-4 h-4 fill-current">star</span>
+                <span className="material-symbols-outlined w-4 h-4 fill-current">star</span>
+                <span className="material-symbols-outlined w-4 h-4 fill-current">star</span>
+                <span className="material-symbols-outlined w-4 h-4 fill-current">star</span>
                 <span className="text-[10px] font-black uppercase tracking-[3px] ml-2 text-white/40">Today's Highest Rated</span>
               </div>
               
               <h2 className="text-4xl md:text-6xl lg:text-7xl font-black italic tracking-tighter leading-none uppercase">
                 {specialItem.name.split(' ')[0]} <br />
-                <span className="text-brand">{specialItem.name.split(' ').slice(1).join(' ')}</span>
+                <span className="text-primary">{specialItem.name.split(' ').slice(1).join(' ')}</span>
               </h2>
               
               <p className="text-white/40 text-sm md:text-lg font-bold leading-relaxed max-w-md italic">
@@ -112,16 +111,16 @@ export default function SpecialOfferBanner() {
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6 py-8 border-y border-white/5">
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                  <Timer className="w-6 h-6 text-brand" />
+                  <span className="material-symbols-outlined w-6 h-6 text-primary">timer</span>
                 </div>
                 <div>
                   <p className="text-white/30 text-[10px] font-black uppercase tracking-[3px]">Offer Ends In</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black italic text-brand">{timeLeft.hours}</span>
+                    <span className="text-2xl font-black italic text-primary">{timeLeft.hours}</span>
                     <span className="text-white/20 font-black">:</span>
-                    <span className="text-2xl font-black italic text-brand">{timeLeft.minutes}</span>
+                    <span className="text-2xl font-black italic text-primary">{timeLeft.minutes}</span>
                     <span className="text-white/20 font-black">:</span>
-                    <span className="text-2xl font-black italic text-brand">{timeLeft.seconds}</span>
+                    <span className="text-2xl font-black italic text-primary">{timeLeft.seconds}</span>
                   </div>
                 </div>
               </div>
@@ -140,21 +139,21 @@ export default function SpecialOfferBanner() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button 
                 onClick={handleAddToCart}
-                className="flex-1 bg-brand text-white py-6 rounded-[24px] font-black text-lg uppercase tracking-[4px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-brand/30 flex items-center justify-center gap-4 group/btn"
+                className="flex-1 bg-primary text-white py-6 rounded-[24px] font-black text-lg uppercase tracking-[4px] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-brand/30 flex items-center justify-center gap-4 group/btn"
               >
-                CLAIM OFFER <ShoppingCart className="w-6 h-6 group-hover/btn:rotate-12 transition-transform" />
+                CLAIM OFFER <span className="material-symbols-outlined w-6 h-6 group-hover/btn:rotate-12 transition-transform">shopping_cart</span>
               </button>
               
               <button 
                 onClick={() => window.location.href = '#food'}
                 className="px-10 py-6 bg-white/5 rounded-[24px] font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10 flex items-center justify-center gap-3"
               >
-                VIEW MENU <ArrowRight className="w-4 h-4" />
+                VIEW MENU <span className="material-symbols-outlined w-4 h-4">arrow_forward</span>
               </button>
             </div>
             
             <p className="flex items-center gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-[3px] animate-pulse">
-              <Sparkles className="w-3 h-3" /> 9 people already ordered this
+              <span className="material-symbols-outlined w-3 h-3">auto_awesome</span> 9 people already ordered this
             </p>
           </div>
         </div>

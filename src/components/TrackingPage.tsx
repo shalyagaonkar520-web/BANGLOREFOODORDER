@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, MapPin, Phone, Truck, Clock, Store, Navigation, ShieldCheck } from 'lucide-react';
+
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, rtdb } from '../firebase';
+import { ref, onValue } from 'firebase/database';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import { ArrowLeft, Clock, Navigation, Truck, Phone, ShieldCheck } from 'lucide-react';
 
 // Helper to calculate distance in km via Haversine
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -29,7 +31,18 @@ export default function TrackingPage() {
 
   const [order, setOrder] = useState<any>(null);
   const [rider, setRider] = useState<any>(null);
+  const [restaurant, setRestaurant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!order || !order.restaurantId) return;
+    const unsub = onSnapshot(doc(db, 'restaurants', order.restaurantId), (snap) => {
+      if (snap.exists()) {
+        setRestaurant(snap.data());
+      }
+    });
+    return () => unsub();
+  }, [order]);
 
   // Leaflet references
   const mapRef = useRef<HTMLDivElement>(null);
@@ -70,17 +83,24 @@ export default function TrackingPage() {
     return () => unsubscribeOrder();
   }, [orderId, navigate]);
 
-  // 2. Real-time Listener for the Rider document
+  // 2. Real-time Listener for the Rider document (RTDB)
   useEffect(() => {
     if (!order || !order.riderId || order.riderId === '') {
       setRider(null);
       return;
     }
 
-    const riderDocRef = doc(db, 'riders', order.riderId);
-    const unsubscribeRider = onSnapshot(riderDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setRider(docSnap.data());
+    const locationRef = ref(rtdb, `riderLocations/${order.riderId}`);
+    const unsubscribeRider = onValue(locationRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        setRider({
+          currentLocation: {
+            lat: val.lat,
+            lng: val.lng
+          },
+          lastUpdated: val.timestamp
+        });
       }
     });
 
@@ -116,7 +136,10 @@ export default function TrackingPage() {
     const map = mapInstance.current;
     if (!map || !order) return;
 
-    const restCoords: [number, number] = [14.9643, 74.7121]; // Mom's Magic Kitchen coordinates
+    const restCoords: [number, number] = [
+      restaurant?.lat || 14.9643,
+      restaurant?.lng || 74.7121
+    ];
     const custCoords: [number, number] = [
       order.deliveryLocation?.lat || 14.9667,
       order.deliveryLocation?.lng || 74.7167
@@ -134,14 +157,14 @@ export default function TrackingPage() {
     });
 
     const customerIcon = L.divIcon({
-      html: '<div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center shadow-lg font-bold text-sm">🏠</div>',
+      html: '<div class="w-8 h-8 rounded-full bg-tertiary border-2 border-surface flex items-center justify-center shadow-lg font-bold text-sm">🏠</div>',
       className: 'custom-div-icon',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
     });
 
     const riderIcon = L.divIcon({
-      html: '<div class="w-9 h-9 rounded-full bg-[#4CD964] border-2 border-white flex items-center justify-center shadow-2xl font-bold text-sm animate-bounce shadow-[#4CD964]/50">🛵</div>',
+      html: '<div class="w-9 h-9 rounded-full bg-primary border-2 border-surface flex items-center justify-center shadow-2xl font-bold text-sm animate-bounce shadow-primary/50">🛵</div>',
       className: 'custom-div-icon',
       iconSize: [36, 36],
       iconAnchor: [18, 18]
@@ -150,7 +173,7 @@ export default function TrackingPage() {
     // Handle Restaurant Marker
     if (!markersRef.current['restaurant']) {
       markersRef.current['restaurant'] = L.marker(restCoords, { icon: restaurantIcon }).addTo(map)
-        .bindPopup('<b>Mom\'s Magic Kitchen</b>');
+        .bindPopup(`<b>${restaurant?.name || "Restaurant"}</b>`);
     } else {
       markersRef.current['restaurant'].setLatLng(restCoords);
     }
@@ -188,7 +211,7 @@ export default function TrackingPage() {
       polylineRef.current.setLatLngs(routePoints);
     } else {
       polylineRef.current = L.polyline(routePoints, {
-        color: '#4CD964',
+        color: 'var(--color-primary, #FF6B35)',
         weight: 4,
         opacity: 0.8,
         dashArray: '8, 8'
@@ -199,15 +222,15 @@ export default function TrackingPage() {
     const bounds = L.latLngBounds(routePoints);
     map.fitBounds(bounds, { padding: [50, 50] });
 
-  }, [order, rider]);
+  }, [order, rider, restaurant]);
 
   // Calculations for remaining distance and ETA
   const getTrackingMetrics = () => {
     if (!order) return { distance: 0, eta: 0 };
     
     // Coordinates
-    const lat1 = rider?.currentLocation?.lat || 14.9643; // Rider or Restaurant
-    const lon1 = rider?.currentLocation?.lng || 74.7121;
+    const lat1 = rider?.currentLocation?.lat || restaurant?.lat || 14.9643; // Rider or Restaurant
+    const lon1 = rider?.currentLocation?.lng || restaurant?.lng || 74.7121;
     const lat2 = order.deliveryLocation?.lat || 14.9667;
     const lon2 = order.deliveryLocation?.lng || 74.7167;
 
@@ -228,51 +251,51 @@ export default function TrackingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-matte-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#4CD964]"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col relative pb-32">
+    <div className="min-h-screen bg-background flex flex-col relative pb-32">
       {/* 1. Leaflet Interactive Map View */}
-      <div className="flex-1 w-full relative z-10 min-h-[50vh] md:min-h-[60vh] bg-neutral-900">
+      <div className="flex-1 w-full relative z-10 min-h-[50vh] md:min-h-[60vh] bg-surface-container">
         <div ref={mapRef} className="w-full h-full absolute inset-0" />
         
         {/* Floating Back Action */}
         <button 
           onClick={() => navigate('/profile')}
-          className="absolute top-6 left-6 z-20 w-10 h-10 rounded-full bg-matte-black/80 border border-white/10 flex items-center justify-center text-white backdrop-blur-md cursor-pointer hover:border-[#4CD964] transition-all active:scale-95 shadow-lg"
+          className="absolute top-6 left-6 z-20 w-12 h-12 rounded-full bg-white/90 border border-gray-100 flex items-center justify-center text-gray-700 backdrop-blur-xl cursor-pointer hover:border-primary transition-all active:scale-95 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ArrowLeft className="w-6 h-6" />
         </button>
       </div>
 
       {/* 2. Order Tracking Status Drawer Sheet */}
-      <div className="relative z-20 bg-matte-black/95 border-t border-[#4CD964]/20 rounded-t-[35px] p-6 space-y-6 -mt-6 backdrop-blur-lg shadow-[0_-10px_35px_rgba(76,217,100,0.1)]">
+      <div className="relative z-20 bg-surface/95 border-t border-primary/20 rounded-t-[35px] p-6 space-y-6 -mt-6 backdrop-blur-lg shadow-[0_-10px_35px_rgba(var(--color-primary-rgb),0.1)]">
         
         {/* ETA & Distance Card */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center gap-4 text-left">
-            <div className="bg-[#4CD964]/10 p-3 rounded-xl border border-[#4CD964]/20">
-              <Clock className="w-6 h-6 text-[#4CD964]" />
+          <div className="bg-white border border-gray-100 p-5 rounded-[24px] flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left shadow-sm">
+            <div className="bg-orange-50 p-3.5 rounded-2xl border border-orange-100 shrink-0">
+              <Clock className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Estimated Arrival</p>
-              <h3 className="text-2xl font-black italic text-white mt-1">
+              <p className="text-label-sm text-secondary uppercase tracking-widest">Estimated Arrival</p>
+              <h3 className="text-body-lg font-headline-sm text-on-surface mt-1">
                 {order.status === 'delivered' ? 'Arrived' : `${metrics.eta} Mins`}
               </h3>
             </div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center gap-4 text-left">
-            <div className="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
-              <Navigation className="w-6 h-6 text-blue-400" />
+          <div className="bg-white border border-gray-100 p-5 rounded-[24px] flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left shadow-sm">
+            <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100 shrink-0">
+              <Navigation className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Remaining Distance</p>
-              <h3 className="text-2xl font-black italic text-white mt-1">
+              <p className="text-label-sm text-secondary uppercase tracking-widest">Remaining Distance</p>
+              <h3 className="text-body-lg font-headline-sm text-on-surface mt-1">
                 {order.status === 'delivered' ? '0.0 km' : `${metrics.distance} km`}
               </h3>
             </div>
@@ -280,31 +303,31 @@ export default function TrackingPage() {
         </div>
 
         {/* Step Indicator Panel */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center gap-3 text-left">
-            <div className={`p-2.5 rounded-full shrink-0 ${
-              order.status === 'delivered' ? 'bg-emerald-500 text-black' : 'bg-[#4CD964]/20 text-[#4CD964] animate-pulse'
+        <div className="space-y-5 pt-2">
+          <div className="flex items-center gap-4 text-left">
+            <div className={`p-3.5 rounded-2xl shrink-0 ${
+              order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-primary animate-pulse'
             }`}>
-              <Truck className="w-5 h-5" />
+              <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-black uppercase text-white tracking-wide">
+              <h4 className="text-body-md font-bold uppercase text-on-surface tracking-wide">
                 {order.status === 'pending' ? 'Waiting for Confirmation' :
                  order.status === 'Preparing' ? 'Kitchen is Cooking Your Feast' :
                  order.status === 'Out For Delivery' ? 'Rider is Out For Delivery' :
                  order.status === 'delivered' ? 'Order Delivered!' : 'Processing Order'}
               </h4>
-              <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-label-sm text-secondary font-bold uppercase tracking-wider mt-0.5">
                 Status: {order.status}
               </p>
             </div>
           </div>
 
           {/* Simple progress bar */}
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all duration-500 ${
-                order.status === 'delivered' ? 'bg-emerald-500' : 'bg-[#4CD964]'
+                order.status === 'delivered' ? 'bg-tertiary' : 'bg-primary'
               }`}
               style={{
                 width: 
@@ -317,47 +340,47 @@ export default function TrackingPage() {
           </div>
         </div>
 
-        <div className="h-px bg-white/5" />
+        <div className="h-px bg-outline-variant/30" />
 
         {/* Rider & Address Info */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           {rider ? (
             <div className="flex items-center gap-4 text-left">
-              <div className="w-12 h-12 rounded-full bg-[#4CD964]/10 border border-[#4CD964]/20 flex items-center justify-center text-xl text-[#4CD964] font-black uppercase">
+              <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xl text-primary font-black uppercase">
                 {rider.name.charAt(0)}
               </div>
               <div>
-                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Assigned Rider</p>
-                <h4 className="text-base font-extrabold text-white mt-0.5">{rider.name}</h4>
-                <p className="text-[10px] text-[#4CD964] font-bold">{rider.phone}</p>
+                <p className="text-label-sm text-secondary uppercase tracking-widest">Assigned Rider</p>
+                <h4 className="text-body-md font-headline-sm text-on-surface mt-0.5">{rider.name}</h4>
+                <p className="text-label-sm text-primary font-bold">{rider.phone}</p>
               </div>
               <a
                 href={`tel:${rider.phone}`}
-                className="ml-4 w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#4CD964] flex items-center justify-center text-[#4CD964] transition-colors"
+                className="ml-auto w-12 h-12 rounded-full bg-green-50 border border-green-200 hover:bg-green-100 flex items-center justify-center text-green-600 transition-colors shrink-0 shadow-sm"
               >
-                <Phone className="w-4 h-4 fill-current text-[#4CD964]" />
+                <Phone className="w-5 h-5 fill-current" />
               </a>
             </div>
           ) : (
             <div className="text-left py-2">
-              <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Delivery Partner</p>
-              <h4 className="text-sm font-bold text-white mt-1">Rider assignment in progress... 🛵</h4>
-              <p className="text-[10px] text-white/40 leading-relaxed mt-0.5">
+              <p className="text-label-sm text-secondary uppercase tracking-widest">Delivery Partner</p>
+              <h4 className="text-body-md font-bold text-on-surface mt-1">Rider assignment in progress... 🛵</h4>
+              <p className="text-body-sm text-secondary leading-relaxed mt-0.5">
                 Our kitchen is preparing your box. Once a delivery partner accepts, you will see their details here.
               </p>
             </div>
           )}
 
           <div className="text-left sm:text-right space-y-1">
-            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Delivery Destination</p>
-            <h4 className="text-xs font-bold text-white truncate max-w-xs">{order.deliveryLocation?.address}</h4>
-            <p className="text-[9px] text-[#4CD964] font-black uppercase tracking-widest mt-1">₹{order.grandTotal} • {order.paymentMethod}</p>
+            <p className="text-label-sm text-secondary uppercase tracking-widest">Delivery Destination</p>
+            <h4 className="text-body-md font-bold text-on-surface truncate max-w-xs">{order.deliveryLocation?.address}</h4>
+            <p className="text-label-sm text-primary font-black uppercase tracking-widest mt-1">₹{order.grandTotal} • {order.paymentMethod}</p>
           </div>
         </div>
 
         {/* Footer badges */}
-        <div className="flex items-center justify-center gap-2 mt-2 text-white/20 font-black uppercase tracking-[3px] text-[8px]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#4CD964]" /> Live GPS Satellite Encrypted
+        <div className="flex items-center justify-center gap-2 mt-4 text-gray-500 font-bold uppercase tracking-[3px] text-[10px]">
+          <ShieldCheck className="w-4 h-4 text-emerald-500" /> Live GPS Satellite Encrypted
         </div>
 
       </div>

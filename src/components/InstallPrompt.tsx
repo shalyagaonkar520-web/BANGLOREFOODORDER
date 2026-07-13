@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 import { trackPWAInstallation } from '../utils/pwaTracking';
@@ -115,7 +115,7 @@ export default function InstallPrompt() {
         <div className="bg-[#0B0E14] border border-[#4CD964]/20 shadow-[0_12px_45px_rgba(76,217,100,0.15)] rounded-[20px] p-4 flex items-center justify-between gap-4 backdrop-blur-[10px]">
           <div className="flex items-center gap-3">
             <div className="bg-[#4CD964]/10 p-2.5 rounded-xl border border-[#4CD964]/10 shrink-0">
-              <Download className="w-5 h-5 text-[#4CD964] animate-bounce" />
+              <span className="material-symbols-outlined w-5 h-5 text-[#4CD964] animate-bounce">download</span>
             </div>
             <div>
               <p className="text-sm font-bold text-white">Add Mom's Magic to home screen</p>
@@ -135,7 +135,7 @@ export default function InstallPrompt() {
               onClick={handleDismiss}
               className="text-white/50 hover:text-white p-2 transition-colors rounded-xl hover:bg-white/5 cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <span className="material-symbols-outlined w-4 h-4">close</span>
             </button>
           </div>
         </div>

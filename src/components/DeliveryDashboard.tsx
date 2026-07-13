@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LogIn, 
-  MapPin, 
-  Navigation, 
-  CheckCircle, 
-  Truck, 
-  TrendingUp, 
-  History, 
-  Power, 
-  Phone, 
-  AlertCircle,
-  Clock,
-  Compass,
-  PhoneCall
-} from 'lucide-react';
+
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { 
   doc, 
@@ -28,8 +14,10 @@ import {
   setDoc,
   serverTimestamp 
 } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db, rtdb } from '../firebase';
+import { ref as rtdbRef, set as rtdbSet, onValue, onDisconnect, serverTimestamp as rtdbTimestamp } from 'firebase/database';
 import toast from 'react-hot-toast';
+import { playSound, SOUNDS } from '../utils/audio';
 import { useSEO } from '../utils/seo';
 
 export default function DeliveryDashboard() {
@@ -50,6 +38,7 @@ export default function DeliveryDashboard() {
   const [assignedOrders, setAssignedOrders] = useState<any[]>([]);
   const [pastDeliveries, setPastDeliveries] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'assigned' | 'history'>('assigned');
+  const [offerTimers, setOfferTimers] = useState<Record<string, number>>({});
 
   // Verify Auth State on mount
   useEffect(() => {
@@ -88,12 +77,25 @@ export default function DeliveryDashboard() {
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          const riderRef = doc(db, 'riders', riderId);
-          await updateDoc(riderRef, {
-            'currentLocation.lat': latitude,
-            'currentLocation.lng': longitude,
-            'currentLocation.lastUpdated': new Date().toISOString()
-          });
+          try {
+            // Update Firestore
+            const riderRef = doc(db, 'riders', riderId);
+            await updateDoc(riderRef, {
+              'currentLocation.lat': latitude,
+              'currentLocation.lng': longitude,
+              'currentLocation.lastUpdated': new Date().toISOString()
+            });
+
+            // Update RTDB for map animations
+            const locationRef = rtdbRef(rtdb, `riderLocations/${riderId}`);
+            await rtdbSet(locationRef, {
+              lat: latitude,
+              lng: longitude,
+              timestamp: Date.now()
+            });
+          } catch (err) {
+            console.error("GPS coordinates sync failed:", err);
+          }
         },
         (error) => {
           console.error("GPS position watch error:", error);
@@ -111,6 +113,77 @@ export default function DeliveryDashboard() {
     };
   }, [isOnline, riderId]);
 
+  // 1.5. Online Presence Monitoring with RTDB onDisconnect()
+  useEffect(() => {
+    if (!riderId || !isOnline) return;
+
+    const connectedRef = rtdbRef(rtdb, '.info/connected');
+    const statusRef = rtdbRef(rtdb, `riders/${riderId}/status`);
+
+    const unsubscribe = onValue(connectedRef, async (snap) => {
+      if (snap.val() === true) {
+        // Set online status in RTDB
+        await rtdbSet(statusRef, 'online');
+
+        // Configure onDisconnect status fallback to offline
+        onDisconnect(statusRef).set('offline');
+
+        // Also update status in Firestore for list queries
+        await updateDoc(doc(db, 'riders', riderId), { status: 'online' });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      // Set status offline when turning off or component unmounts
+      rtdbSet(statusRef, 'offline').catch(() => {});
+      updateDoc(doc(db, 'riders', riderId), { status: 'offline' }).catch(() => {});
+    };
+  }, [riderId, isOnline]);
+
+  // 1.7. 30-Second Countdown for New Assigned Order Offers
+  useEffect(() => {
+    const assigned = assignedOrders.filter(o => !o.riderStatus || o.riderStatus === 'assigned');
+    if (assigned.length === 0) return;
+
+    const interval = setInterval(() => {
+      setOfferTimers(prev => {
+        const next = { ...prev };
+        let updated = false;
+
+        assigned.forEach(order => {
+          if (next[order.id] === undefined) {
+            next[order.id] = 30;
+            updated = true;
+            playSound(SOUNDS.NOTIFICATION);
+          } else if (next[order.id] > 0) {
+            next[order.id] = next[order.id] - 1;
+            updated = true;
+            playSound(SOUNDS.CLICK);
+          } else if (next[order.id] === 0) {
+            handleRejectOrder(order.id);
+            delete next[order.id];
+            updated = true;
+            playSound(SOUNDS.ERROR);
+            toast.error(`Offer for order #${order.id.slice(0, 8)} expired.`);
+          }
+        });
+
+        // Clean up stale timers
+        Object.keys(next).forEach(id => {
+          if (!assigned.some(o => o.id === id)) {
+            delete next[id];
+            updated = true;
+          }
+        });
+
+        return updated ? next : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [assignedOrders]);
+
   // 2. Real-Time Listeners for Assigned Orders (Pending/Preparing/Delivering)
   useEffect(() => {
     if (!riderId) return;
@@ -125,7 +198,7 @@ export default function DeliveryDashboard() {
       const past: any[] = [];
       
       snapshot.forEach((docSnap) => {
-        const o = { id: docSnap.id, ...docSnap.data() };
+        const o = { id: docSnap.id, ...docSnap.data() } as any;
         if (o.status === 'delivered' || o.status === 'completed' || o.status === 'cancelled') {
           past.push(o);
         } else {
@@ -259,7 +332,7 @@ export default function DeliveryDashboard() {
   // Render Login Panel
   if (!riderId) {
     return (
-      <div className="min-h-screen bg-matte-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
         <motion.div 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -269,7 +342,7 @@ export default function DeliveryDashboard() {
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-red-500/5 blur-[80px] rounded-full pointer-events-none" />
 
           <div className="space-y-2 mt-4 text-center">
-            <Truck className="w-12 h-12 text-[#4CD964] mx-auto animate-pulse" />
+            <span className="material-symbols-outlined w-12 h-12 text-[#4CD964] mx-auto animate-pulse">local_shipping</span>
             <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white mt-4">
               RIDER <span className="text-[#4CD964]">PORTAL</span>
             </h2>
@@ -300,7 +373,7 @@ export default function DeliveryDashboard() {
               disabled={loginLoading}
               className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:brightness-105 active:scale-95 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-[0_6px_20px_rgba(239,68,68,0.25)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              {loginLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Log In Partner <LogIn className="w-4 h-4" /></>}
+              {loginLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Log In Partner <span className="material-symbols-outlined w-4 h-4">login</span></>}
             </button>
           </form>
         </motion.div>
@@ -310,6 +383,37 @@ export default function DeliveryDashboard() {
 
   // Calculate earnings
   const completedCount = pastDeliveries.filter(o => o.status === 'delivered').length;
+
+  // Show Verification pending/rejected status page
+  if (riderProfile && riderProfile.verificationStatus !== 'approved') {
+    const isRejected = riderProfile.verificationStatus === 'rejected';
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center space-y-8">
+        <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-lg">
+          {isRejected ? '❌' : '⏳'}
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">
+            {isRejected ? 'Account Rejected' : 'Verification Pending'}
+          </h2>
+          <p className="text-white/40 text-xs font-semibold uppercase tracking-[3px]">
+            {isRejected ? 'Your delivery partner registration was rejected' : 'Platform owner authorization required'}
+          </p>
+          <p className="text-white/60 text-sm max-w-sm mx-auto leading-relaxed">
+            {isRejected 
+              ? 'Please contact platform administration if you believe this was in error.' 
+              : 'Our administration team is currently reviewing your uploaded profile credentials. We will notify you once approved!'}
+          </p>
+        </div>
+        <button
+          onClick={handleRiderLogout}
+          className="bg-white/5 border border-white/10 hover:border-white/20 text-white/60 hover:text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+        >
+          Sign Out / Exit
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white pt-24 pb-48 px-4 md:px-6">
@@ -340,7 +444,7 @@ export default function DeliveryDashboard() {
                   : 'bg-[#4CD964] text-black hover:brightness-105 shadow-[#4CD964]/10'
               }`}
             >
-              <Power className="w-4 h-4" />
+              <span className="material-symbols-outlined w-4 h-4">power_settings_new</span>
               {isOnline ? "Go Offline" : "Go Online"}
             </button>
 
@@ -357,17 +461,17 @@ export default function DeliveryDashboard() {
         {/* Earning Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl text-left">
-            <TrendingUp className="w-5 h-5 text-[#4CD964] mb-2" />
+            <span className="material-symbols-outlined w-5 h-5 text-[#4CD964] mb-2">trending_up</span>
             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Total Earnings</p>
             <h3 className="text-3xl font-black italic text-white mt-1">₹{riderProfile?.earnings || 0}</h3>
           </div>
           <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl text-left">
-            <CheckCircle className="w-5 h-5 text-emerald-400 mb-2" />
+            <span className="material-symbols-outlined w-5 h-5 text-emerald-400 mb-2">check_circle</span>
             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Deliveries Done</p>
             <h3 className="text-3xl font-black italic text-white mt-1">{completedCount} Orders</h3>
           </div>
           <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl text-left col-span-2 sm:col-span-1">
-            <Clock className="w-5 h-5 text-gold mb-2" />
+            <span className="material-symbols-outlined w-5 h-5 text-gold mb-2">schedule</span>
             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Commission Rate</p>
             <h3 className="text-xl font-black italic text-gold mt-2">₹40 / order</h3>
           </div>
@@ -399,14 +503,14 @@ export default function DeliveryDashboard() {
             <div className="space-y-6">
               {!isOnline && (
                 <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-bold">
-                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <span className="material-symbols-outlined w-5 h-5 shrink-0">error</span>
                   Please toggle status to ONLINE to activate Geolocation GPS tracking and receive order assignments.
                 </div>
               )}
 
               {assignedOrders.length === 0 ? (
                 <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-white/5">
-                  <Truck className="w-12 h-12 text-white/10 mx-auto mb-4 animate-bounce" />
+                  <span className="material-symbols-outlined w-12 h-12 text-white/10 mx-auto mb-4 animate-bounce">local_shipping</span>
                   <p className="text-white/30 text-xs font-bold uppercase tracking-widest">No active deliveries assigned</p>
                 </div>
               ) : (
@@ -452,20 +556,34 @@ export default function DeliveryDashboard() {
                         <div className="flex flex-wrap gap-3 pt-4 border-t border-white/5">
                           {/* Unconfirmed riderStatus: Accept/Reject */}
                           {(!order.riderStatus || order.riderStatus === 'assigned') && (
-                            <>
-                              <button
-                                onClick={() => handleAcceptOrder(order.id)}
-                                className="flex-1 bg-[#4CD964] text-black font-black uppercase text-[10px] tracking-widest py-3.5 rounded-xl hover:brightness-105 active:scale-95 transition-all cursor-pointer"
-                              >
-                                Accept Order
-                              </button>
-                              <button
-                                onClick={() => handleRejectOrder(order.id)}
-                                className="flex-1 bg-white/5 border border-white/10 text-red-400 font-black uppercase text-[10px] tracking-widest py-3.5 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer"
-                              >
-                                Reject Order
-                              </button>
-                            </>
+                            <div className="w-full space-y-4">
+                              <div className="w-full bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-2xl flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">⏳</span>
+                                  <div>
+                                    <p className="text-[10px] font-black uppercase tracking-wider">New Order Offer</p>
+                                    <p className="text-[9px] text-white/50 font-bold mt-0.5 text-left">Accept before countdown expires</p>
+                                  </div>
+                                </div>
+                                <span className="text-xl font-black italic animate-pulse">
+                                  {offerTimers[order.id] ?? 30}s
+                                </span>
+                              </div>
+                              <div className="flex gap-3 w-full">
+                                <button
+                                  onClick={() => handleAcceptOrder(order.id)}
+                                  className="flex-1 bg-[#4CD964] text-black font-black uppercase text-[10px] tracking-widest py-3.5 rounded-xl hover:brightness-105 active:scale-95 transition-all cursor-pointer"
+                                >
+                                  Accept Order
+                                </button>
+                                <button
+                                  onClick={() => handleRejectOrder(order.id)}
+                                  className="flex-1 bg-white/5 border border-white/10 text-red-400 font-black uppercase text-[10px] tracking-widest py-3.5 rounded-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                                >
+                                  Reject Order
+                                </button>
+                              </div>
+                            </div>
                           )}
 
                           {/* Accepted order status: Start Delivery */}
@@ -474,7 +592,7 @@ export default function DeliveryDashboard() {
                               onClick={() => handleStartDelivery(order.id)}
                               className="flex-1 bg-[#4CD964] text-black font-black uppercase text-[10px] tracking-widest py-4 rounded-xl hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                             >
-                              <Navigation className="w-4 h-4" /> Start Delivery Run
+                              <span className="material-symbols-outlined w-4 h-4">navigation</span> Start Delivery Run
                             </button>
                           )}
 
@@ -484,7 +602,7 @@ export default function DeliveryDashboard() {
                               onClick={() => handleCompleteDelivery(order.id)}
                               className="flex-1 bg-gradient-to-r from-emerald-500 to-[#4CD964] text-black font-black uppercase text-[10px] tracking-widest py-4 rounded-xl hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                             >
-                              <CheckCircle className="w-4 h-4 fill-black stroke-emerald-500" /> Complete Delivery
+                              <span className="material-symbols-outlined w-4 h-4 fill-black stroke-emerald-500">check_circle</span> Complete Delivery
                             </button>
                           )}
 
@@ -496,7 +614,7 @@ export default function DeliveryDashboard() {
                               rel="noopener noreferrer"
                               className="bg-white/5 border border-white/10 hover:border-blue-400 text-blue-400 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                             >
-                              <Compass className="w-4 h-4" /> Navigate
+                              <span className="material-symbols-outlined w-4 h-4">explore</span> Navigate
                             </a>
                           )}
 
@@ -504,7 +622,7 @@ export default function DeliveryDashboard() {
                             href={`tel:${order.userPhone}`}
                             className="bg-white/5 border border-white/10 hover:border-[#4CD964] text-white px-4 py-4 rounded-xl flex items-center justify-center transition-all"
                           >
-                            <PhoneCall className="w-4 h-4 text-[#4CD964]" />
+                            <span className="material-symbols-outlined w-4 h-4 text-[#4CD964]">add_call</span>
                           </a>
                         </div>
                       </div>
@@ -514,36 +632,82 @@ export default function DeliveryDashboard() {
               )}
             </div>
           ) : (
-            // History and Completed Deliveries list
-            <div className="space-y-6">
-              <h3 className="text-xl font-black italic uppercase tracking-tighter text-white text-left">Completed Deliveries</h3>
-              
-              {pastDeliveries.length === 0 ? (
-                <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-white/5">
-                  <p className="text-white/30 text-xs font-bold uppercase tracking-widest">No delivery history found</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pastDeliveries.map((order) => (
-                    <div key={order.id} className="bg-[#0B0E14]/40 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4 text-left">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-white text-sm font-bold">{order.userName}</p>
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] font-black uppercase px-2 py-0.5 rounded">
-                            {order.status}
-                          </span>
-                        </div>
-                        <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">ID: #{order.id.slice(0, 8)} • Completed: {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString() : 'Just now'}</p>
-                      </div>
+            // Earnings Analytics Dashboard
+            (() => {
+              const today = new Date().toDateString();
+              const todayDeliveries = pastDeliveries.filter(o => {
+                const d = o.deliveredAt ? new Date(o.deliveredAt).toDateString() : null;
+                return d === today;
+              });
+              const todayEarnings = todayDeliveries.length * 40;
+              const totalEarnings = riderProfile?.earnings || (completedCount * 40);
+              const weekDeliveries = pastDeliveries.filter(o => {
+                if (!o.deliveredAt) return false;
+                const diff = (Date.now() - new Date(o.deliveredAt).getTime()) / (1000 * 60 * 60 * 24);
+                return diff <= 7;
+              });
 
-                      <div className="text-right">
-                        <span className="text-[#4CD964] font-black italic text-lg">+₹40</span>
-                      </div>
+              return (
+                <div className="space-y-6">
+                  {/* KPI Cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2 bg-gradient-to-br from-[#4CD964]/10 to-emerald-500/5 border border-[#4CD964]/20 rounded-3xl p-6 text-left">
+                      <p className="text-[9px] font-black text-[#4CD964]/70 uppercase tracking-widest mb-1">Today's Earnings</p>
+                      <h2 className="text-5xl font-black italic text-white">₹{todayEarnings}</h2>
+                      <p className="text-white/30 text-[10px] font-bold mt-2">{todayDeliveries.length} deliveries completed today</p>
                     </div>
-                  ))}
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                      <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Total Earnings</p>
+                      <h3 className="text-2xl font-black italic text-[#4CD964] mt-1">₹{totalEarnings}</h3>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                      <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">This Week</p>
+                      <h3 className="text-2xl font-black italic text-amber-400 mt-1">{weekDeliveries.length} orders</h3>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                      <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">All-Time Orders</p>
+                      <h3 className="text-2xl font-black italic text-white mt-1">{completedCount}</h3>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                      <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Rating</p>
+                      <h3 className="text-2xl font-black italic text-amber-400 mt-1">⭐ {riderProfile?.rating || '5.0'}</h3>
+                    </div>
+                  </div>
+
+                  {/* Delivery Log */}
+                  <div>
+                    <h3 className="text-xs font-black italic uppercase tracking-widest text-white/40 mb-3">Delivery Log</h3>
+                    {pastDeliveries.length === 0 ? (
+                      <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-white/5">
+                        <p className="text-white/30 text-xs font-bold uppercase tracking-widest">No delivery history found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {pastDeliveries.map((order) => (
+                          <div key={order.id} className="bg-[#0B0E14]/60 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4 text-left hover:border-[#4CD964]/15 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-[#4CD964]/10 border border-[#4CD964]/20 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined w-4 h-4 text-[#4CD964]">check_circle</span>
+                              </div>
+                              <div>
+                                <p className="text-white text-sm font-bold leading-none">{order.userName}</p>
+                                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">
+                                  #{order.id.slice(0, 8)} • {order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Completed'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-[#4CD964] font-black italic text-lg">+₹40</span>
+                              <p className="text-white/20 text-[8px] font-black uppercase tracking-widest mt-0.5">Commission</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })()
           )}
         </div>
 

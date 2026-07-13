@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout | HungerMoment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c2c5de",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#dee1fa",
+                    "surface-container-high": "#e6e7f5",
+                    "on-primary-container": "#fffbff",
+                    "surface-tint": "#ac3500",
+                    "primary-fixed": "#ffdbd0",
+                    "primary-fixed-dim": "#ffb59d",
+                    "on-tertiary-container": "#f8ffef",
+                    "on-secondary-fixed": "#161b2d",
+                    "surface-container": "#ecedfb",
+                    "outline-variant": "#e5beb2",
+                    "tertiary": "#196b00",
+                    "inverse-on-surface": "#eff0fd",
+                    "surface-container-highest": "#e1e2ef",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#115300",
+                    "on-secondary-fixed-variant": "#42465a",
+                    "secondary-container": "#dbdef8",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#35851d",
+                    "on-tertiary-fixed": "#032100",
+                    "surface-dim": "#d8d9e7",
+                    "tertiary-fixed-dim": "#86db69",
+                    "surface-variant": "#e1e2ef",
+                    "tertiary-fixed": "#a1f882",
+                    "error": "#ba1a1a",
+                    "surface": "#faf8ff",
+                    "on-surface": "#191b25",
+                    "on-secondary-container": "#5e6177",
+                    "outline": "#907065",
+                    "inverse-surface": "#2d303a",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#390c00",
+                    "on-surface-variant": "#5c4037",
+                    "surface-container-low": "#f2f3ff",
+                    "on-primary-fixed-variant": "#832600",
+                    "primary-container": "#d24200",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#ffb59d",
+                    "secondary": "#5a5d73",
+                    "primary": "#a83300",
+                    "on-background": "#191b25",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#faf8ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "0.5rem",
+                    "stack-md": "1rem",
+                    "stack-xs": "0.25rem",
+                    "margin-desktop": "2rem",
+                    "gutter": "1.5rem",
+                    "stack-lg": "2rem",
+                    "margin-mobile": "1rem",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Montserrat"],
+                    "headline-xl": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "body-sm": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-card {
+            border: 2px solid #a83300 ! from-primary;
+            background-color: #fffbff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-container-low shadow-[0px_4px_20px_rgba(40,44,63,0.08)] docked full-width top-0 sticky z-50 h-20">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-full max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl md:hidden" onclick="history.back()">arrow_back</span>
+<h1 class="text-headline-lg font-headline-lg text-primary dark:text-inverse-primary tracking-tight">HungerMoment</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Offers</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Help</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Sign In</a>
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">shopping_cart</span>
+<span class="text-label-md font-label-md text-primary font-bold">Cart</span>
+</div>
+</nav>
+<div class="flex items-center gap-4 md:hidden">
+<span class="material-symbols-outlined text-secondary">account_circle</span>
+</div>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg min-h-screen">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Address & Payment -->
+<div class="lg:col-span-8 space-y-stack-lg">
+<!-- Section 1: Delivery Address -->
+<section class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<div class="flex items-center justify-between mb-stack-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<h2 class="text-headline-md font-headline-md">Delivery Address</h2>
+</div>
+<button class="text-primary font-bold text-label-md hover:underline">+ ADD NEW</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Address Card 1 -->
+<div class="border-2 border-primary bg-primary-container/5 p-4 rounded-xl relative cursor-pointer group">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary">home</span>
+<span class="font-bold text-label-md">Home</span>
+</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="text-body-sm text-secondary leading-relaxed">
+                                402, Sunset Heights, 8th Main Road, Koramangala 4th Block, Bangalore, Karnataka - 560034
+                            </p>
+<button class="mt-4 bg-primary text-white px-6 py-2 rounded-lg font-bold text-label-md w-full md:w-auto uppercase tracking-wide">Deliver Here</button>
+</div>
+<!-- Address Card 2 -->
+<div class="border border-outline-variant p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary">work</span>
+<span class="font-bold text-label-md">Office</span>
+</div>
+<p class="text-body-sm text-secondary leading-relaxed">
+                                Prestige Tech Park, Jupiter Block, 2nd Floor, Marathahalli-Sarjapur Outer Ring Road, Bangalore - 560103
+                            </p>
+<button class="mt-4 border border-secondary text-secondary px-6 py-2 rounded-lg font-bold text-label-md w-full md:w-auto uppercase tracking-wide">Deliver Here</button>
+</div>
+</div>
+</section>
+<!-- Section 2: Payment Method -->
+<section class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<div class="flex items-center gap-3 mb-stack-md">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<h2 class="text-headline-md font-headline-md">Choose Payment Method</h2>
+</div>
+<div class="space-y-4">
+<!-- UPI -->
+<div class="border border-outline-variant rounded-xl overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-container-low transition-colors text-left" onclick="togglePayment('upi')">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary">account_balance</span>
+<div>
+<p class="font-bold text-body-md">UPI (Google Pay, PhonePe, BHIM)</p>
+<p class="text-label-sm text-secondary">Pay instantly using any UPI app</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary" id="upi-icon">expand_more</span>
+</button>
+<div class="hidden p-4 border-t border-outline-variant bg-white animate-fade-in" id="upi-content">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-primary">
+<img class="w-8 h-8 object-contain" data-alt="Official logo of Google Pay on a clean white background, minimalist and recognizable corporate branding with vibrant brand colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtjl4VclQiOxHa5ErxMnl6LBi57bNEk6OxX2KSOFJApJ_BgcXwVnweoaGrmUcWev69WiQj1UrJrytf8bvLMy9fLVrOitM2XATEGOFa5uziFrHC5auvLNp646W-h6ncP7JwkA3cZWYGhgg66i4MoE7A5-8vGRvWgoOJoXvYnUQEbAPLv0K-rkZf7CGCMHoUk-__XM2i-CCVRmBWS5Ob3qu8bRC-kBHUEc55yDGPD31y3Dx2v0E3MlyR3Uh--bnNr7FKM1fQ-j958CmT"/>
+<span class="font-medium text-body-md">Google Pay</span>
+</div>
+<div class="relative">
+<input class="w-full border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Enter UPI ID (e.g. user@bank)" type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-primary font-bold text-label-md">VERIFY</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Credit/Debit Cards -->
+<div class="border border-outline-variant rounded-xl overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-container-low transition-colors text-left" onclick="togglePayment('card')">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary">credit_card</span>
+<div>
+<p class="font-bold text-body-md">Credit / Debit Cards</p>
+<p class="text-label-sm text-secondary">Visa, Mastercard, RuPay &amp; more</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary" id="card-icon">expand_more</span>
+</button>
+<div class="hidden p-4 border-t border-outline-variant bg-white" id="card-content">
+<div class="space-y-4">
+<div class="relative">
+<input class="w-full border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Card Number" type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+<img class="w-8" data-alt="A small icon representing a Visa card with blue and gold colors, presented in a clean and professional financial UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3DjnvbJowZyV1XT0SGhugheeRWtjst_QIYWb42hWq228CsXcoSsV9fbcbLZa8kQqRQ5Ty6iBoFs1PNFE2gANwnab_Qy1C9EAZA3BF3B1RFQ3E4PErxhL90LRrbmlUzoHiWDXo9go4NGn4dyc4zt8OdO-hivfT3LWOf3puPT8W5jtEqWeA8AhLFGdT6b-Nmwu0IzIvcpY6JTDOyni66LTg1EwHpD7iOqXhS0AwZ1RlHgzY0HnOlWiDkMd2xcQrmxa3qrhSbtZKNger"/>
+<img class="w-8" data-alt="A small icon representing a Mastercard logo with overlapping red and orange circles, presented in a clean and professional financial UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoExED7ye04M_NE7fonEv2QRjoKXx3n0qtJwAxSi46p4878oru1w1deOd42tX88-4YFupZvsBmjalBtv5EH3lJhZ1iA0UskEokQHm0sTgksyugCyc22s35tSIHHwS4F3Tqaj5dfrPFk5OgAipIa5QntUNZsg8FhoqQeJa9uHf77lSTPuzsGtYL-8c0c_R19V7BKQFlS75JG2SAW2L57vhh1ASFyXY0FXHv5k1oCZO9AZnir1_6V0efuTQKs4UELGCOjaQojAKdGBxa"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<input class="border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Valid Thru (MM/YY)" type="text"/>
+<input class="border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary" placeholder="CVV" type="password"/>
+</div>
+<input class="w-full border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Name on Card" type="text"/>
+<div class="flex items-center gap-2">
+<input class="rounded text-primary focus:ring-primary" id="save-card" type="checkbox"/>
+<label class="text-body-sm text-secondary" for="save-card">Securely save this card for a faster checkout</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Net Banking -->
+<div class="border border-outline-variant rounded-xl overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 bg-surface hover:bg-surface-container-low transition-colors text-left" onclick="togglePayment('netbanking')">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary">language</span>
+<div>
+<p class="font-bold text-body-md">Net Banking</p>
+<p class="text-label-sm text-secondary">Select from a list of banks</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary" id="netbanking-icon">expand_more</span>
+</button>
+<div class="hidden p-4 border-t border-outline-variant bg-white" id="netbanking-content">
+<div class="grid grid-cols-3 gap-2">
+<button class="p-3 border border-outline-variant rounded-lg text-label-sm hover:border-primary hover:text-primary transition-colors">HDFC</button>
+<button class="p-3 border border-outline-variant rounded-lg text-label-sm hover:border-primary hover:text-primary transition-colors">ICICI</button>
+<button class="p-3 border border-outline-variant rounded-lg text-label-sm hover:border-primary hover:text-primary transition-colors">SBI</button>
+</div>
+<select class="w-full mt-4 border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary bg-surface">
+<option>Other Banks</option>
+<option>Axis Bank</option>
+<option>Kotak Mahindra</option>
+<option>Bank of Baroda</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Order Summary -->
+<aside class="lg:col-span-4 space-y-stack-md">
+<!-- Restaurant Brief -->
+<div class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)] flex items-center gap-4">
+<img class="w-16 h-16 rounded-lg object-cover" data-alt="A gourmet wood-fired pizza with fresh basil and mozzarella pearls, shot with high-end food photography lighting on a dark stone surface, highlighting the vibrant colors and appetizing texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB_3Da5HHMIKFWxiSVt6FkzV4xLAoo85vNqvOd7BUCZ1DoOJkqcIfTd8SM4JspxZLPprKHbab2mh0_NnI2FZwOBRnyDgLwk8a_pd77mSdINTQbCsyzjZTa9VnFo5dR4Wgv_80AbdkaA-ZUVJpadpnWLYYEAQVjqXgav93h2wEEtlkcMPTTug7h80cPM0ZtknmCiOKh0tPKM4kAzuRfK0kQG5XRsWzAUW2d3wOCwAerGURr5PrRMT2TkhRiFZcbTUqIvKpNgtrShb08"/>
+<div>
+<h3 class="font-bold text-body-lg">The Pizza Haven</h3>
+<p class="text-label-sm text-secondary">Indiranagar, Bangalore</p>
+</div>
+</div>
+<!-- Promo Code -->
+<div class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">sell</span>
+<p class="font-bold text-label-md">Apply Coupon</p>
+</div>
+<div class="flex gap-2">
+<input class="flex-1 border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary bg-surface uppercase font-bold tracking-widest text-primary" placeholder="Enter code" type="text"/>
+<button class="bg-secondary px-4 rounded-xl text-white font-bold text-label-md active:scale-95 transition-transform">APPLY</button>
+</div>
+<p class="mt-3 text-label-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                        Coupon 'HUNGER50' applied! You saved ₹150
+                    </p>
+</div>
+<!-- Bill Details -->
+<div class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<h3 class="font-bold text-headline-md mb-4">Order Summary</h3>
+<!-- Items -->
+<div class="space-y-3 pb-4 border-b border-outline-variant mb-4">
+<div class="flex justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 border-2 border-tertiary flex items-center justify-center p-[2px]"><span class="w-full h-full bg-tertiary rounded-full"></span></span>
+<span>Margherita Pizza (Large) x 1</span>
+</div>
+<span class="font-medium">₹599</span>
+</div>
+<div class="flex justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 border-2 border-error flex items-center justify-center p-[2px]"><span class="w-full h-full bg-error rounded-full"></span></span>
+<span>Chicken Wings (6 pcs) x 1</span>
+</div>
+<span class="font-medium">₹249</span>
+</div>
+</div>
+<!-- Calculation -->
+<div class="space-y-2 text-body-sm text-secondary">
+<div class="flex justify-between">
+<span>Item Total</span>
+<span>₹848</span>
+</div>
+<div class="flex justify-between">
+<span>Delivery Fee | 2.5 km</span>
+<span class="flex gap-1 items-center"><span class="line-through text-label-sm">₹40</span> <span class="text-tertiary font-bold">FREE</span></span>
+</div>
+<div class="flex justify-between">
+<span>Platform Fee</span>
+<span>₹5</span>
+</div>
+<div class="flex justify-between">
+<span>Taxes and Charges</span>
+<span>₹42.40</span>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t-2 border-dashed border-outline-variant flex justify-between items-center mb-6">
+<span class="text-headline-md font-bold">Total Amount</span>
+<span class="text-headline-md font-bold text-primary">₹745.40</span>
+</div>
+<!-- Place Order Button -->
+<button class="w-full bg-primary text-white py-4 rounded-xl font-bold text-headline-md flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:bg-surface-tint transition-all active:scale-[0.98]">
+                        PLACE ORDER
+                        <span class="material-symbols-outlined">chevron_right</span>
+</button>
+<p class="mt-4 text-center text-label-sm text-secondary-fixed-variant">
+                        By placing this order, you agree to our <a class="underline" href="#">Terms of Service</a>.
+                    </p>
+</div>
+<!-- Safe Checkout Badge -->
+<div class="flex items-center justify-center gap-2 py-4 opacity-60">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-label-sm uppercase tracking-widest font-bold">100% Safe &amp; Secure Checkout</span>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-inverse-surface dark:bg-surface-container-lowest full-width mt-stack-lg">
+<div class="w-full py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-start gap-stack-lg max-w-container-max mx-auto">
+<div class="max-w-xs">
+<h2 class="text-headline-md font-headline-md text-surface-bright mb-4">HungerMoment</h2>
+<p class="text-surface-variant text-body-sm">Satisfying your cravings, one moment at a time. The fastest delivery in town for the food you love.</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-12">
+<div class="space-y-4">
+<h4 class="text-surface-bright font-bold text-label-md">Company</h4>
+<ul class="space-y-2">
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">About Us</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Team</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Careers</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h4 class="text-surface-bright font-bold text-label-md">Contact</h4>
+<ul class="space-y-2">
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Help &amp; Support</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Partner with Us</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Ride with Us</a></li>
+</ul>
+</div>
+<div class="space-y-4 col-span-2 md:col-span-1">
+<h4 class="text-surface-bright font-bold text-label-md">Legal</h4>
+<ul class="space-y-2">
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Terms &amp; Conditions</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Cookie Policy</a></li>
+<li><a class="text-surface-variant hover:text-surface-bright transition-colors text-body-sm hover:underline" href="#">Privacy Policy</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="w-full border-t border-surface-variant/20 py-6 text-center">
+<p class="text-surface-variant text-label-sm">© 2024 HungerMoment Technologies Pvt. Ltd</p>
+</div>
+</footer>
+<!-- BottomNavBar (Mobile only) -->
+<div class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline md:hidden z-[60] shadow-lg">
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-label-sm font-label-sm">Explore</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">search</span>
+<span class="text-label-sm font-label-sm">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-label-sm font-label-sm">Orders</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</div>
+</div>
+<script>
+        function togglePayment(id) {
+            const contents = ['upi', 'card', 'netbanking'];
+            contents.forEach(item => {
+                const element = document.getElementById(item + '-content');
+                const icon = document.getElementById(item + '-icon');
+                if (item === id) {
+                    const isHidden = element.classList.contains('hidden');
+                    element.classList.toggle('hidden', !isHidden);
+                    icon.innerText = isHidden ? 'expand_less' : 'expand_more';
+                } else {
+                    element.classList.add('hidden');
+                    document.getElementById(item + '-icon').innerText = 'expand_more';
+                }
+            });
+        }
+    </script>
+</body></html>

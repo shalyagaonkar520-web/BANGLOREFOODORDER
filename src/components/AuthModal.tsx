@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, LogIn, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -64,45 +63,45 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-scrim/80 backdrop-blur-md">
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 30 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 30 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="bg-matte-black border border-white/10 rounded-[35px] w-full max-w-md shadow-[0_20px_50px_rgba(76,217,100,0.15)] relative overflow-hidden"
+          className="bg-surface border border-outline-variant/30 rounded-[35px] w-full max-w-md shadow-2xl relative overflow-hidden"
         >
           {/* Subtle Accent Glow */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#4CD964] to-[#3AC152]" />
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#4CD964]/5 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary to-primary/80" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5 hover:border-white/20 transition-all text-white/60 hover:text-white"
+            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container border border-outline-variant/30 hover:border-outline-variant transition-all text-secondary hover:text-on-surface"
           >
-            <X className="w-5 h-5" />
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
 
           <div className="p-8 space-y-8">
             {/* Header info */}
             <div className="space-y-2 mt-4">
-              <h2 className="text-3xl font-black italic tracking-tighter uppercase text-white">
+              <h2 className="text-3xl font-headline-lg tracking-tighter uppercase text-on-surface">
                 {isSignUp ? "Create" : "Elite"}{' '}
-                <span className="text-[#4CD964]">Account</span>
+                <span className="text-primary">Account</span>
               </h2>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none">
+              <p className="text-[10px] font-bold text-secondary uppercase tracking-widest leading-none">
                 {isSignUp ? "Sign up to claim welcome bonuses" : "Access your premium dashboard"}
               </p>
             </div>
 
             {/* Toggle tabs */}
-            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+            <div className="flex bg-surface-container-low p-1 rounded-2xl border border-outline-variant/30">
               <button
                 type="button"
                 onClick={() => setIsSignUp(false)}
-                className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
-                  !isSignUp ? 'bg-white text-matte-black shadow-lg font-bold' : 'text-white/50 hover:text-white'
+                className={`flex-1 py-3 text-center text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
+                  !isSignUp ? 'bg-on-surface text-surface shadow-lg' : 'text-secondary hover:text-on-surface'
                 }`}
               >
                 Login
@@ -110,8 +109,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <button
                 type="button"
                 onClick={() => setIsSignUp(true)}
-                className={`flex-1 py-3 text-center text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
-                  isSignUp ? 'bg-white text-matte-black shadow-lg font-bold' : 'text-white/50 hover:text-white'
+                className={`flex-1 py-3 text-center text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
+                  isSignUp ? 'bg-on-surface text-surface shadow-lg' : 'text-secondary hover:text-on-surface'
                 }`}
               >
                 Sign Up
@@ -122,70 +121,70 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <form onSubmit={handleEmailAuth} className="space-y-4">
               {isSignUp && (
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[#4CD964] transition-colors" />
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-secondary group-focus-within:text-primary transition-colors">person</span>
                   <input
                     type="text"
                     placeholder="YOUR FULL NAME"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#4CD964]/50 transition-all font-bold text-xs text-white placeholder:text-white/20 uppercase tracking-[1px]"
+                    className="w-full bg-surface-container border border-outline-variant/50 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 transition-all font-bold text-xs text-on-surface placeholder:text-secondary uppercase tracking-[1px]"
                   />
                 </div>
               )}
 
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[#4CD964] transition-colors" />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-secondary group-focus-within:text-primary transition-colors">mail</span>
                 <input
                   type="email"
                   placeholder="EMAIL ADDRESS"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#4CD964]/50 transition-all font-bold text-xs text-white placeholder:text-white/20 tracking-[1px]"
+                  className="w-full bg-surface-container border border-outline-variant/50 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 transition-all font-bold text-xs text-on-surface placeholder:text-secondary tracking-[1px]"
                 />
               </div>
 
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[#4CD964] transition-colors" />
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-secondary group-focus-within:text-primary transition-colors">lock</span>
                 <input
                   type="password"
                   placeholder="PASSWORD"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#4CD964]/50 transition-all font-bold text-xs text-white placeholder:text-white/20 tracking-[1px]"
+                  className="w-full bg-surface-container border border-outline-variant/50 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-primary/50 transition-all font-bold text-xs text-on-surface placeholder:text-secondary tracking-[1px]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitLoading}
-                className="w-full bg-gradient-to-r from-[#4CD964] to-[#3AC152] hover:brightness-105 active:scale-95 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-[0_6px_20px_rgba(76,217,100,0.25)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:scale-100"
+                className="w-full bg-primary hover:bg-primary/90 active:scale-95 text-on-primary font-bold text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:scale-100"
               >
                 {submitLoading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
                 ) : (
                   <>
                     {isSignUp ? "Create Account" : "Access Account"}
-                    <ChevronRight className="w-4 h-4" />
+                    <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                   </>
                 )}
               </button>
             </form>
 
             {/* Separator */}
-            <div className="flex items-center justify-center gap-4 text-white/10">
-              <div className="h-px bg-white/10 flex-1" />
-              <span className="text-[9px] font-black uppercase tracking-[3px] text-white/30 whitespace-nowrap">OR CONTINUE WITH</span>
-              <div className="h-px bg-white/10 flex-1" />
+            <div className="flex items-center justify-center gap-4 text-outline/50">
+              <div className="h-px bg-outline-variant/50 flex-1" />
+              <span className="text-[9px] font-bold uppercase tracking-[3px] text-secondary whitespace-nowrap">OR CONTINUE WITH</span>
+              <div className="h-px bg-outline-variant/50 flex-1" />
             </div>
 
             {/* Google Sign-in */}
             <button
               type="button"
               onClick={handleGoogleAuth}
-              className="w-full bg-white/5 border border-white/10 hover:border-white/20 active:scale-95 text-white font-black text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full bg-surface-container border border-outline-variant hover:border-outline active:scale-95 text-on-surface font-bold text-xs uppercase tracking-[2px] py-4 rounded-2xl transition-all flex items-center justify-center gap-3 cursor-pointer"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path

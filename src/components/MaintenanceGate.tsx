@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wrench, Sparkles, Clock, Hourglass, ShieldAlert } from 'lucide-react';
+
 import { useSystemStore } from '../store/systemStore';
 
 export default function MaintenanceGate({ children }: { children: React.ReactNode }) {
@@ -91,11 +91,11 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
             className="w-24 h-24 rounded-[36px] bg-gradient-to-br from-[#FF4B2B] to-[#F4B400] flex items-center justify-center border border-white/10 shadow-2xl relative rotate-6"
           >
             {settings.emergencyStop ? (
-              <ShieldAlert className="w-10 h-10 text-white animate-bounce" />
+              <span className="material-symbols-outlined w-10 h-10 text-white animate-bounce">shield_with_heart</span>
             ) : (
-              <Wrench className="w-10 h-10 text-white animate-bounce" />
+              <span className="material-symbols-outlined w-10 h-10 text-white animate-bounce">build</span>
             )}
-            <Sparkles className="w-5 h-5 text-white absolute top-4 right-4 animate-ping" />
+            <span className="material-symbols-outlined w-5 h-5 text-white absolute top-4 right-4 animate-ping">auto_awesome</span>
           </motion.div>
         </div>
 
@@ -107,7 +107,7 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
             transition={{ delay: 0.4 }}
             className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-black uppercase tracking-wider ${settings.emergencyStop ? 'text-red-400' : 'text-[#F4B400]'}`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <span className="material-symbols-outlined w-3.5 h-3.5">schedule</span>
             {settings.emergencyStop ? 'Emergency Lockdown' : 'Temporarily Closed'}
           </motion.div>
 

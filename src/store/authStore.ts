@@ -28,6 +28,8 @@ export interface UserProfile {
   name: string;
   email: string;
   phone?: string;
+  role?: 'customer' | 'admin' | 'kitchen_staff' | 'delivery_partner';
+  restaurantId?: string;
   walletBalance: number;
   rewardPoints: number;
   addresses: Array<{
@@ -119,6 +121,23 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       }
       set({ user: firebaseUser });
       await syncProfile(firebaseUser);
+
+      // Retrieve custom claims to assign role
+      try {
+        const tokenResult = await firebaseUser.getIdTokenResult(true);
+        const role = tokenResult.claims.role || 'customer';
+        const restaurantId = tokenResult.claims.restaurantId || null;
+
+        set((state) => ({
+          profile: state.profile ? {
+            ...state.profile,
+            role: role as any,
+            restaurantId: restaurantId as any
+          } : null
+        }));
+      } catch (err) {
+        console.error('Error fetching custom claims:', err);
+      }
     } else {
       set({ user: null, profile: null });
     }

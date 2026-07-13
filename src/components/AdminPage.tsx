@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Lock, ShieldCheck, Loader2, ChevronRight, Sliders, LogOut, Ticket, Search, Clock, AlertCircle, Activity, Calendar, Sparkles, Power, Bell, Save, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Power, ShieldAlert, Clock, Save, Phone, Bell, Loader2, 
-  Lock, AlertCircle, Calendar, TrendingUp, LogOut, Sliders, 
-  Sparkles, CheckCircle2, ChevronRight, Activity, Moon, Sun, Laptop, Flame,
-  Search, PackageSearch, Users, Wallet, Map, Ticket
-} from 'lucide-react';
+
 import { useAdminStore } from '../store/adminStore';
 import { playSound, SOUNDS } from '../utils/audio';
 import { useSystemStore } from '../store/systemStore';
@@ -30,6 +26,7 @@ import {
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import AdminMenuManager from './AdminMenuManager';
 import AdminCouponManager from './AdminCouponManager';
+import AdminRestaurantManager from './AdminRestaurantManager';
 
 // Real Orders fetched from localStorage
 
@@ -53,7 +50,7 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
 
   // Bar management states
-  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'menu' | 'coupons' | 'notifications' | 'luckyWheel'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'analytics' | 'riders' | 'customers' | 'walletLogs' | 'system' | 'menu' | 'coupons' | 'notifications' | 'luckyWheel' | 'restaurants'>('orders');
 
   // Lucky Wheel States
   const [luckyCoupons, setLuckyCoupons] = useState<any[]>([]);
@@ -522,6 +519,29 @@ export default function AdminPage() {
     }
   };
 
+  // ── Handle Rider Verification Status Changes ──
+  const handleApproveRider = async (uid: string) => {
+    try {
+      await updateDoc(doc(db, 'riders', uid), {
+        verificationStatus: 'approved'
+      });
+      toast.success('Rider account verified and approved! 🎉');
+    } catch (err) {
+      toast.error('Failed to approve rider.');
+    }
+  };
+
+  const handleRejectRider = async (uid: string) => {
+    try {
+      await updateDoc(doc(db, 'riders', uid), {
+        verificationStatus: 'rejected'
+      });
+      toast.success('Rider account status marked as rejected.');
+    } catch (err) {
+      toast.error('Failed to update rider status.');
+    }
+  };
+
   // ── Lucky Wheel Handlers ──
   const handleGenerateOTP = async () => {
     setGeneratingOTP(true);
@@ -681,10 +701,10 @@ export default function AdminPage() {
   // RENDER LOGIN GATE IF NOT LOGGED IN
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0B0E14] text-white flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      <div className="min-h-screen bg-background text-gray-900 flex items-center justify-center p-6 relative overflow-hidden font-sans">
         {/* Glow Spheres */}
-        <div className="absolute top-[-30%] right-[-10%] w-[70%] h-[70%] bg-[#FF4D00]/10 rounded-full blur-[250px] animate-pulse pointer-events-none" />
-        <div className="absolute bottom-[-30%] left-[-10%] w-[60%] h-[60%] bg-[#FFB700]/10 rounded-full blur-[250px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-30%] right-[-10%] w-[70%] h-[70%] bg-primary/10 rounded-full blur-[250px] animate-pulse pointer-events-none" />
+        <div className="absolute bottom-[-30%] left-[-10%] w-[60%] h-[60%] bg-secondary/10 rounded-full blur-[250px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -695,52 +715,52 @@ export default function AdminPage() {
           {/* Brand Logo & Name */}
           <div className="text-center mb-10 space-y-4">
             <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-[32px] bg-gradient-to-tr from-[#FF4D00] to-[#FFB700] opacity-20 blur-md" />
-              <div className="w-18 h-18 rounded-[24px] bg-gradient-to-br from-[#FF4D00] to-[#FFB700] flex items-center justify-center border border-white/10 shadow-2xl relative rotate-6">
-                <Lock className="w-8 h-8 text-matte-black" />
+              <div className="absolute inset-0 rounded-[32px] bg-gradient-to-tr from-primary to-primary-container opacity-20 blur-md" />
+              <div className="w-18 h-18 rounded-[24px] bg-gradient-to-br from-primary to-primary-container flex items-center justify-center border border-gray-100 shadow-2xl relative rotate-6">
+                <Lock className="w-8 h-8 text-white" />
               </div>
             </div>
             <div className="space-y-1">
               <h1 className="text-4xl font-black italic tracking-tighter uppercase">
-                Moms <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4D00] to-[#FFB700]">Magic</span>
+                Moms <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">Magic</span>
               </h1>
-              <p className="text-white/40 text-[9px] font-black uppercase tracking-[4px]">Secure Admin Portal</p>
+              <p className="text-gray-500 text-[9px] font-black uppercase tracking-[4px]">Secure Admin Portal</p>
             </div>
           </div>
 
           {/* Login Card */}
-          <div className="bg-[#121620]/80 backdrop-blur-2xl border border-white/5 rounded-[35px] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.6)] space-y-8">
-            <div className="space-y-2 border-b border-white/5 pb-5">
-              <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-[#FFB700]" /> Sign In Required
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[24px] p-8 shadow-[0_16px_40px_rgba(0,0,0,0.08)] space-y-8">
+            <div className="space-y-2 border-b border-gray-100 pb-5">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary" /> Sign In Required
               </h2>
-              <p className="text-white/40 text-xs font-semibold leading-relaxed">Access is restricted to verified restaurant operators.</p>
+              <p className="text-gray-500 text-xs font-semibold leading-relaxed">Access is restricted to verified restaurant operators.</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
               {/* Email */}
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Operator Email</label>
+                <label className="text-[9px] font-black text-primary/60 uppercase tracking-[3px] ml-1">Operator Email</label>
                 <input 
                   required
                   type="email" 
                   placeholder="name@momsmagic.com" 
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full px-6 py-4.5 bg-white/5 rounded-2xl border border-white/10 focus:border-[#FFB700]/30 outline-none font-bold text-sm text-white transition-all placeholder:text-white/15"
+                  className="w-full px-6 py-4.5 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 focus:border-primary/50 outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-500"
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Security Key</label>
+                <label className="text-[9px] font-black text-primary/60 uppercase tracking-[3px] ml-1">Security Key</label>
                 <input 
                   required
                   type="password" 
                   placeholder="••••••••••••" 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full px-6 py-4.5 bg-white/5 rounded-2xl border border-white/10 focus:border-[#FFB700]/30 outline-none font-bold text-sm text-white transition-all placeholder:text-white/15"
+                  className="w-full px-6 py-4.5 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 focus:border-primary/50 outline-none font-bold text-sm text-gray-900 transition-all placeholder:text-gray-500"
                 />
               </div>
 
@@ -748,17 +768,17 @@ export default function AdminPage() {
               <button 
                 type="submit" 
                 disabled={isLoggingIn}
-                className="w-full h-16 rounded-2xl bg-gradient-to-r from-[#FF4D00] to-[#FFB700] text-matte-black font-black text-xs uppercase tracking-[3px] shadow-lg shadow-[#FF4D00]/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-black text-xs uppercase tracking-[3px] shadow-lg shadow-[#FF4D00]/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {isLoggingIn ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin text-matte-black" />
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
                     Verifying Identity...
                   </>
                 ) : (
                   <>
                     Verify & Unlock
-                    <ChevronRight className="w-4 h-4 text-matte-black" />
+                    <ChevronRight className="w-4 h-4 text-white" />
                   </>
                 )}
               </button>
@@ -766,7 +786,7 @@ export default function AdminPage() {
           </div>
 
           <div className="text-center mt-6">
-            <span className="text-white/20 text-[9px] font-bold uppercase tracking-widest">Authorized Operations Only</span>
+            <span className="text-gray-500 text-[9px] font-bold uppercase tracking-widest">Authorized Operations Only</span>
           </div>
         </motion.div>
       </div>
@@ -775,40 +795,40 @@ export default function AdminPage() {
 
   // MAIN ADMIN CONTROL INTERFACE
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-white font-sans pb-32 relative">
+    <div className="min-h-screen bg-background text-gray-900 font-sans pb-32 relative">
       {/* Background Ambience */}
       <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#161B2A]/40 to-transparent pointer-events-none" />
-      <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-[#FF4D00]/5 rounded-full blur-[200px] pointer-events-none" />
-      <div className="absolute top-[30%] right-[-10%] w-[50%] h-[50%] bg-[#FFB700]/5 rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute top-[30%] right-[-10%] w-[50%] h-[50%] bg-secondary/5 rounded-full blur-[200px] pointer-events-none" />
 
       {/* Header Container */}
-      <header className="sticky top-0 z-[50] bg-[#0F121C]/90 backdrop-blur-2xl border-b border-white/5 py-5 px-6">
+      <header className="sticky top-0 z-[50] bg-white shadow-sm/90 backdrop-blur-2xl border-b border-gray-100 py-5 px-6">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#FF4D00] to-[#FFB700] flex items-center justify-center border border-white/10 shadow-lg shrink-0">
-              <Sliders className="w-6 h-6 text-matte-black" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center border border-gray-100 shadow-lg shrink-0">
+              <Sliders className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-black italic tracking-tighter uppercase leading-none">
-                Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4D00] to-[#FFB700]">Desk</span>
+                Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">Desk</span>
               </h1>
-              <p className="text-white/40 text-[8px] font-black uppercase tracking-[3px] mt-1">Moms Magic Operator Portal</p>
+              <p className="text-gray-500 text-[8px] font-black uppercase tracking-[3px] mt-1">Moms Magic Operator Portal</p>
             </div>
           </div>
 
           {/* Quick Stats Panel & Profile */}
           <div className="flex items-center gap-4">
             {/* Live Indicator */}
-            <div className={`hidden sm:flex items-center gap-2.5 px-4 py-2 bg-white/5 border ${statusInfo.border} rounded-full text-[9px] font-black uppercase tracking-wider`}>
+            <div className={`hidden sm:flex items-center gap-2.5 px-4 py-2 bg-gray-50/50est border border-gray-100 border ${statusInfo.border} rounded-full text-[9px] font-black uppercase tracking-wider`}>
               <span className={`w-2.5 h-2.5 rounded-full ${statusInfo.color} animate-pulse`} />
               {statusInfo.text}
             </div>
 
             {/* Logout Button */}
-            <div className="flex items-center gap-3 bg-white/5 rounded-2xl p-1.5 border border-white/5">
+            <div className="flex items-center gap-3 bg-gray-50/50est border border-gray-100 rounded-2xl p-1.5 border border-gray-100">
               <div className="px-3.5 py-1.5 text-left hidden md:block">
-                <p className="text-xs font-black uppercase tracking-wider leading-none text-white">{user.name}</p>
-                <p className="text-[8px] font-bold text-white/30 tracking-widest mt-1 uppercase">Super Admin</p>
+                <p className="text-xs font-black uppercase tracking-wider leading-none text-gray-900">{user.name}</p>
+                <p className="text-[8px] font-bold text-gray-500 tracking-widest mt-1 uppercase">Super Admin</p>
               </div>
               <button 
                 onClick={() => {
@@ -827,7 +847,7 @@ export default function AdminPage() {
       </header>
 
       {/* Tab Switcher */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 flex gap-4 relative z-25 text-left overflow-x-auto no-scrollbar pb-2">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 flex gap-4 relative z-25 text-left overflow-x-auto no-scrollbar pb-4 pt-2">
         <button
           onClick={() => {
             playSound(SOUNDS.CLICK);
@@ -835,8 +855,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'orders'
-              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-matte-black border-emerald-400 shadow-[0_10px_20px_rgba(16,185,129,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white border-emerald-400 shadow-[0_10px_20px_rgba(16,185,129,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           📦 Live Orders
@@ -848,8 +868,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'analytics'
-              ? 'bg-gradient-to-r from-blue-500 to-blue-400 text-matte-black border-blue-400 shadow-[0_10px_20px_rgba(59,130,246,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-blue-500 to-blue-400 text-white border-blue-400 shadow-[0_10px_20px_rgba(59,130,246,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           📊 Analytics
@@ -861,8 +881,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'riders'
-              ? 'bg-gradient-to-r from-indigo-500 to-indigo-400 text-matte-black border-indigo-400 shadow-[0_10px_20px_rgba(99,102,241,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-400 text-white border-indigo-400 shadow-[0_10px_20px_rgba(99,102,241,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           🛵 Riders Map
@@ -874,8 +894,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'customers'
-              ? 'bg-gradient-to-r from-pink-500 to-pink-400 text-matte-black border-pink-400 shadow-[0_10px_20px_rgba(236,72,153,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-pink-500 to-pink-400 text-white border-pink-400 shadow-[0_10px_20px_rgba(236,72,153,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           👥 Customers
@@ -887,8 +907,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'walletLogs'
-              ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-matte-black border-teal-400 shadow-[0_10px_20px_rgba(20,184,166,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-white border-teal-400 shadow-[0_10px_20px_rgba(20,184,166,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           💳 Wallet Logs
@@ -900,8 +920,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'system'
-              ? 'bg-gradient-to-r from-[#FF4D00] to-[#FFB700] text-matte-black border-[#FFB700] shadow-[0_10px_20px_rgba(255,77,0,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-primary to-secondary text-white border-primary shadow-[0_10px_20px_rgba(255,77,0,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           ⚙️ System Controls
@@ -913,8 +933,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'menu'
-              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-matte-black border-amber-400 shadow-[0_10px_20px_rgba(245,158,11,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-amber-400 shadow-[0_10px_20px_rgba(245,158,11,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           🍔 Menu Manager
@@ -927,7 +947,7 @@ export default function AdminPage() {
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'coupons'
               ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-fuchsia-400 shadow-[0_10px_20px_rgba(217,70,239,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           <Ticket className="w-4 h-4" /> Coupons
@@ -939,8 +959,8 @@ export default function AdminPage() {
           }}
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'luckyWheel'
-              ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-matte-black border-yellow-400 shadow-[0_10px_20px_rgba(234,179,8,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white border-yellow-400 shadow-[0_10px_20px_rgba(234,179,8,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           🎡 Lucky Wheel
@@ -954,10 +974,24 @@ export default function AdminPage() {
           className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
             activeTab === 'notifications'
               ? 'bg-gradient-to-r from-[#4CD964] to-[#3AC152] text-white border-[#3AC152] shadow-[0_10px_20px_rgba(76,217,100,0.15)]'
-              : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:border-white/10'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
           }`}
         >
           🔔 Send Notifications
+        </button>
+
+        <button
+          onClick={() => {
+            playSound(SOUNDS.CLICK);
+            setActiveTab('restaurants');
+          }}
+          className={`px-8 h-14 shrink-0 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-2 cursor-pointer ${
+            activeTab === 'restaurants'
+              ? 'bg-gradient-to-r from-teal-500 to-[#FF5A1F] text-white border-[#FF5A1F] shadow-[0_10px_20px_rgba(255,90,31,0.15)]'
+              : 'bg-gray-50/50est border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-100'
+          }`}
+        >
+          🏪 Restaurants
         </button>
       </div>
 
@@ -973,9 +1007,9 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {realOrders.length === 0 ? (
-              <div className="col-span-full py-20 text-center bg-white/5 border border-white/10 rounded-3xl">
-                <PackageSearch className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/40 font-bold uppercase tracking-widest text-sm">No Orders Yet</p>
+              <div className="col-span-full py-20 text-center bg-gray-50/50est border border-gray-100 border border-gray-100 rounded-3xl">
+                <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">No Orders Yet</p>
               </div>
             ) : (
               realOrders.map((order) => {
@@ -987,8 +1021,8 @@ export default function AdminPage() {
                   'text-gray-400 bg-gray-500/10 border-gray-500/20';
 
                 return (
-                  <div key={order.id} className="bg-[#121624] border border-white/5 rounded-[30px] p-6 space-y-4 hover:border-white/10 transition-colors">
-                    <div className="flex items-start justify-between border-b border-white/5 pb-4">
+                  <div key={order.id} className="bg-white border border-gray-100 rounded-[24px] p-6 space-y-4 hover:border-primary/30 hover:shadow-lg transition-all">
+                    <div className="flex items-start justify-between border-b border-gray-100 pb-4">
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-black uppercase text-emerald-400 tracking-widest">ID: {order.id.slice(0,8)}</p>
@@ -1000,11 +1034,11 @@ export default function AdminPage() {
                             🗑️
                           </button>
                         </div>
-                        <h3 className="text-lg font-black text-white italic truncate mt-1">{order.userName}</h3>
-                        <p className="text-xs font-bold text-white/40 tracking-widest mt-1">{order.userPhone}</p>
+                        <h3 className="text-lg font-black text-gray-900 italic truncate mt-1">{order.userName}</h3>
+                        <p className="text-xs font-bold text-gray-500 tracking-widest mt-1">{order.userPhone}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-black italic text-brand">₹{order.grandTotal}</p>
+                        <p className="text-xl font-black italic text-primary">₹{order.grandTotal}</p>
                         <span className={`inline-block mt-2 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${statusColor}`}>
                           {order.status || 'Pending'}
                         </span>
@@ -1012,23 +1046,23 @@ export default function AdminPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Order Items:</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Order Items:</p>
                       {order.items.slice(0,3).map((item: any, idx: number) => (
-                        <div key={idx} className="flex justify-between text-xs font-medium text-white/80">
+                        <div key={idx} className="flex justify-between text-xs font-medium text-gray-500">
                           <span>{item.finalQuantity || item.quantity || 1}x {item.name}</span>
                         </div>
                       ))}
-                      {order.items.length > 3 && <p className="text-[10px] text-white/40 italic">+{order.items.length - 3} more</p>}
+                      {order.items.length > 3 && <p className="text-[10px] text-gray-500 italic">+{order.items.length - 3} more</p>}
                     </div>
 
                     {/* Rider Assignment section */}
-                    <div className="pt-3 border-t border-white/5 space-y-2">
+                    <div className="pt-3 border-t border-gray-100 space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-white/45 uppercase tracking-wider text-[9px]">Delivery Partner</span>
+                        <span className="font-bold text-gray-500 uppercase tracking-wider text-[9px]">Delivery Partner</span>
                         {order.riderId ? (
                           <span className="font-black text-[#4CD964] uppercase text-[9px] tracking-wide flex items-center gap-1">
                             🛵 {ridersList.find(r => r.uid === order.riderId)?.name || 'Assigned'}
-                            <span className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-white/50 lowercase">
+                            <span className="text-[8px] bg-gray-50/50est border border-gray-100 border border-gray-100 px-1.5 py-0.5 rounded text-gray-500 lowercase">
                               ({order.riderStatus || 'assigned'})
                             </span>
                           </span>
@@ -1043,7 +1077,7 @@ export default function AdminPage() {
                         <select
                           value={order.riderId || ''}
                           onChange={(e) => handleAssignRider(order.id, e.target.value)}
-                          className="flex-1 bg-[#050505] border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white/80 outline-none focus:border-[#4CD964]/40"
+                          className="flex-1 bg-white shadow-sm border border-gray-100 rounded-xl px-3 py-2 text-[10px] font-bold text-gray-500 outline-none focus:border-[#4CD964]/40"
                         >
                           <option value="">MANUAL ASSIGN...</option>
                           {ridersList.map(r => (
@@ -1063,7 +1097,7 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-4 border-t border-white/5">
+                    <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-100">
                       <button onClick={() => handleUpdateOrderStatus(order.id, 'Confirmed', order.userPhone)} className="py-2.5 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-[9px] font-black uppercase tracking-widest transition-colors">
                         ✅ Confirmed
                       </button>
@@ -1085,27 +1119,27 @@ export default function AdminPage() {
 
           {/* Tracking Link Modal */}
           {trackingModalOrder && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#121620] w-full max-w-md rounded-[30px] p-8 border border-white/10 shadow-2xl relative">
-                <button onClick={() => setTrackingModalOrder(null)} className="absolute top-4 right-4 p-2 text-white/40 hover:text-white">✕</button>
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-md rounded-[24px] p-8 border border-gray-100 shadow-2xl relative">
+                <button onClick={() => setTrackingModalOrder(null)} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-900">✕</button>
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-xl font-black italic uppercase tracking-tight text-purple-400 flex items-center gap-2">
                       📍 Share Live Location
                     </h3>
-                    <p className="text-xs font-semibold text-white/50 mt-1">Provide the Google Maps tracking link to the customer.</p>
+                    <p className="text-xs font-semibold text-gray-500 mt-1">Provide the Google Maps tracking link to the customer.</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Tracking Link URL</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Tracking Link URL</label>
                     <input 
                       type="url" 
                       placeholder="https://maps.google.com/..." 
                       value={trackingUrl}
                       onChange={(e) => setTrackingUrl(e.target.value)}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-purple-500/50 transition-all text-xs"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-purple-500/50 transition-all text-xs"
                     />
                   </div>
-                  <button onClick={handleSaveTrackingLink} className="w-full h-14 bg-purple-500 hover:bg-purple-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2">
+                  <button onClick={handleSaveTrackingLink} className="w-full h-14 bg-purple-500 hover:bg-purple-600 text-gray-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2">
                     Set Out For Delivery & Notify
                   </button>
                 </div>
@@ -1116,46 +1150,46 @@ export default function AdminPage() {
       ) : activeTab === 'analytics' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-10">
           <div>
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Platform Analytics</h2>
-            <p className="text-white/40 text-xs mt-1 font-semibold">Real-time business performance overview metrics.</p>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">Platform Analytics</h2>
+            <p className="text-gray-500 text-xs mt-1 font-semibold">Real-time business performance overview metrics.</p>
           </div>
 
           {/* Grid Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {/* PWA Installs Card */}
-            <div className="bg-[#121620]/60 border border-[#4CD964]/20 p-6 rounded-[25px] relative overflow-hidden col-span-2 lg:col-span-4 text-left">
+            <div className="bg-white border border-[#4CD964]/20 p-6 rounded-[24px] relative overflow-hidden col-span-2 lg:col-span-4 text-left">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#4CD964]/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
                 <div className="flex items-center gap-3">
                   <span className="p-3 bg-[#4CD964]/10 text-[#4CD964] rounded-xl text-lg">📲</span>
                   <div>
-                    <h4 className="font-extrabold text-white text-base">PWA Installation Analytics</h4>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-0.5">App install tracking & user signups</p>
+                    <h4 className="font-extrabold text-gray-900 text-base">PWA Installation Analytics</h4>
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-0.5">App install tracking & user signups</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#4CD964] animate-pulse" />
-                  <span className="text-[10px] text-white/60 font-black uppercase tracking-wider">Live Tracking Active</span>
+                  <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider">Live Tracking Active</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6">
                 <div>
-                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Total PWA Installs</p>
-                  <h3 className="text-3xl font-black italic text-white mt-3">{pwaInstallsList.length}</h3>
+                  <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Total PWA Installs</p>
+                  <h3 className="text-3xl font-black italic text-gray-900 mt-3">{pwaInstallsList.length}</h3>
                 </div>
                 <div>
-                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
+                  <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
                   <h3 className="text-3xl font-black italic text-[#4CD964] mt-3">{usersList.length}</h3>
                 </div>
                 <div>
-                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Daily Installs (Today)</p>
+                  <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Daily Installs (Today)</p>
                   <h3 className="text-3xl font-black italic text-blue-400 mt-3">
                     {pwaInstallsList.filter(inst => inst.installedAt && new Date(inst.installedAt).toDateString() === new Date().toDateString()).length}
                   </h3>
                 </div>
                 <div>
-                  <p className="text-white/45 text-[9px] font-black uppercase tracking-widest leading-none">Monthly Installs</p>
+                  <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Monthly Installs</p>
                   <h3 className="text-3xl font-black italic text-pink-400 mt-3">
                     {pwaInstallsList.filter(inst => {
                       if (!inst.installedAt) return false;
@@ -1168,79 +1202,168 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+            <div className="bg-white border border-gray-100 p-6 rounded-[24px]">
               <div className="flex items-center gap-3">
                 <span className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">📦</span>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Total Orders</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Total Orders</p>
               </div>
-              <h3 className="text-3xl font-black italic text-white mt-4">{realOrders.length}</h3>
+              <h3 className="text-3xl font-black italic text-gray-900 mt-4">{realOrders.length}</h3>
             </div>
 
-            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+            <div className="bg-white border border-gray-100 p-6 rounded-[24px]">
               <div className="flex items-center gap-3">
                 <span className="p-3 bg-blue-500/10 text-blue-400 rounded-xl">💵</span>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Delivered Revenue</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Delivered Revenue</p>
               </div>
               <h3 className="text-3xl font-black italic text-emerald-400 mt-4">
                 ₹{realOrders.filter(o => o.status === 'delivered' || o.status === 'completed').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}
               </h3>
             </div>
 
-            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+            <div className="bg-white border border-gray-100 p-6 rounded-[24px]">
               <div className="flex items-center gap-3">
                 <span className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">🛵</span>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Active Riders</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Active Riders</p>
               </div>
-              <h3 className="text-3xl font-black italic text-white mt-4">{ridersList.filter(r => r.status === 'online').length} <span className="text-xs text-white/30 font-bold">online</span></h3>
+              <h3 className="text-3xl font-black italic text-gray-900 mt-4">{ridersList.filter(r => r.status === 'online').length} <span className="text-xs text-gray-500 font-bold">online</span></h3>
             </div>
 
-            <div className="bg-[#121620]/60 border border-white/5 p-6 rounded-[25px]">
+            <div className="bg-white border border-gray-100 p-6 rounded-[24px]">
               <div className="flex items-center gap-3">
                 <span className="p-3 bg-pink-500/10 text-pink-400 rounded-xl">👥</span>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Registered Users</p>
               </div>
-              <h3 className="text-3xl font-black italic text-white mt-4">{usersList.length}</h3>
+              <h3 className="text-3xl font-black italic text-gray-900 mt-4">{usersList.length}</h3>
             </div>
           </div>
 
           {/* Revenue and Orders Analytics Breakdown */}
+
+          {/* Today's Live Snapshot */}
+          {(() => {
+            const today = new Date().toDateString();
+            const todayOrders = realOrders.filter(o => {
+              const d = o.createdAt ? new Date(o.createdAt).toDateString() : null;
+              return d === today;
+            });
+            const todayRevenue = todayOrders
+              .filter(o => o.status !== 'cancelled')
+              .reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+            const todayDelivered = todayOrders.filter(o => o.status === 'delivered' || o.status === 'completed').length;
+            const todayPending = todayOrders.filter(o => o.status === 'pending').length;
+            const todayCancelled = todayOrders.filter(o => o.status === 'cancelled').length;
+
+            return (
+              <div className="bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent border border-orange-500/20 rounded-[24px] p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-black italic uppercase tracking-tighter text-gray-900">Today's Live Snapshot</h3>
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                  <span className="flex items-center gap-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" /> Live
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="text-left">
+                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Today's Revenue</p>
+                    <h4 className="text-3xl font-black italic text-orange-400 mt-1">₹{todayRevenue}</h4>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Today's Orders</p>
+                    <h4 className="text-3xl font-black italic text-gray-900 mt-1">{todayOrders.length}</h4>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Delivered</p>
+                    <h4 className="text-3xl font-black italic text-emerald-400 mt-1">{todayDelivered}</h4>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest">Pending / Cancelled</p>
+                    <h4 className="text-3xl font-black italic text-amber-400 mt-1">{todayPending} <span className="text-red-400">/ {todayCancelled}</span></h4>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Live order activity feed */}
+          <div className="bg-white border border-gray-100 p-8 rounded-[24px] space-y-5">
+            <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-gray-100 pb-4 text-gray-900">Recent Activity Feed</h3>
+            <div className="space-y-3 max-h-[340px] overflow-y-auto no-scrollbar pr-1">
+              {realOrders.slice(0, 12).map(order => {
+                const statusColors: Record<string, string> = {
+                  pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                  Preparing: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+                  'Out For Delivery': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+                  delivered: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                  cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
+                };
+                const colorClass = statusColors[order.status] || 'bg-gray-50/50est border border-gray-100 text-gray-500 border-gray-100';
+                return (
+                  <div key={order.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
+                      <div>
+                        <p className="text-gray-900 text-xs font-bold leading-none">{order.userName}</p>
+                        <p className="text-gray-500 text-[9px] font-bold uppercase tracking-wider mt-1">
+                          #{order.id?.slice(0, 8)} • ₹{order.grandTotal || 0} • {order.createdAt ? new Date(order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </p>
+                        {order.deliveryLocation?.address && (
+                          <p className="text-gray-500 text-[10px] font-medium mt-1 max-w-[200px] truncate" title={order.deliveryLocation.address}>
+                            📍 {order.deliveryLocation.address}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded border ${colorClass} shrink-0`}>
+                      {order.status}
+                    </span>
+                  </div>
+                );
+              })}
+              {realOrders.length === 0 && (
+                <p className="text-gray-500 text-xs text-center py-10 font-bold uppercase tracking-widest">No orders recorded yet</p>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-[#121620]/50 border border-white/5 p-8 rounded-[35px] space-y-6">
-              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-white/5 pb-4">Revenue Breakdown</h3>
+            <div className="bg-white border border-gray-100 p-8 rounded-[24px] space-y-6">
+              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-gray-100 pb-4">Revenue Breakdown</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-white/60">Delivered Orders Revenue:</span>
+                  <span className="text-gray-500">Delivered Orders Revenue:</span>
                   <span className="text-emerald-400 font-extrabold">₹{realOrders.filter(o => o.status === 'delivered' || o.status === 'completed').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-white/60">In-progress Orders Value:</span>
+                  <span className="text-gray-500">In-progress Orders Value:</span>
                   <span className="text-blue-400 font-extrabold">₹{realOrders.filter(o => o.status === 'pending' || o.status === 'Preparing' || o.status === 'Out For Delivery').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-semibold">
-                  <span className="text-white/60">Cancelled Orders Value:</span>
+                  <span className="text-gray-500">Cancelled Orders Value:</span>
                   <span className="text-red-400 font-extrabold">₹{realOrders.filter(o => o.status === 'cancelled').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
                 </div>
-                <div className="h-px bg-white/5 my-2" />
+                <div className="h-px bg-gray-50/50est border border-gray-100 my-2" />
                 <div className="flex justify-between items-center text-base font-black uppercase">
                   <span>Gross Sales Total:</span>
-                  <span className="text-white">₹{realOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
+                  <span className="text-gray-900">₹{realOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.grandTotal || 0), 0)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#121620]/50 border border-white/5 p-8 rounded-[35px] space-y-6">
-              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-white/5 pb-4">Order Pipeline Volume</h3>
+            <div className="bg-white border border-gray-100 p-8 rounded-[24px] space-y-6">
+              <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-gray-100 pb-4">Order Pipeline Volume</h3>
               <div className="space-y-4">
                 {['pending', 'Preparing', 'Out For Delivery', 'delivered', 'cancelled'].map(status => {
                   const count = realOrders.filter(o => o.status === status).length;
                   const percentage = realOrders.length ? Math.round((count / realOrders.length) * 100) : 0;
                   return (
                     <div key={status} className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-white/70">
+                      <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-gray-500">
                         <span>{status === 'pending' ? 'Pending Confirmation' : status}</span>
                         <span>{count} ({percentage}%)</span>
                       </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-2 bg-gray-50/50est border border-gray-100 rounded-full overflow-hidden">
                         <div 
                           className={`h-full rounded-full ${
                             status === 'pending' ? 'bg-blue-500' :
@@ -1262,8 +1385,8 @@ export default function AdminPage() {
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Delivery Partner Operations</h2>
-              <p className="text-white/40 text-xs mt-1 font-semibold">Monitor active riders, earnings, and real-time geolocations.</p>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">Delivery Partner Operations</h2>
+              <p className="text-gray-500 text-xs mt-1 font-semibold">Monitor active riders, earnings, and real-time geolocations.</p>
             </div>
             <div className="px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-emerald-500/50 animate-pulse" />
@@ -1274,38 +1397,66 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left: Riders List */}
             <div className="lg:col-span-1 space-y-4">
-              <h3 className="text-xs font-black uppercase text-white/50 tracking-widest">Riders Directory</h3>
+              <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest">Riders Directory</h3>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 no-scrollbar">
                 {ridersList.length === 0 ? (
-                  <div className="py-12 text-center bg-white/5 border border-white/5 rounded-2xl">
-                    <p className="text-xs text-white/30 font-bold uppercase tracking-wider">No registered riders found</p>
+                  <div className="py-12 text-center bg-gray-50/50est border border-gray-100 border border-gray-100 rounded-2xl">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">No registered riders found</p>
                   </div>
                 ) : (
-                  ridersList.map(rider => (
-                    <div key={rider.uid} className="bg-[#121620]/60 border border-white/5 p-4.5 rounded-2xl flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 font-sans">
-                        <div className={`w-3 h-3 rounded-full shrink-0 ${rider.status === 'online' ? 'bg-[#4CD964] shadow-[0_0_10px_#4CD964]' : 'bg-red-500'}`} />
-                        <div>
-                          <h4 className="font-extrabold text-white text-sm">{rider.name}</h4>
-                          <p className="text-[10px] text-white/40 font-semibold">{rider.phone || 'No phone'}</p>
+                  ridersList.map(rider => {
+                    const status = rider.verificationStatus || 'pending';
+                    const statusText = status === 'approved' ? 'Verified' : status === 'rejected' ? 'Rejected' : 'Pending Verification';
+                    const statusColor = status === 'approved' ? 'text-emerald-400 bg-emerald-500/10' : status === 'rejected' ? 'text-red-400 bg-red-500/10' : 'text-amber-400 bg-amber-500/10';
+
+                    return (
+                      <div key={rider.uid} className="bg-white border border-gray-100 p-5 rounded-2xl flex flex-col gap-4 text-left">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3 font-sans">
+                            <div className={`w-3 h-3 rounded-full shrink-0 ${rider.status === 'online' ? 'bg-[#4CD964] shadow-[0_0_10px_#4CD964]' : 'bg-red-500'}`} />
+                            <div>
+                              <h4 className="font-extrabold text-gray-900 text-sm">{rider.name}</h4>
+                              <p className="text-[10px] text-gray-500 font-semibold">{rider.phone || 'No phone'}</p>
+                              <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${statusColor}`}>
+                                {statusText}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">Commission</p>
+                            <p className="font-black italic text-[#4CD964] text-sm">₹{rider.earnings || 0}</p>
+                          </div>
                         </div>
+
+                        {status === 'pending' && (
+                          <div className="flex gap-2 pt-2 border-t border-gray-100">
+                            <button
+                              onClick={() => handleApproveRider(rider.uid)}
+                              className="flex-1 py-2 rounded-xl bg-emerald-500 text-black font-black uppercase text-[9px] tracking-wider hover:brightness-105 active:scale-95 transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectRider(rider.uid)}
+                              className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 font-bold uppercase text-[9px] tracking-wider hover:bg-red-500 hover:text-gray-900 active:scale-95 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Commission</p>
-                        <p className="font-black italic text-[#4CD964] text-sm">₹{rider.earnings || 0}</p>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
 
             {/* Right: Live Rider Map */}
             <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-xs font-black uppercase text-white/50 tracking-widest flex items-center gap-2">
+              <h3 className="text-xs font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
                 📍 Live Geolocation Tracking Map
               </h3>
-              <div className="w-full h-[500px] rounded-[30px] overflow-hidden border border-white/10 relative z-10 bg-neutral-900 shadow-2xl">
+              <div className="w-full h-[500px] rounded-[24px] overflow-hidden border border-gray-100 relative z-10 bg-neutral-900 shadow-2xl">
                 <div ref={riderMapRef} className="w-full h-full absolute inset-0" />
               </div>
             </div>
@@ -1315,35 +1466,35 @@ export default function AdminPage() {
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Customer Database</h2>
-              <p className="text-white/40 text-xs mt-1 font-semibold">View user profiles, reward points, and manage wallet credits.</p>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">Customer Database</h2>
+              <p className="text-gray-500 text-xs mt-1 font-semibold">View user profiles, reward points, and manage wallet credits.</p>
             </div>
             
             {/* Search Input */}
             <div className="relative w-full sm:w-80">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
                 placeholder="Search customers..."
                 value={customerSearch}
                 onChange={e => setCustomerSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-[#121620] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/30 transition-all text-xs"
+                className="w-full pl-11 pr-4 py-3 bg-white rounded-xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-pink-500/30 transition-all text-xs"
               />
             </div>
           </div>
 
           {/* Customers Table */}
-          <div className="bg-[#121620]/50 border border-white/5 rounded-[35px] overflow-hidden">
+          <div className="bg-white border border-gray-100 rounded-[24px] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Customer</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Email & Phone</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Wallet Balance</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Reward Points</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Saved Addresses</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest text-right">Actions</th>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Customer</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Email & Phone</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Wallet Balance</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Reward Points</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Saved Addresses</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1353,7 +1504,7 @@ export default function AdminPage() {
                     user.phone?.includes(customerSearch)
                   ).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-16 text-white/30 text-xs font-bold uppercase tracking-widest">
+                      <td colSpan={6} className="text-center py-16 text-gray-500 text-xs font-bold uppercase tracking-widest">
                         No matching customers found
                       </td>
                     </tr>
@@ -1365,14 +1516,14 @@ export default function AdminPage() {
                     ).map(u => (
                       <tr key={u.uid} className="hover:bg-white/[0.01] transition-colors">
                         <td className="px-6 py-4.5">
-                          <h4 className="font-extrabold text-white text-sm">{u.name}</h4>
-                          <span className="text-[8px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/30 uppercase tracking-wider font-mono">
+                          <h4 className="font-extrabold text-gray-900 text-sm">{u.name}</h4>
+                          <span className="text-[8px] bg-gray-50/50est border border-gray-100 border border-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase tracking-wider font-mono">
                             ID: {u.uid.slice(0, 8)}
                           </span>
                         </td>
                         <td className="px-6 py-4.5">
-                          <p className="text-xs text-white/80 font-bold">{u.email}</p>
-                          <p className="text-[10px] text-white/40 font-semibold mt-0.5">{u.phone || 'No phone number'}</p>
+                          <p className="text-xs text-gray-500 font-bold">{u.email}</p>
+                          <p className="text-[10px] text-gray-500 font-semibold mt-0.5">{u.phone || 'No phone number'}</p>
                         </td>
                         <td className="px-6 py-4.5">
                           <span className="text-sm font-black text-[#4CD964] italic">₹{u.walletBalance || 0}</span>
@@ -1380,7 +1531,7 @@ export default function AdminPage() {
                         <td className="px-6 py-4.5">
                           <span className="text-xs font-bold text-amber-400">★ {u.rewardPoints || 0} pts</span>
                         </td>
-                        <td className="px-6 py-4.5 text-xs text-white/60 font-semibold">
+                        <td className="px-6 py-4.5 text-xs text-gray-500 font-semibold">
                           {u.addresses?.length || 0} locations
                         </td>
                         <td className="px-6 py-4.5 text-right">
@@ -1389,7 +1540,7 @@ export default function AdminPage() {
                               playSound(SOUNDS.CLICK);
                               setAdjustingUser(u);
                             }}
-                            className="bg-white/5 border border-white/10 hover:border-pink-500/30 text-white hover:text-pink-400 px-4.5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                            className="bg-gray-50/50est border border-gray-100 border border-gray-100 hover:border-pink-500/30 text-gray-900 hover:text-pink-400 px-4.5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
                           >
                             Adjust Wallet
                           </button>
@@ -1404,15 +1555,15 @@ export default function AdminPage() {
 
           {/* Wallet Adjustment Dialog Modal */}
           {adjustingUser && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#121620] w-full max-w-md rounded-[30px] p-8 border border-white/10 shadow-2xl relative text-left space-y-6"
+                className="bg-white w-full max-w-md rounded-[24px] p-8 border border-gray-100 shadow-2xl relative text-left space-y-6"
               >
                 <button 
                   onClick={() => setAdjustingUser(null)} 
-                  className="absolute top-4 right-4 p-2 text-white/40 hover:text-white"
+                  className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-900"
                 >
                   ✕
                 </button>
@@ -1420,44 +1571,44 @@ export default function AdminPage() {
                   <h3 className="text-xl font-black italic uppercase tracking-tight text-pink-400">
                     💳 Adjust User Wallet
                   </h3>
-                  <p className="text-xs font-semibold text-white/50 mt-1">
+                  <p className="text-xs font-semibold text-gray-500 mt-1">
                     Credit or debit wallet balance for <b>{adjustingUser.name}</b>.
                   </p>
                 </div>
 
                 <form onSubmit={handleAdjustWallet} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Amount (e.g. +100 to Add, -50 to Deduct)</label>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Amount (e.g. +100 to Add, -50 to Deduct)</label>
                     <input
                       type="number"
                       placeholder="₹0.00"
                       required
                       value={adjustAmount}
                       onChange={e => setAdjustAmount(e.target.value)}
-                      className="w-full px-5 py-4 bg-[#050505] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
+                      className="w-full px-5 py-4 bg-white shadow-sm rounded-xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Adjustment Reason (Audit trail description)</label>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Adjustment Reason (Audit trail description)</label>
                     <input
                       type="text"
                       placeholder="e.g. Good-will gesture bonus credit"
                       required
                       value={adjustReason}
                       onChange={e => setAdjustReason(e.target.value)}
-                      className="w-full px-5 py-4 bg-[#050505] rounded-xl border border-white/10 text-white font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
+                      className="w-full px-5 py-4 bg-white shadow-sm rounded-xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-pink-500/50 transition-all text-xs"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={adjustingLoading}
-                    className="w-full h-14 bg-pink-500 hover:bg-pink-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    className="w-full h-14 bg-pink-500 hover:bg-pink-600 text-gray-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     {adjustingLoading ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-900" />
                         Updating Database...
                       </>
                     ) : (
@@ -1473,8 +1624,8 @@ export default function AdminPage() {
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Wallet Transaction Logs</h2>
-              <p className="text-white/40 text-xs mt-1 font-semibold">Audit trail database of all platform credits and debits.</p>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">Wallet Transaction Logs</h2>
+              <p className="text-gray-500 text-xs mt-1 font-semibold">Audit trail database of all platform credits and debits.</p>
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
@@ -1485,7 +1636,7 @@ export default function AdminPage() {
                   playSound(SOUNDS.CLICK);
                   setWalletTypeFilter(e.target.value);
                 }}
-                className="px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white/70 font-black outline-none focus:border-teal-500/30 transition-all text-xs uppercase tracking-wider"
+                className="px-4 py-3 bg-gray-50/50est border border-gray-100 rounded-xl border border-gray-100 text-gray-500 font-black outline-none focus:border-teal-500/30 transition-all text-xs uppercase tracking-wider"
               >
                 <option value="All">All Types</option>
                 <option value="welcome_bonus">Welcome Bonus</option>
@@ -1495,30 +1646,30 @@ export default function AdminPage() {
 
               {/* Search Log Description */}
               <div className="relative w-full sm:w-60">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search transactions..."
                   value={walletSearch}
                   onChange={e => setWalletSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-teal-500/30 transition-all text-xs"
+                  className="w-full pl-11 pr-4 py-3 bg-gray-50/50est border border-gray-100 rounded-xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-teal-500/30 transition-all text-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Logs Table */}
-          <div className="bg-[#121620]/50 border border-white/5 rounded-[35px] overflow-hidden">
+          <div className="bg-white border border-gray-100 rounded-[24px] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Transaction ID</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Customer</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Amount</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Type</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Description</th>
-                    <th className="px-6 py-4.5 text-[9px] font-black text-white/40 uppercase tracking-widest">Timestamp</th>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Transaction ID</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Customer</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Amount</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Type</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Description</th>
+                    <th className="px-6 py-4.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">Timestamp</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1528,7 +1679,7 @@ export default function AdminPage() {
                     return matchesSearch && matchesType;
                   }).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-16 text-white/30 text-xs font-bold uppercase tracking-widest">
+                      <td colSpan={6} className="text-center py-16 text-gray-500 text-xs font-bold uppercase tracking-widest">
                         No transactions registered
                       </td>
                     </tr>
@@ -1547,14 +1698,14 @@ export default function AdminPage() {
 
                       return (
                         <tr key={log.id} className="hover:bg-white/[0.01] transition-colors">
-                          <td className="px-6 py-4.5 font-mono text-[10px] text-white/60">
+                          <td className="px-6 py-4.5 font-mono text-[10px] text-gray-500">
                             #{log.id.slice(0, 8)}
                           </td>
-                          <td className="px-6 py-4.5 text-xs text-white/80 font-bold">
+                          <td className="px-6 py-4.5 text-xs text-gray-500 font-bold">
                             {resolvedUser ? (
                               <div>
                                 <p>{resolvedUser.name}</p>
-                                <p className="text-[9px] text-white/40 font-semibold">{resolvedUser.email}</p>
+                                <p className="text-[9px] text-gray-500 font-semibold">{resolvedUser.email}</p>
                               </div>
                             ) : (
                               <span>ID: {log.userId.slice(0, 8)}</span>
@@ -1564,14 +1715,14 @@ export default function AdminPage() {
                             <span className={`text-sm font-black italic ${amountColor}`}>{log.amount > 0 ? `+₹${log.amount}` : `-₹${Math.abs(log.amount)}`}</span>
                           </td>
                           <td className="px-6 py-4.5">
-                            <span className="text-[9px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/50 font-bold uppercase tracking-wider">
+                            <span className="text-[9px] bg-gray-50/50est border border-gray-100 border border-gray-100 px-2 py-0.5 rounded text-gray-500 font-bold uppercase tracking-wider">
                               {typeLabel}
                             </span>
                           </td>
-                          <td className="px-6 py-4.5 text-xs text-white/80 font-medium">
+                          <td className="px-6 py-4.5 text-xs text-gray-500 font-medium">
                             {log.description}
                           </td>
-                          <td className="px-6 py-4.5 text-[10px] text-white/40 font-bold">
+                          <td className="px-6 py-4.5 text-[10px] text-gray-500 font-bold">
                             {log.createdAt ? new Date(log.createdAt).toLocaleString() : 'Just now'}
                           </td>
                         </tr>
@@ -1593,72 +1744,72 @@ export default function AdminPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             
             {/* Status card 1 */}
-            <div className="bg-[#121624] border border-white/5 rounded-3xl p-5 space-y-3 relative overflow-hidden">
+            <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
               <Activity className="w-5 h-5 text-emerald-400" />
               <div>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Accepting Orders</p>
-                <p className="text-2xl font-black italic tracking-tighter mt-1 text-white uppercase">{settings.websiteStatus}</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Accepting Orders</p>
+                <p className="text-2xl font-black italic tracking-tighter mt-1 text-gray-900 uppercase">{settings.websiteStatus}</p>
               </div>
             </div>
 
             {/* Status card 2 */}
-            <div className="bg-[#121624] border border-white/5 rounded-3xl p-5 space-y-3 relative overflow-hidden">
+            <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-xl pointer-events-none" />
-              <ShieldAlert className="w-5 h-5 text-red-400" />
+              <ShieldCheck className="w-5 h-5 text-red-400" />
               <div>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Emergency Stop</p>
-                <p className="text-2xl font-black italic tracking-tighter mt-1 text-white uppercase">{settings.emergencyStop ? 'ACTIVE' : 'INACTIVE'}</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Emergency Stop</p>
+                <p className="text-2xl font-black italic tracking-tighter mt-1 text-gray-900 uppercase">{settings.emergencyStop ? 'ACTIVE' : 'INACTIVE'}</p>
               </div>
             </div>
 
             {/* Status card 3 */}
-            <div className="bg-[#121624] border border-white/5 rounded-3xl p-5 space-y-3 relative overflow-hidden">
+            <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-xl pointer-events-none" />
               <Calendar className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Festival Mode</p>
-                <p className="text-2xl font-black italic tracking-tighter mt-1 text-white uppercase">{settings.festivalMode ? 'ON' : 'OFF'}</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Festival Mode</p>
+                <p className="text-2xl font-black italic tracking-tighter mt-1 text-gray-900 uppercase">{settings.festivalMode ? 'ON' : 'OFF'}</p>
               </div>
             </div>
 
             {/* Status card 4 */}
-            <div className="bg-[#121624] border border-white/5 rounded-3xl p-5 space-y-3 relative overflow-hidden">
+            <div className="bg-white border border-gray-100 rounded-3xl p-5 space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
               <Clock className="w-5 h-5 text-amber-400" />
               <div>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">Schedule Window</p>
-                <p className="text-base font-black italic tracking-tighter mt-1 text-white uppercase">{settings.openTime} - {settings.closeTime}</p>
+                <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">Schedule Window</p>
+                <p className="text-base font-black italic tracking-tighter mt-1 text-gray-900 uppercase">{settings.openTime} - {settings.closeTime}</p>
               </div>
             </div>
 
           </div>
 
           {/* PRIMARY SWITCHES PANEL */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-8 relative">
-            <div className="flex items-center justify-between border-b border-white/5 pb-5">
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 md:p-10 space-y-8 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-5">
               <div>
                 <h3 className="text-xl font-black italic uppercase tracking-tight">Core System Switches</h3>
-                <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Changes propagate instantly to all user sessions</p>
+                <p className="text-gray-500 text-[9px] font-semibold tracking-wider mt-1">Changes propagate instantly to all user sessions</p>
               </div>
-              <Sparkles className="w-6 h-6 text-[#FFB700] animate-pulse" />
+              <Sparkles className="w-6 h-6 text-primary animate-pulse" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* TOGGLE 1: Website Status ON/OFF */}
-              <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
+              <div className="bg-gray-50/50 border border-gray-100 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <h4 className="text-base font-bold text-white tracking-tight">Website Ordering</h4>
-                    <p className="text-white/40 text-[10px] font-semibold max-w-[200px]">Instantly toggle website ordering status online/offline.</p>
+                    <h4 className="text-base font-bold text-gray-900 tracking-tight">Website Ordering</h4>
+                    <p className="text-gray-500 text-[10px] font-semibold max-w-[200px]">Instantly toggle website ordering status online/offline.</p>
                   </div>
-                  <div className={`p-3 rounded-2xl bg-white/5 ${settings.websiteStatus === 'ON' ? 'text-emerald-400 bg-emerald-500/10' : 'text-white/30'}`}>
+                  <div className={`p-3 rounded-2xl bg-gray-50/50est border border-gray-100 ${settings.websiteStatus === 'ON' ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500'}`}>
                     <Power className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/5">
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.websiteStatus === 'ON' ? 'text-emerald-400' : 'text-white/30'}`}>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.websiteStatus === 'ON' ? 'text-emerald-400' : 'text-gray-500'}`}>
                     Status: {settings.websiteStatus === 'ON' ? 'Online' : 'Offline'}
                   </span>
                   
@@ -1669,7 +1820,7 @@ export default function AdminPage() {
                   >
                     <motion.div 
                       layout
-                      className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
+                      className="w-7 h-7 rounded-full bg-white shadow-sm shadow-lg"
                       animate={{ x: settings.websiteStatus === 'ON' ? 28 : 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
@@ -1678,18 +1829,18 @@ export default function AdminPage() {
               </div>
 
               {/* TOGGLE 2: Delivery Pause Mode */}
-              <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
+              <div className="bg-gray-50/50 border border-gray-100 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <h4 className="text-base font-bold text-white tracking-tight">Delivery Pause</h4>
-                    <p className="text-white/40 text-[10px] font-semibold max-w-[200px]">Temporarily stop new delivery orders without taking menu offline.</p>
+                    <h4 className="text-base font-bold text-gray-900 tracking-tight">Delivery Pause</h4>
+                    <p className="text-gray-500 text-[10px] font-semibold max-w-[200px]">Temporarily stop new delivery orders without taking menu offline.</p>
                   </div>
-                  <div className={`p-3 rounded-2xl bg-white/5 ${settings.deliveryPause ? 'text-amber-400 bg-amber-500/10' : 'text-white/30'}`}>
+                  <div className={`p-3 rounded-2xl bg-gray-50/50est border border-gray-100 ${settings.deliveryPause ? 'text-amber-400 bg-amber-500/10' : 'text-gray-500'}`}>
                     <Clock className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/5">
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.deliveryPause ? 'text-amber-400' : 'text-white/30'}`}>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.deliveryPause ? 'text-amber-400' : 'text-gray-500'}`}>
                     Status: {settings.deliveryPause ? 'Paused' : 'Active'}
                   </span>
                   
@@ -1700,7 +1851,7 @@ export default function AdminPage() {
                   >
                     <motion.div 
                       layout
-                      className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
+                      className="w-7 h-7 rounded-full bg-white shadow-sm shadow-lg"
                       animate={{ x: settings.deliveryPause ? 28 : 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
@@ -1709,18 +1860,18 @@ export default function AdminPage() {
               </div>
 
               {/* TOGGLE 3: Festival Closure Mode */}
-              <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
+              <div className="bg-gray-50/50 border border-gray-100 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <h4 className="text-base font-bold text-white tracking-tight">Festival Closure Mode</h4>
-                    <p className="text-white/40 text-[10px] font-semibold max-w-[200px]">Declare holiday/festival closures with unique theme & announcements.</p>
+                    <h4 className="text-base font-bold text-gray-900 tracking-tight">Festival Closure Mode</h4>
+                    <p className="text-gray-500 text-[10px] font-semibold max-w-[200px]">Declare holiday/festival closures with unique theme & announcements.</p>
                   </div>
-                  <div className={`p-3 rounded-2xl bg-white/5 ${settings.festivalMode ? 'text-purple-400 bg-purple-500/10' : 'text-white/30'}`}>
+                  <div className={`p-3 rounded-2xl bg-gray-50/50est border border-gray-100 ${settings.festivalMode ? 'text-purple-400 bg-purple-500/10' : 'text-gray-500'}`}>
                     <Calendar className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/5">
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.festivalMode ? 'text-purple-400' : 'text-white/30'}`}>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.festivalMode ? 'text-purple-400' : 'text-gray-500'}`}>
                     Status: {settings.festivalMode ? 'Holiday Mode' : 'Normal'}
                   </span>
                   
@@ -1731,7 +1882,7 @@ export default function AdminPage() {
                   >
                     <motion.div 
                       layout
-                      className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
+                      className="w-7 h-7 rounded-full bg-white shadow-sm shadow-lg"
                       animate={{ x: settings.festivalMode ? 28 : 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
@@ -1740,18 +1891,18 @@ export default function AdminPage() {
               </div>
 
               {/* TOGGLE 4: WhatsApp Notification Toggles */}
-              <div className="bg-white/[0.02] border border-white/5 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
+              <div className="bg-gray-50/50 border border-gray-100 p-6 rounded-3xl flex flex-col justify-between gap-6 transition-all hover:bg-white/[0.04]">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <h4 className="text-base font-bold text-white tracking-tight">WhatsApp Alerts</h4>
-                    <p className="text-white/40 text-[10px] font-semibold max-w-[200px]">Send structured receipt details automatically on checkout submission.</p>
+                    <h4 className="text-base font-bold text-gray-900 tracking-tight">WhatsApp Alerts</h4>
+                    <p className="text-gray-500 text-[10px] font-semibold max-w-[200px]">Send structured receipt details automatically on checkout submission.</p>
                   </div>
-                  <div className={`p-3 rounded-2xl bg-white/5 ${settings.whatsappAlertsEnabled ? 'text-[#25D366] bg-[#25D366]/10' : 'text-white/30'}`}>
+                  <div className={`p-3 rounded-2xl bg-gray-50/50est border border-gray-100 ${settings.whatsappAlertsEnabled ? 'text-[#25D366] bg-[#25D366]/10' : 'text-gray-500'}`}>
                     <Bell className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 pt-4 border-t border-white/5">
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.whatsappAlertsEnabled ? 'text-[#25D366]' : 'text-white/30'}`}>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${settings.whatsappAlertsEnabled ? 'text-[#25D366]' : 'text-gray-500'}`}>
                     Status: {settings.whatsappAlertsEnabled ? 'Alerting ON' : 'Alerting OFF'}
                   </span>
                   
@@ -1762,7 +1913,7 @@ export default function AdminPage() {
                   >
                     <motion.div 
                       layout
-                      className="w-7 h-7 rounded-full bg-matte-black shadow-lg"
+                      className="w-7 h-7 rounded-full bg-white shadow-sm shadow-lg"
                       animate={{ x: settings.whatsappAlertsEnabled ? 28 : 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
@@ -1773,15 +1924,15 @@ export default function AdminPage() {
             </div>
 
             {/* EMERGENCY LOCKDOWN BUTTON */}
-            <div className="border-t border-white/5 pt-8">
-              <div className="bg-red-500/5 border border-red-500/20 rounded-[30px] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="border-t border-gray-100 pt-8">
+              <div className="bg-red-500/5 border border-red-500/20 rounded-[24px] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1.5 flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center border border-red-500/20 shrink-0">
-                    <ShieldAlert className="w-6 h-6" />
+                    <ShieldCheck className="w-6 h-6" />
                   </div>
                   <div>
                     <h4 className="text-lg font-black italic uppercase text-red-400 tracking-tight">🚨 Emergency “Stop All Orders”</h4>
-                    <p className="text-white/40 text-xs font-semibold max-w-lg leading-relaxed">
+                    <p className="text-gray-500 text-xs font-semibold max-w-lg leading-relaxed">
                       locks the entire food checkout interface, clears the operational statuses, and redirects all active sessions to the emergency banner. Use in case of chef shortage, power cuts, or weather lockdowns.
                     </p>
                   </div>
@@ -1790,16 +1941,16 @@ export default function AdminPage() {
                   {settings.emergencyStop ? (
                     <button 
                       onClick={handleEmergencyReset}
-                      className="px-8 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center gap-2"
+                      className="px-8 h-14 rounded-2xl bg-white text-white font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center gap-2"
                     >
                       <Lock className="w-4 h-4" /> Reset Operations
                     </button>
                   ) : (
                     <button 
                       onClick={handleEmergencyTrigger}
-                      className="px-8 h-14 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-[2px] shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center gap-2"
+                      className="px-8 h-14 rounded-2xl bg-red-600 hover:bg-red-700 text-gray-900 font-black text-xs uppercase tracking-[2px] shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center gap-2"
                     >
-                      <ShieldAlert className="w-4 h-4 animate-bounce" /> STOP ALL ORDERS
+                      <ShieldCheck className="w-4 h-4 animate-bounce" /> STOP ALL ORDERS
                     </button>
                   )}
                 </div>
@@ -1809,104 +1960,104 @@ export default function AdminPage() {
           </div>
 
           {/* TIMINGS & OPERATIONAL CONTROLS */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-8">
-            <h3 className="text-xl font-black italic uppercase tracking-tight border-b border-white/5 pb-5">Operating Schedule & Limits</h3>
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 md:p-10 space-y-8">
+            <h3 className="text-xl font-black italic uppercase tracking-tight border-b border-gray-100 pb-5">Operating Schedule & Limits</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Daily opening and closing hours selector */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-[#FFB700] uppercase tracking-[3px] flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#FFB700]" /> Working Hour Bounds
+                <h4 className="text-xs font-black text-primary uppercase tracking-[3px] flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" /> Working Hour Bounds
                 </h4>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Opening Time</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Opening Time</label>
                     <input 
                       type="time" 
                       value={localSettings.openTime}
                       onChange={e => setLocalSettings({ ...localSettings, openTime: e.target.value })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Closing Time</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Closing Time</label>
                     <input 
                       type="time" 
                       value={localSettings.closeTime}
                       onChange={e => setLocalSettings({ ...localSettings, closeTime: e.target.value })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                 </div>
-                <p className="text-white/30 text-[10px] font-medium leading-relaxed italic">
+                <p className="text-gray-500 text-[10px] font-medium leading-relaxed italic">
                   Ordering pipelines will lock down automatically outside these limits.
                 </p>
               </div>
 
               {/* Order limit & WhatsApp configs */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-[#FFB700] uppercase tracking-[3px] flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-[#FFB700]" /> Capacity & Alert Config
+                <h4 className="text-xs font-black text-primary uppercase tracking-[3px] flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-primary" /> Capacity & Alert Config
                 </h4>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Order Limit / Hr</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Order Limit / Hr</label>
                     <input 
                       type="number" 
                       min="5"
                       max="500"
                       value={localSettings.orderLimit}
                       onChange={e => setLocalSettings({ ...localSettings, orderLimit: parseInt(e.target.value) || 50 })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Alert Phone No.</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Alert Phone No.</label>
                     <input 
                       type="text" 
                       placeholder="+91..."
                       value={localSettings.whatsappNumber}
                       onChange={e => setLocalSettings({ ...localSettings, whatsappNumber: e.target.value })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center placeholder:text-white/10"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 {/* Financial Settings */}
-                <h4 className="text-xs font-black text-[#FFB700] uppercase tracking-[3px] flex items-center gap-2 mt-6">
-                  <Sliders className="w-4 h-4 text-[#FFB700]" /> Financial Rules
+                <h4 className="text-xs font-black text-primary uppercase tracking-[3px] flex items-center gap-2 mt-6">
+                  <Sliders className="w-4 h-4 text-primary" /> Financial Rules
                 </h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Tax (%)</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tax (%)</label>
                     <input 
                       type="number" 
                       min="0"
                       value={localSettings.taxRate ?? 5}
                       onChange={e => setLocalSettings({ ...localSettings, taxRate: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Del. Fee (₹)</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Del. Fee (₹)</label>
                     <input 
                       type="number" 
                       min="0"
                       value={localSettings.deliveryFee ?? 40}
                       onChange={e => setLocalSettings({ ...localSettings, deliveryFee: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Min Order (₹)</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Min Order (₹)</label>
                     <input 
                       type="number" 
                       min="0"
                       value={localSettings.minOrderValue ?? 150}
                       onChange={e => setLocalSettings({ ...localSettings, minOrderValue: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                      className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                     />
                   </div>
                 </div>
@@ -1914,31 +2065,31 @@ export default function AdminPage() {
             </div>
 
             {/* SAVE BUTTON FOR CONTROLS */}
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-4">
-              <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5" /> Save changes to commit updates
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+              <span className="text-gray-500 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                <AlertCircle className="w-5 h-5 w-3.5 h-3.5" /> Save changes to commit updates
               </span>
               <button 
                 onClick={() => handleSaveSettings()}
                 disabled={isSaving}
-                className="px-10 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="px-10 h-14 rounded-2xl bg-white text-white font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-matte-black" /> : <Save className="w-4 h-4 text-matte-black" />}
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-white" />}
                 Commit Schedule Changes
               </button>
             </div>
           </div>
 
           {/* MON-SUN SCHEDULER BOARD */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-8">
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 md:p-10 space-y-8">
             <div>
               <h3 className="text-xl font-black italic uppercase tracking-tight">Weekly Timing Calendar</h3>
-              <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Configure individual working parameters per calendar day</p>
+              <p className="text-gray-500 text-[9px] font-semibold tracking-wider mt-1">Configure individual working parameters per calendar day</p>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {Object.entries(schedule).map(([day, details]) => (
-                <div key={day} className={`border rounded-3xl p-5 space-y-4 transition-all relative ${details.closed ? 'bg-red-500/5 border-red-500/10' : 'bg-white/[0.02] border-white/5'}`}>
+                <div key={day} className={`border rounded-3xl p-5 space-y-4 transition-all relative ${details.closed ? 'bg-red-500/5 border-red-500/10' : 'bg-gray-50/50 border-gray-100'}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black uppercase tracking-wider">{day.slice(0, 3)}</span>
                     <button 
@@ -1958,12 +2109,12 @@ export default function AdminPage() {
                   {!details.closed && (
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-[8px] font-bold text-white/30 uppercase block mb-1">Open</span>
-                        <span className="text-xs font-black bg-white/5 rounded-lg px-2.5 py-1.5 border border-white/5 text-white block text-center">{details.open}</span>
+                        <span className="text-[8px] font-bold text-gray-500 uppercase block mb-1">Open</span>
+                        <span className="text-xs font-black bg-gray-50/50est border border-gray-100 rounded-lg px-2.5 py-1.5 border border-gray-100 text-gray-900 block text-center">{details.open}</span>
                       </div>
                       <div>
-                        <span className="text-[8px] font-bold text-white/30 uppercase block mb-1">Close</span>
-                        <span className="text-xs font-black bg-white/5 rounded-lg px-2.5 py-1.5 border border-white/5 text-white block text-center">{details.close}</span>
+                        <span className="text-[8px] font-bold text-gray-500 uppercase block mb-1">Close</span>
+                        <span className="text-xs font-black bg-gray-50/50est border border-gray-100 rounded-lg px-2.5 py-1.5 border border-gray-100 text-gray-900 block text-center">{details.close}</span>
                       </div>
                     </div>
                   )}
@@ -1973,23 +2124,23 @@ export default function AdminPage() {
           </div>
 
           {/* 🔥 COMBO OFFERS MANAGER */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-8 mt-8">
-            <div className="flex items-center justify-between border-b border-white/5 pb-5">
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 md:p-10 space-y-8 mt-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-5">
               <div>
                 <h3 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-brand fill-brand" /> Combo Offers Manager
+                  <Flame className="w-5 h-5 text-primary fill-brand" /> Combo Offers Manager
                 </h3>
-                <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Configure and release premium food bundles in real-time</p>
+                <p className="text-gray-500 text-[9px] font-semibold tracking-wider mt-1">Configure and release premium food bundles in real-time</p>
               </div>
             </div>
 
             <div className="space-y-10">
               {localSettings.comboOffers?.map((combo, index) => (
-                <div key={combo.id} className="bg-white/[0.02] border border-white/5 p-6 md:p-8 rounded-3xl space-y-6 relative overflow-hidden">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                <div key={combo.id} className="bg-gray-50/50 border border-gray-100 p-6 md:p-8 rounded-3xl space-y-6 relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
                     <div>
-                      <h4 className="text-lg font-black italic text-white uppercase">{combo.name}</h4>
-                      <p className="text-[9px] font-mono text-white/30">ID: {combo.id}</p>
+                      <h4 className="text-lg font-black italic text-gray-900 uppercase">{combo.name}</h4>
+                      <p className="text-[9px] font-mono text-gray-500">ID: {combo.id}</p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4">
@@ -2021,7 +2172,7 @@ export default function AdminPage() {
                         className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
                           combo.isFeatured 
                             ? 'bg-gold/10 text-gold border-gold/20' 
-                            : 'bg-white/5 text-white/30 border-white/5'
+                            : 'bg-gray-50/50est border border-gray-100 text-gray-500 border-gray-100'
                         }`}
                       >
                         {combo.isFeatured ? '★ Featured' : '☆ Standard'}
@@ -2032,7 +2183,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Offer Price */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Offer Price (₹)</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Offer Price (₹)</label>
                       <input
                         type="number"
                         min="1"
@@ -2047,13 +2198,13 @@ export default function AdminPage() {
                           };
                           setLocalSettings({ ...localSettings, comboOffers: updated });
                         }}
-                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                        className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                       />
                     </div>
 
                     {/* Regular Price */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Regular Price (₹)</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Regular Price (₹)</label>
                       <input
                         type="number"
                         min="1"
@@ -2068,13 +2219,13 @@ export default function AdminPage() {
                           };
                           setLocalSettings({ ...localSettings, comboOffers: updated });
                         }}
-                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                        className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                       />
                     </div>
 
                     {/* Expiry Date */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Expiry Date</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Expiry Date</label>
                       <input
                         type="date"
                         value={combo.expiryDate || ''}
@@ -2083,7 +2234,7 @@ export default function AdminPage() {
                           updated[index] = { ...combo, expiryDate: e.target.value };
                           setLocalSettings({ ...localSettings, comboOffers: updated });
                         }}
-                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-center"
+                        className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all text-center"
                       />
                     </div>
                   </div>
@@ -2091,7 +2242,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Badge */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Offer Badge Label</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Offer Badge Label</label>
                       <input
                         type="text"
                         placeholder="e.g. BESTSELLER"
@@ -2101,13 +2252,13 @@ export default function AdminPage() {
                           updated[index] = { ...combo, badge: e.target.value.toUpperCase() };
                           setLocalSettings({ ...localSettings, comboOffers: updated });
                         }}
-                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all"
+                        className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all"
                       />
                     </div>
 
                     {/* Included Items (Textarea) */}
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest ml-1">Included Food Items (one per line)</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Included Food Items (one per line)</label>
                       <textarea
                         rows={3}
                         value={combo.items.join('\n')}
@@ -2117,7 +2268,7 @@ export default function AdminPage() {
                           setLocalSettings({ ...localSettings, comboOffers: updated });
                         }}
                         placeholder="Half Chicken Biryani&#10;Half Chicken Kabab&#10;Coke"
-                        className="w-full px-5 py-4 bg-white/5 rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all h-28 resize-none leading-relaxed"
+                        className="w-full px-5 py-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-primary/50 transition-all h-28 resize-none leading-relaxed"
                       />
                     </div>
                   </div>
@@ -2132,16 +2283,16 @@ export default function AdminPage() {
             </div>
 
             {/* SAVE BUTTON FOR COMBOS */}
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-4">
-              <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5" /> Save changes to commit combo updates
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+              <span className="text-gray-500 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                <AlertCircle className="w-5 h-5 w-3.5 h-3.5" /> Save changes to commit combo updates
               </span>
               <button 
                 onClick={() => handleSaveSettings()}
                 disabled={isSaving}
-                className="px-10 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="px-10 h-14 rounded-2xl bg-white text-white font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-matte-black text-center" /> : <Save className="w-4 h-4 text-matte-black" />}
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white text-center" /> : <Save className="w-4 h-4 text-white" />}
                 Commit Combo Settings
               </button>
             </div>
@@ -2153,29 +2304,29 @@ export default function AdminPage() {
         <div className="space-y-8">
           
           {/* ANNOUNCEMENT MESSAGE EDITORS */}
-          <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 space-y-6">
-            <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-white/5 pb-4">Operator Messages</h3>
+          <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 space-y-6">
+            <h3 className="text-lg font-black italic uppercase tracking-tight border-b border-gray-100 pb-4">Operator Messages</h3>
 
             {/* Maintenance Message */}
             <div className="space-y-2.5">
-              <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Custom Maintenance Announcement</label>
+              <label className="text-[9px] font-black text-primary/60 uppercase tracking-[3px] ml-1">Custom Maintenance Announcement</label>
               <textarea 
                 rows={3} 
                 value={localSettings.maintenanceMessage}
                 onChange={e => setLocalSettings({ ...localSettings, maintenanceMessage: e.target.value })}
-                className="w-full px-6 py-4.5 bg-white/5 rounded-2xl border border-white/10 text-white font-semibold text-sm outline-none focus:border-[#FFB700]/30 transition-all placeholder:text-white/10"
+                className="w-full px-6 py-4.5 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-semibold text-sm outline-none focus:border-primary/50 transition-all placeholder:text-gray-500"
                 placeholder="Message users will see during maintenance..."
               />
             </div>
 
             {/* Reopening Time message */}
             <div className="space-y-2.5">
-              <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Display Reopening / Return Message</label>
+              <label className="text-[9px] font-black text-primary/60 uppercase tracking-[3px] ml-1">Display Reopening / Return Message</label>
               <textarea 
                 rows={2} 
                 value={localSettings.reopenMessage}
                 onChange={e => setLocalSettings({ ...localSettings, reopenMessage: e.target.value })}
-                className="w-full px-6 py-4.5 bg-white/5 rounded-2xl border border-white/10 text-white font-semibold text-sm outline-none focus:border-[#FFB700]/30 transition-all placeholder:text-white/10"
+                className="w-full px-6 py-4.5 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 text-gray-900 font-semibold text-sm outline-none focus:border-primary/50 transition-all placeholder:text-gray-500"
                 placeholder="E.g. Reopening May 29, 2026."
               />
             </div>
@@ -2183,9 +2334,9 @@ export default function AdminPage() {
             <button 
               onClick={() => handleSaveSettings()}
               disabled={isSaving}
-              className="w-full h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2"
+              className="w-full h-14 rounded-2xl bg-white text-white font-black text-xs uppercase tracking-[2px] shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2"
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-matte-black" /> : <Save className="w-4 h-4 text-matte-black" />}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-white" />}
               Update Banner Announcements
             </button>
           </div>
@@ -2193,340 +2344,23 @@ export default function AdminPage() {
         </main>
       ) : activeTab === 'menu' ? (
         <AdminMenuManager />
+      ) : activeTab === 'restaurants' ? (
+        <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left bg-zinc-900 rounded-[24px] my-6">
+          <AdminRestaurantManager />
+        </main>
       ) : activeTab === 'coupons' ? (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left">
           <AdminCouponManager />
-        </main>
-      ) : activeTab === 'bar' ? (
-        <main className="max-w-[1400px] mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-          
-          {/* LEFT COLUMN: DRINKS INVENTORY LIST */}
-          <div className="lg:col-span-2 space-y-8 text-left">
-            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-6">
-              
-              {/* Header with Search and Category filters */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
-                <div>
-                  <h3 className="text-xl font-black italic uppercase tracking-tight">Drinks Inventory</h3>
-                  <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">Manage resort bar items availability & price listing</p>
-                </div>
-                <button
-                  onClick={() => {
-                    playSound(SOUNDS.CLICK);
-                    setEditingDrink(null);
-                    setDrinkForm({
-                      name: '',
-                      brand: '',
-                      category: 'Beer',
-                      size: '750ml',
-                      price: 0,
-                      image: '',
-                      isAvailable: true
-                    });
-                    setShowAddForm(true);
-                  }}
-                  className="px-6 py-3.5 bg-gradient-to-r from-[#FFB700] to-[#FFD166] text-matte-black font-black text-xs uppercase tracking-[2px] rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer"
-                >
-                  + Add New Drink
-                </button>
-              </div>
-
-              {/* Filters row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <input
-                    type="text"
-                    placeholder="Search name or brand..."
-                    value={barSearch}
-                    onChange={e => setBarSearch(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
-                  />
-                </div>
-                <div>
-                  <select
-                    value={barFilterCategory}
-                    onChange={e => {
-                      playSound(SOUNDS.CLICK);
-                      setBarFilterCategory(e.target.value);
-                    }}
-                    className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white/70 font-black outline-none focus:border-[#FFB700]/30 transition-all text-xs uppercase tracking-wider"
-                  >
-                    <option value="All">All Categories</option>
-                    <option value="Beer">Beer</option>
-                    <option value="Whisky">Whisky</option>
-                    <option value="Rum">Rum</option>
-                    <option value="Vodka">Vodka</option>
-                    <option value="Wine">Wine</option>
-                    <option value="Brandy">Brandy</option>
-                    <option value="Gin">Gin</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Inventory List */}
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
-                {drinksLoading ? (
-                  <div className="text-center py-10">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#FFB700] mx-auto" />
-                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-2">Loading catalog...</p>
-                  </div>
-                ) : filteredAdminDrinks.length > 0 ? (
-                  filteredAdminDrinks.map((drink) => (
-                    <div 
-                      key={drink.id} 
-                      className={`p-4 bg-white/[0.02] border rounded-2xl flex items-center justify-between gap-4 transition-all hover:bg-white/[0.04] ${
-                        drink.isAvailable ? 'border-white/5' : 'border-red-500/20 bg-red-500/[0.01]'
-                      }`}
-                    >
-                      {/* Left: Image & Details */}
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/40 border border-white/10 shrink-0">
-                          <img src={drink.image} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
-                        </div>
-                        <div className="min-w-0 text-left">
-                          <span className="text-[9px] font-bold text-white/30 uppercase tracking-wider">{drink.brand}</span>
-                          <h4 className="font-bold text-sm text-white truncate leading-tight">{drink.name}</h4>
-                          <div className="flex items-center gap-2 text-[10px] text-white/50 font-medium mt-0.5">
-                            <span className="bg-white/5 px-2 py-0.5 rounded text-[8px] uppercase tracking-wider">{drink.category}</span>
-                            <span>•</span>
-                            <span>{drink.size}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Actions */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right mr-2">
-                          <span className="text-[8px] font-bold text-white/35 block uppercase tracking-wider">Rate Card</span>
-                          <span className="font-black text-sm text-[#FFB700]">₹{drink.price}</span>
-                        </div>
-
-                        {/* Availability Toggle */}
-                        <button
-                          onClick={() => handleToggleDrinkStock(drink)}
-                          className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all ${
-                            drink.isAvailable 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' 
-                              : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
-                          }`}
-                        >
-                          {drink.isAvailable ? 'In Stock' : 'Out of Stock'}
-                        </button>
-
-                        {/* Edit Button */}
-                        <button
-                          onClick={() => {
-                            playSound(SOUNDS.CLICK);
-                            setEditingDrink(drink);
-                            setDrinkForm(drink);
-                            setShowAddForm(true);
-                          }}
-                          className="p-2 bg-white/5 rounded-xl text-white hover:text-[#FFB700] hover:bg-white/10 transition-colors border border-white/5"
-                        >
-                          ✏️
-                        </button>
-
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => handleDeleteDrink(drink.id)}
-                          className="p-2 bg-red-500/10 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors border border-red-500/15"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-16 border border-dashed border-white/5 rounded-2xl">
-                    <Wine className="w-12 h-12 text-white/10 mx-auto" />
-                    <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-2">No drinks found</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: ADD / EDIT DRINK PANEL */}
-          <div className="space-y-8 text-left">
-            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 space-y-6">
-              <div className="border-b border-white/5 pb-4">
-                <h3 className="text-lg font-black italic uppercase tracking-tight text-white">
-                  {editingDrink ? '✏️ Edit Drink' : '🍸 Add Drink'}
-                </h3>
-                <p className="text-white/40 text-[9px] font-semibold tracking-wider mt-1">
-                  {editingDrink ? 'Modify existing catalog attributes' : 'Register a new luxury drink item'}
-                </p>
-              </div>
-
-              <form onSubmit={handleSaveDrink} className="space-y-4">
-                {/* Name */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Drink Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Absolut Vodka"
-                    value={drinkForm.name}
-                    onChange={e => setDrinkForm({ ...drinkForm, name: e.target.value })}
-                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
-                  />
-                </div>
-
-                {/* Brand */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Brand Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Pernod Ricard"
-                    value={drinkForm.brand}
-                    onChange={e => setDrinkForm({ ...drinkForm, brand: e.target.value })}
-                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
-                  />
-                </div>
-
-                {/* Category & Size */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Category</label>
-                    <select
-                      value={drinkForm.category}
-                      onChange={e => setDrinkForm({ ...drinkForm, category: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
-                    >
-                      <option value="Beer">Beer</option>
-                      <option value="Whisky">Whisky</option>
-                      <option value="Rum">Rum</option>
-                      <option value="Vodka">Vodka</option>
-                      <option value="Wine">Wine</option>
-                      <option value="Brandy">Brandy</option>
-                      <option value="Gin">Gin</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Bottle Size</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. 750ml, 330ml"
-                      value={drinkForm.size}
-                      onChange={e => setDrinkForm({ ...drinkForm, size: e.target.value })}
-                      className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs text-center"
-                    />
-                  </div>
-                </div>
-
-                {/* Price & Status */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Price (₹)</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={drinkForm.price || ''}
-                      onChange={e => setDrinkForm({ ...drinkForm, price: parseInt(e.target.value) || 0 })}
-                      className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs text-center"
-                    />
-                  </div>
-                  <div className="space-y-1.5 flex flex-col justify-end">
-                    <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1 mb-2">Availability</label>
-                    <button
-                      type="button"
-                      onClick={() => setDrinkForm({ ...drinkForm, isAvailable: !drinkForm.isAvailable })}
-                      className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
-                        drinkForm.isAvailable 
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                          : 'bg-red-500/10 border-red-500/20 text-red-400'
-                      }`}
-                    >
-                      {drinkForm.isAvailable ? 'In Stock' : 'Out of Stock'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-[#FFB700]/60 uppercase tracking-[3px] ml-1">Image URL</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="https://images.unsplash.com/..."
-                    value={drinkForm.image}
-                    onChange={e => setDrinkForm({ ...drinkForm, image: e.target.value })}
-                    className="w-full px-5 py-3 bg-white/5 rounded-xl border border-white/10 text-white font-bold outline-none focus:border-[#FFB700]/30 transition-all text-xs"
-                  />
-                </div>
-
-                {/* Preset image selector */}
-                <div className="space-y-1.5">
-                  <label className="text-[8px] font-bold text-white/30 uppercase tracking-widest ml-1">Or Pick A Premium Preset Image</label>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar border border-white/5 p-2 rounded-xl bg-black/20">
-                    {IMAGE_PRESETS.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset.name}
-                        onClick={() => {
-                          playSound(SOUNDS.CLICK);
-                          setDrinkForm({ ...drinkForm, image: preset.url });
-                          toast.success(`Loaded preset: ${preset.name}`, { duration: 1500 });
-                        }}
-                        className={`px-2 py-1 text-[8px] font-black uppercase rounded-lg border transition-all ${
-                          drinkForm.image === preset.url
-                            ? 'bg-[#FFB700] border-[#FFB700] text-matte-black'
-                            : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10'
-                        }`}
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Form buttons */}
-                <div className="flex gap-3 pt-4 border-t border-white/5">
-                  {editingDrink && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playSound(SOUNDS.CLICK);
-                        setEditingDrink(null);
-                        setDrinkForm({
-                          name: '',
-                          brand: '',
-                          category: 'Beer',
-                          size: '750ml',
-                          price: 0,
-                          image: '',
-                          isAvailable: true
-                        });
-                      }}
-                      className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-wider"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="flex-1 h-12 rounded-xl bg-white text-matte-black font-black text-[10px] uppercase tracking-wider hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-1.5"
-                  >
-                    Save Drink
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
         </main>
       ) : (
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 text-left">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Broadcast Push Notification</h2>
-              <p className="text-white/40 text-xs mt-1 font-semibold">Send a live push alert to all registered PWA client installations.</p>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">Broadcast Push Notification</h2>
+              <p className="text-gray-500 text-xs mt-1 font-semibold">Send a live push alert to all registered PWA client installations.</p>
             </div>
           </div>
-          <div className="max-w-2xl bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[40px] p-8 md:p-10 space-y-6">
+          <div className="max-w-2xl bg-white backdrop-blur-2xl border border-gray-100 rounded-[40px] p-8 md:p-10 space-y-6">
             <form onSubmit={handleSendNotification} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1">Notification Title</label>
@@ -2536,7 +2370,7 @@ export default function AdminPage() {
                   placeholder="e.g. Special Discount! 🍲"
                   value={notificationForm.title}
                   onChange={e => setNotificationForm({ ...notificationForm, title: e.target.value })}
-                  className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                  className="w-full px-6 py-4 bg-white shadow-sm rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-gray-500"
                 />
               </div>
 
@@ -2548,7 +2382,7 @@ export default function AdminPage() {
                   placeholder="e.g. Get 20% off on all Chicken Biryani combos today only! Use code MAGIC20."
                   value={notificationForm.message}
                   onChange={e => setNotificationForm({ ...notificationForm, message: e.target.value })}
-                  className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm resize-none placeholder:text-white/20 leading-relaxed"
+                  className="w-full px-6 py-4 bg-white shadow-sm rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm resize-none placeholder:text-gray-500 leading-relaxed"
                 />
               </div>
 
@@ -2560,7 +2394,7 @@ export default function AdminPage() {
                     placeholder="https://example.com/food-image.jpg"
                     value={notificationForm.imageUrl}
                     onChange={e => setNotificationForm({ ...notificationForm, imageUrl: e.target.value })}
-                    className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                    className="w-full px-6 py-4 bg-white shadow-sm rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-gray-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -2570,7 +2404,7 @@ export default function AdminPage() {
                     placeholder="e.g. https://momsmagic.shop/offers"
                     value={notificationForm.deepLink}
                     onChange={e => setNotificationForm({ ...notificationForm, deepLink: e.target.value })}
-                    className="w-full px-6 py-4 bg-[#050505] rounded-2xl border border-white/10 text-white font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-white/20"
+                    className="w-full px-6 py-4 bg-white shadow-sm rounded-2xl border border-gray-100 text-gray-900 font-bold outline-none focus:border-[#4CD964]/40 transition-all text-sm placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -2582,7 +2416,7 @@ export default function AdminPage() {
               >
                 {sendingNotification ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-900" />
                     Broadcasting Push Alerts...
                   </>
                 ) : (
@@ -2600,13 +2434,13 @@ export default function AdminPage() {
         <main className="max-w-[1400px] mx-auto p-6 md:p-10 relative z-10 space-y-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">🎡 Lucky Wheel Management</h2>
-              <p className="text-white/40 text-xs mt-1 font-semibold">Generate OTPs, manage prizes, and view spin history.</p>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter text-gray-900">🎡 Lucky Wheel Management</h2>
+              <p className="text-gray-500 text-xs mt-1 font-semibold">Generate OTPs, manage prizes, and view spin history.</p>
             </div>
             <button
               onClick={handleGenerateOTP}
               disabled={generatingOTP}
-              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-matte-black rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-[0_10px_20px_rgba(234,179,8,0.15)] disabled:opacity-50"
+              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-[0_10px_20px_rgba(234,179,8,0.15)] disabled:opacity-50"
             >
               {generatingOTP ? 'Generating...' : '+ Generate New OTP'}
             </button>
@@ -2616,34 +2450,34 @@ export default function AdminPage() {
             {/* OTPs and Spins */}
             <div className="space-y-8">
               {/* Generated OTPs Table */}
-              <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-4">
-                <h3 className="font-bold text-lg text-white">Active & Used OTPs</h3>
+              <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[24px] p-6 space-y-4">
+                <h3 className="font-bold text-lg text-gray-900">Active & Used OTPs</h3>
                 <div className="space-y-3">
                   {luckyCoupons.slice(0, 10).map((coupon: any) => (
-                    <div key={coupon.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div key={coupon.id} className="p-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 flex items-center justify-between">
                       <div>
                         <p className="font-mono text-xl font-bold tracking-widest text-yellow-400">{coupon.code}</p>
-                        <p className="text-[10px] text-white/40 mt-1 uppercase">Created: {new Date(coupon.createdAt).toLocaleString()}</p>
+                        <p className="text-[10px] text-gray-500 mt-1 uppercase">Created: {new Date(coupon.createdAt).toLocaleString()}</p>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${coupon.status === 'unused' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                         {coupon.status}
                       </div>
                     </div>
                   ))}
-                  {luckyCoupons.length === 0 && <p className="text-white/30 text-sm italic">No OTPs generated yet.</p>}
+                  {luckyCoupons.length === 0 && <p className="text-gray-500 text-sm italic">No OTPs generated yet.</p>}
                 </div>
               </div>
 
               {/* Spin History */}
-              <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-4">
-                <h3 className="font-bold text-lg text-white">Recent Spins & Winners</h3>
+              <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[24px] p-6 space-y-4">
+                <h3 className="font-bold text-lg text-gray-900">Recent Spins & Winners</h3>
                 <div className="space-y-3">
                   {luckySpins.slice(0, 10).map((spin: any) => (
-                    <div key={spin.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div key={spin.id} className="p-4 bg-gray-50/50est border border-gray-100 rounded-2xl border border-gray-100 flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-sm text-white">Prize: <span className="text-yellow-400">{spin.prize}</span></p>
-                        <p className="text-xs text-white/60">Phone: {spin.phone}</p>
-                        <p className="text-[10px] text-white/40 mt-1">Code Used: {spin.code}</p>
+                        <p className="font-bold text-sm text-gray-900">Prize: <span className="text-yellow-400">{spin.prize}</span></p>
+                        <p className="text-xs text-gray-500">Phone: {spin.phone}</p>
+                        <p className="text-[10px] text-gray-500 mt-1">Code Used: {spin.code}</p>
                       </div>
                       {spin.status === 'won' && spin.prize !== 'Better Luck Next Time' && (
                         <button
@@ -2658,22 +2492,22 @@ export default function AdminPage() {
                       )}
                     </div>
                   ))}
-                  {luckySpins.length === 0 && <p className="text-white/30 text-sm italic">No spins yet.</p>}
+                  {luckySpins.length === 0 && <p className="text-gray-500 text-sm italic">No spins yet.</p>}
                 </div>
               </div>
             </div>
 
             {/* Probability Manager */}
-            <div className="bg-[#121620]/50 backdrop-blur-2xl border border-white/5 rounded-[30px] p-6 space-y-6">
+            <div className="bg-white backdrop-blur-2xl border border-gray-100 rounded-[24px] p-6 space-y-6">
               <div>
-                <h3 className="font-bold text-lg text-white">Prize Probabilities (%)</h3>
-                <p className="text-xs text-white/40 mt-1">Adjust win chances. Ensure total equals 100%.</p>
+                <h3 className="font-bold text-lg text-gray-900">Prize Probabilities (%)</h3>
+                <p className="text-xs text-gray-500 mt-1">Adjust win chances. Ensure total equals 100%.</p>
               </div>
               
               <div className="space-y-4">
                 {luckyConfig && Object.entries(luckyConfig).map(([prize, chance]: any) => (
                   <div key={prize} className="flex items-center justify-between gap-4">
-                    <label className="text-sm font-bold text-white/80 w-1/2">{prize}</label>
+                    <label className="text-sm font-bold text-gray-500 w-1/2">{prize}</label>
                     <div className="flex gap-2 flex-1">
                       <input
                         type="number"
@@ -2681,13 +2515,13 @@ export default function AdminPage() {
                         max="100"
                         value={chance}
                         onChange={(e) => handleUpdateProbability(prize, parseInt(e.target.value) || 0)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-yellow-400/50"
+                        className="w-full bg-gray-50/50est border border-gray-100 border border-gray-100 rounded-xl px-4 py-2 text-gray-900 font-bold outline-none focus:border-yellow-400/50"
                       />
-                      <span className="flex items-center text-white/40">%</span>
+                      <span className="flex items-center text-gray-500">%</span>
                     </div>
                   </div>
                 ))}
-                {!luckyConfig && <p className="text-white/30 text-sm">Loading config...</p>}
+                {!luckyConfig && <p className="text-gray-500 text-sm">Loading config...</p>}
               </div>
             </div>
           </div>

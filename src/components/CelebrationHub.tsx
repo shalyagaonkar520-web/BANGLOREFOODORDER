@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Cake, PartyPopper, Sparkles, X, Wand2, Hammer, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
@@ -194,7 +193,7 @@ export default function CelebrationHub() {
             onClick={() => navigate('/')}
             className="w-11 h-11 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors backdrop-blur-md"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <span className="material-symbols-outlined w-5 h-5">chevron_left</span>
           </button>
           <div className="flex-1" />
           <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
@@ -369,7 +368,7 @@ export default function CelebrationHub() {
                   onClick={() => setShowModal(false)}
                   className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 >
-                  <X className="w-4 h-4" />
+                  <span className="material-symbols-outlined w-4 h-4">close</span>
                 </button>
               </div>
 
@@ -431,7 +430,7 @@ export default function CelebrationHub() {
                     className={`w-full py-5 rounded-[24px] font-black uppercase tracking-widest text-xs bg-gradient-to-r ${selectedCardData.gradient} text-white ${selectedCardData.glow} flex items-center justify-center gap-3 relative overflow-hidden`}
                   >
                     <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
-                    <Send className="w-4 h-4 shrink-0" />
+                    <span className="material-symbols-outlined w-4 h-4 shrink-0">send</span>
                     Submit & Send Reference On WhatsApp 🚀
                   </motion.button>
 

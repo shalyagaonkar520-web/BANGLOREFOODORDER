@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,11 +14,27 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+import { connectAuthEmulator } from 'firebase/auth';
+import { connectFirestoreEmulator } from 'firebase/firestore';
+import { connectDatabaseEmulator } from 'firebase/database';
+
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const rtdb = getDatabase(app);
+
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+  console.log('Connecting to local Firebase Emulators...');
+  connectAuthEmulator(auth, 'http://localhost:9099');
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  try {
+    connectDatabaseEmulator(rtdb, 'localhost', 9000);
+  } catch (err) {
+    console.warn('Realtime Database emulator connection skipped or failed:', err);
+  }
+}
 
 /**
  * Requests browser notification permission, registers the service worker,

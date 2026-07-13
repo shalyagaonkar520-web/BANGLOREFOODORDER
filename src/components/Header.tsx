@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown, User, Bell, Menu, X, Compass, PartyPopper, Utensils, LogOut, PackageSearch, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { useLocationStore } from '../store/locationStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSystemStore } from '../store/systemStore';
 import { useAuthStore } from '../store/authStore';
 import AuthModal from './AuthModal';
+import { MapPin, ChevronDown, Bell, User } from 'lucide-react';
 
 export default function Header() {
   const { deliveryLocation, openLocationPicker } = useLocationStore();
@@ -14,106 +15,91 @@ export default function Header() {
   const { user, profile } = useAuthStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const formatTime12h = (time24: string) => {
-    try {
-      const [hStr, mStr] = time24.split(':');
-      const h = parseInt(hStr, 10);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const displayHours = h % 12 || 12;
-      return `${displayHours}:${mStr} ${ampm}`;
-    } catch (e) {
-      return time24;
-    }
-  };
-
   const isStoreOpen = () => {
-    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) {
-      return false;
-    }
+    if (settings.websiteStatus === 'OFF' || settings.emergencyStop) return false;
     const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const currentTimeStr = `${hours}:${minutes}`;
-
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const t = `${h}:${m}`;
     if (settings.openTime <= settings.closeTime) {
-      return currentTimeStr >= settings.openTime && currentTimeStr <= settings.closeTime;
-    } else {
-      return currentTimeStr >= settings.openTime || currentTimeStr <= settings.closeTime;
+      return t >= settings.openTime && t <= settings.closeTime;
     }
+    return t >= settings.openTime || t <= settings.closeTime;
   };
+
+  const displayLocation = deliveryLocation?.address || "Yellapur, Karnataka";
 
   return (
     <>
-      <header className="sticky top-0 z-[100] bg-[#050505]/95 backdrop-blur-md px-4 py-3 border-b border-[#4CD964]/10 shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-3">
-          {/* Left Side: Delivery Details */}
-          <div className="flex flex-col text-left">
-            {/* Delivery Time Badge */}
-            <div className="flex items-center gap-1.5 w-fit">
-              <span className="bg-[#4CD964]/10 text-[#4CD964] text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1">
-                ⚡ 10 Minutes
-              </span>
-              {isStoreOpen() ? (
-                <span className="bg-[#4CD964]/10 border border-[#4CD964]/20 text-[#4CD964] text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5 animate-pulse">
-                  🟢 Open Now
-                </span>
-              ) : (
-                <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5">
-                  🔴 Closed
-                </span>
-              )}
-              <span className="bg-white/5 border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-[#4CD964]" /> {formatTime12h(settings.openTime)} - {formatTime12h(settings.closeTime)}
-              </span>
-            </div>
-            
-            {/* Location Picker Dropdown */}
-            <button 
-              onClick={openLocationPicker}
-              className="flex items-center gap-1 text-[11px] font-extrabold text-white mt-1 max-w-[180px] sm:max-w-xs transition-colors hover:text-[#4CD964] outline-none"
-            >
-              <span className="truncate">
-                {deliveryLocation ? deliveryLocation.address : 'Balaji PG, Bengaluru'}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-white/40 shrink-0" />
-            </button>
-          </div>
+      <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+        <div className="max-w-[1440px] mx-auto px-4 py-4 flex items-center justify-between gap-3">
 
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/food" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
-                <Utensils className="w-3.5 h-3.5 text-[#4CD964]" /> Food Order
-              </Link>
-              <Link to="/bulk" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
-                <PartyPopper className="w-3.5 h-3.5 text-[#4CD964]" /> Party Specials
-              </Link>
-              {user && (
-                <Link to="/profile" className="text-xs font-black uppercase tracking-widest text-white/70 hover:text-[#4CD964] transition-colors flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-[#4CD964]" /> My Profile
-                </Link>
-              )}
+          {/* Left — Deliver To */}
+          <button
+            onClick={openLocationPicker}
+            className="flex items-start gap-2 group outline-none text-left"
+          >
+            <MapPin className="text-primary w-5 h-5 shrink-0 group-hover:scale-110 transition-transform mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-label-sm text-secondary uppercase tracking-wider">
+                Deliver to
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-body-lg font-headline-sm text-on-surface max-w-[160px] sm:max-w-[220px] truncate leading-tight">
+                  {displayLocation}
+                </span>
+                <ChevronDown className="text-primary w-4 h-4 shrink-0" />
+              </div>
+            </div>
+          </button>
+
+          {/* Right — Actions */}
+          <div className="flex items-center gap-2">
+            {/* Desktop nav links */}
+            <nav className="hidden md:flex items-center gap-6 mr-6">
+              <Link to="/" className="text-body-md font-medium text-on-surface hover:text-primary transition-colors">Home</Link>
+              <Link to="/food" className="text-body-md font-medium text-secondary hover:text-primary transition-colors">Food</Link>
+              <Link to="/orders" className="text-body-md font-medium text-secondary hover:text-primary transition-colors">Orders</Link>
+              <Link to="/profile#wallet" className="text-body-md font-medium text-secondary hover:text-primary transition-colors">Wallet</Link>
+              <Link to="/support" className="text-body-md font-medium text-secondary hover:text-primary transition-colors">Support</Link>
             </nav>
 
-            {/* Auth Button at Top Right */}
+            {/* Store Status dot */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/50 px-3 py-1.5 rounded-full">
+              <span className={`w-2 h-2 rounded-full ${isStoreOpen() ? 'bg-tertiary animate-pulse' : 'bg-error'}`} />
+              <span className={`text-label-sm font-bold ${isStoreOpen() ? 'text-tertiary' : 'text-error'}`}>
+                {isStoreOpen() ? 'Open' : 'Closed'}
+              </span>
+            </div>
+
+            {/* Notification Bell */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="relative w-9 h-9 rounded-full bg-surface-container-low border border-outline-variant/50 flex items-center justify-center hover:border-primary transition-colors"
+              onClick={() => navigate('/orders')}
+            >
+              <Bell className="text-gray-600 w-5 h-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+            </motion.button>
+
+            {/* Profile / Auth */}
             {user ? (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/profile')}
-                className="flex items-center gap-2 bg-white/5 border border-[#4CD964]/20 px-3.5 py-2 rounded-xl text-xs font-black text-white hover:border-[#4CD964] transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary text-xs font-bold shadow-md hover:bg-primary/90 transition-colors"
               >
-                <div className="w-5 h-5 rounded-full bg-[#4CD964]/10 border border-[#4CD964]/30 flex items-center justify-center text-[10px] text-[#4CD964] uppercase font-black shrink-0">
-                  {profile?.name?.charAt(0) || user.displayName?.charAt(0) || 'U'}
-                </div>
-                <span className="max-w-[80px] sm:max-w-[120px] truncate uppercase tracking-wider text-[10px] sm:text-xs">
-                  {profile?.name || user.displayName || 'Profile'}
-                </span>
-              </button>
+                {profile?.name?.charAt(0)?.toUpperCase() || user.displayName?.charAt(0)?.toUpperCase() || 'U'}
+              </motion.button>
             ) : (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsAuthModalOpen(true)}
-                className="bg-gradient-to-r from-[#4CD964] to-[#3AC152] hover:brightness-105 active:scale-95 text-white font-black text-[10px] uppercase tracking-[1px] px-4 py-2 rounded-xl transition-all shadow-[0_4px_12px_rgba(76,217,100,0.2)] cursor-pointer"
+                className="flex items-center gap-1.5 bg-primary text-on-primary font-bold text-label-md px-4 py-2 rounded-xl shadow-md hover:bg-primary/90 transition-all"
               >
-                Login / Sign Up
-              </button>
+                <User className="w-4 h-4" />
+                Login
+              </motion.button>
             )}
           </div>
         </div>

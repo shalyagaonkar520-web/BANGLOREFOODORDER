@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MomsmagicDelivery</string>
+    <string name="title_activity_main">MomsmagicDelivery</string>
+    <string name="package_name">com.momsmagic.delivery</string>
+    <string name="custom_url_scheme">com.momsmagic.delivery</string>
+</resources>

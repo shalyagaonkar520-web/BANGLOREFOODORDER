@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ChevronLeft, Plus, X, PartyPopper, ShoppingBag, Calendar, Users } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
@@ -94,9 +94,9 @@ export default function BulkOrderPage() {
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
         <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none" />
         <div className="space-y-6 relative z-10 max-w-md mx-auto">
-          <PartyPopper className="w-16 h-16 text-brand mx-auto opacity-80" />
-          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-tight">Party <span className="text-brand">Specials</span></h1>
-          <div className="bg-brand/20 text-brand px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest inline-block border border-brand/30">
+          <span className="material-symbols-outlined w-16 h-16 text-primary mx-auto opacity-80">celebration</span>
+          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white leading-tight">Party <span className="text-primary">Specials</span></h1>
+          <div className="bg-primary/20 text-primary px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest inline-block border border-primary/30">
             Coming Soon
           </div>
           <p className="text-white/40 text-sm font-bold mt-4 leading-relaxed">
@@ -140,15 +140,15 @@ export default function BulkOrderPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button onClick={() => navigate('/')} className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors">
-            <ChevronLeft className="w-6 h-6" />
+            <span className="material-symbols-outlined w-6 h-6">chevron_left</span>
           </button>
           <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-full border border-white/10 backdrop-blur-md">
-             <PartyPopper className="w-5 h-5 text-brand" />
+             <span className="material-symbols-outlined w-5 h-5 text-primary">celebration</span>
              <span className="font-black uppercase tracking-widest text-xs">Premium Celebration</span>
           </div>
           <button onClick={() => navigate('/cart')} className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors relative">
-            <ShoppingBag className="w-5 h-5" />
-            {items.length > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-brand rounded-full" />}
+            <span className="material-symbols-outlined w-5 h-5">shopping_bag</span>
+            {items.length > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />}
           </button>
         </div>
 
@@ -219,7 +219,7 @@ export default function BulkOrderPage() {
                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                          {(activeCategory === 'Normal' || activeCategory === 'Ice Cake') && (
                            <div className="absolute bottom-2 left-2 right-2 text-center">
-                             <span className="text-[8px] font-black uppercase tracking-widest bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-brand">{activeCategory}</span>
+                             <span className="text-[8px] font-black uppercase tracking-widest bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-primary">{activeCategory}</span>
                            </div>
                          )}
                          {activeCategory === 'Party Items' && (
@@ -233,7 +233,7 @@ export default function BulkOrderPage() {
                       <div className="space-y-3 relative z-10">
                         <div>
                           <h4 className="font-black italic uppercase tracking-tighter text-lg leading-tight">{item.name}</h4>
-                          <span className="text-brand font-black">₹{item.price}</span>
+                          <span className="text-primary font-black">₹{item.price}</span>
                         </div>
                         <button 
                           onClick={() => handleAddToCart(item, activeCategory)}
@@ -241,7 +241,7 @@ export default function BulkOrderPage() {
                           className={`w-full py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${
                             isClosed
                               ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                              : 'bg-white/10 hover:bg-brand active:scale-95 transition-transform'
+                              : 'bg-white/10 hover:bg-primary active:scale-95 transition-transform'
                           }`}
                         >
                           {isClosed ? 'Closed' : 'Add Item'}
@@ -277,8 +277,8 @@ export default function BulkOrderPage() {
             >
               <div className="sticky top-0 bg-[#111]/90 backdrop-blur-md p-6 border-b border-white/5 flex items-center justify-between z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand/20 rounded-full flex items-center justify-center">
-                    <PartyPopper className="w-5 h-5 text-brand" />
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined w-5 h-5 text-primary">celebration</span>
                   </div>
                   <div>
                     <h3 className="font-black italic uppercase tracking-tighter text-xl">Complete Your Celebration 🎉</h3>
@@ -286,24 +286,24 @@ export default function BulkOrderPage() {
                   </div>
                 </div>
                 <button onClick={() => setShowUpsell(false)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/10">
-                  <X className="w-5 h-5" />
+                  <span className="material-symbols-outlined w-5 h-5">close</span>
                 </button>
               </div>
 
               <div className="p-6 space-y-6 pb-24 md:pb-6">
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-brand mb-4">Party Essentials</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-4">Party Essentials</h4>
                   <div className="grid grid-cols-2 gap-4">
                     {PARTY_ITEMS.slice(0, 4).map(item => (
                       <div key={item.id} className="bg-white/5 rounded-2xl p-4 flex flex-col justify-between border border-white/5">
                         <img src={item.image} className="w-full h-24 object-cover rounded-xl mb-3" alt={item.name} />
                         <div className="mb-3">
                           <p className="font-black uppercase text-[10px] truncate">{item.name}</p>
-                          <p className="text-brand font-black text-xs">₹{item.price}</p>
+                          <p className="text-primary font-black text-xs">₹{item.price}</p>
                         </div>
                         <button 
                           onClick={() => { addItem(item); toast.success('Added!'); }}
-                          className="w-full py-2 bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand transition-colors"
+                          className="w-full py-2 bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-colors"
                         >
                           Add +
                         </button>
@@ -313,7 +313,7 @@ export default function BulkOrderPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-brand mb-4">Quick Snacks</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-4">Quick Snacks</h4>
                   <div className="space-y-3">
                     {SNACKS.map(snack => (
                       <div key={snack.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
@@ -321,14 +321,14 @@ export default function BulkOrderPage() {
                           <img src={snack.image} className="w-16 h-16 object-cover rounded-xl" alt="" />
                           <div>
                             <p className="font-black uppercase text-sm">{snack.name}</p>
-                            <p className="text-brand font-black text-xs">₹{snack.price}</p>
+                            <p className="text-primary font-black text-xs">₹{snack.price}</p>
                           </div>
                         </div>
                         <button 
                           onClick={() => { addItem(snack); toast.success('Added!'); }}
-                          className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-brand transition-colors"
+                          className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-primary transition-colors"
                         >
-                          <Plus className="w-5 h-5" />
+                          <span className="material-symbols-outlined w-5 h-5">add</span>
                         </button>
                       </div>
                     ))}
@@ -337,7 +337,7 @@ export default function BulkOrderPage() {
               </div>
               
               <div className="sticky bottom-0 bg-[#111] p-4 border-t border-white/5 md:hidden">
-                 <button onClick={() => setShowUpsell(false)} className="w-full py-4 bg-brand rounded-2xl font-black uppercase tracking-widest">Done</button>
+                 <button onClick={() => setShowUpsell(false)} className="w-full py-4 bg-primary rounded-2xl font-black uppercase tracking-widest">Done</button>
               </div>
             </motion.div>
           </motion.div>
@@ -349,7 +349,7 @@ export default function BulkOrderPage() {
           onClick={() => advanceToNextCategory(activeCategory)}
           className="fixed bottom-24 left-6 md:bottom-10 md:left-10 z-40 bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-4 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:bg-white/20 active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2"
         >
-          Skip {activeCategory} <ArrowRight className="w-4 h-4" />
+          Skip {activeCategory} <span className="material-symbols-outlined w-4 h-4">arrow_forward</span>
         </button>
     </div>
   );

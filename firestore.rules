@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function signedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+
+    function isAdmin() {
+      return signedIn() && getUserRole() == 'admin';
+    }
+
+    function isKitchenStaff() {
+      return signedIn() && getUserRole() == 'kitchen_staff';
+    }
+
+    function isRider() {
+      return signedIn() && getUserRole() == 'delivery_partner';
+    }
+
+    // Users
+    match /users/{uid} {
+      allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
+      
+      match /addresses/{addressId} {
+        allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
+      }
+    }
+
+    // Restaurants
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Menu Items
+    match /menuItems/{itemId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow read: if signedIn() && (
+        resource.data.customerId == request.auth.uid ||
+        isAdmin() ||
+        (isKitchenStaff() && resource.data.restaurantId == request.auth.token.restaurantId) ||
+        (isRider() && (resource.data.riderId == request.auth.uid || (resource.data.riderId == null && resource.data.status == 'ReadyForPickup')))
+      );
+      
+      allow create: if signedIn() && request.resource.data.customerId == request.auth.uid;
+      
+      allow update: if signedIn() && (
+        isAdmin() ||
+        (isKitchenStaff() && resource.data.restaurantId == request.auth.token.restaurantId) ||
+        (isRider() && (
+          // Rider claiming unassigned order
+          (resource.data.riderId == null && request.resource.data.riderId == request.auth.uid && request.resource.data.status == 'RiderAssigned') ||
+          // Rider updating status of their own order
+          (resource.data.riderId == request.auth.uid)
+        )) ||
+        // Customer cancelling order before accepted
+        (resource.data.customerId == request.auth.uid && resource.data.status == 'Placed' && request.resource.data.status == 'Cancelled')
+      );
+    }
+
+    // Delivery Partners
+    match /deliveryPartners/{uid} {
+      allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if signedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Coupons
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.customerId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Global Settings
+    match /settings/config {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

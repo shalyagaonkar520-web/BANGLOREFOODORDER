@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, Users, ShieldCheck, Wifi, Award, ArrowLeft, Star, 
-  MapPin, Coffee, Check, ChevronRight, Loader2, PartyPopper 
-} from 'lucide-react';
+
 import { playSound, SOUNDS } from '../utils/audio';
 import Header from './Header';
 
@@ -128,7 +125,7 @@ export default function ResortBookingPage() {
           }}
           className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-6"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Home
+          <span className="material-symbols-outlined w-4 h-4">arrow_back</span> Back to Home
         </button>
 
         {/* Heading */}
@@ -167,7 +164,7 @@ export default function ResortBookingPage() {
                       <div className="w-full md:w-[40%] h-64 md:h-auto relative min-h-[220px]">
                         <img src={room.image} className="w-full h-full object-cover" alt={room.name} />
                         <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10 flex items-center gap-1">
-                          <Star className="w-3.5 h-3.5 fill-[#FFB700] text-[#FFB700]" />
+                          <span className="material-symbols-outlined w-3.5 h-3.5 fill-[#FFB700] text-[#FFB700]">star</span>
                           <span className="text-[10px] font-black text-white">{room.rating.toFixed(1)}</span>
                         </div>
                       </div>
@@ -192,8 +189,8 @@ export default function ResortBookingPage() {
                         {/* Specs & Amenities */}
                         <div className="space-y-4">
                           <div className="flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-wider text-white/40 border-t border-white/5 pt-4">
-                            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-[#4CD964]" /> Size: {room.size}</span>
-                            <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-[#4CD964]" /> View: {room.view}</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined w-3.5 h-3.5 text-[#4CD964]">verified_user</span> Size: {room.size}</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined w-3.5 h-3.5 text-[#4CD964]">location_on</span> View: {room.view}</span>
                           </div>
 
                           <div className="flex flex-wrap gap-2 pt-1">
@@ -208,8 +205,8 @@ export default function ResortBookingPage() {
 
                       {/* Chosen indicator */}
                       {isChosen && (
-                        <div className="absolute top-4 right-4 bg-[#4CD964] text-matte-black w-8 h-8 rounded-full flex items-center justify-center shadow-lg border border-white/10">
-                          <Check className="w-4 h-4 stroke-[3px]" />
+                        <div className="absolute top-4 right-4 bg-[#4CD964] text-surface w-8 h-8 rounded-full flex items-center justify-center shadow-lg border border-white/10">
+                          <span className="material-symbols-outlined w-4 h-4 stroke-[3px]">check</span>
                         </div>
                       )}
                     </motion.div>
@@ -228,7 +225,7 @@ export default function ResortBookingPage() {
                     {/* Check In */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1 flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" /> Check-In Date
+                        <span className="material-symbols-outlined w-3.5 h-3.5">calendar_today</span> Check-In Date
                       </label>
                       <input 
                         type="date"
@@ -246,7 +243,7 @@ export default function ResortBookingPage() {
                     {/* Check Out */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1 flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" /> Check-Out Date
+                        <span className="material-symbols-outlined w-3.5 h-3.5">calendar_today</span> Check-Out Date
                       </label>
                       <input 
                         type="date"
@@ -264,7 +261,7 @@ export default function ResortBookingPage() {
                     {/* Guest Count */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-[#4CD964] uppercase tracking-[3px] ml-1 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" /> Total Guests
+                        <span className="material-symbols-outlined w-3.5 h-3.5">group</span> Total Guests
                       </label>
                       <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl p-2.5">
                         <button 
@@ -332,13 +329,13 @@ export default function ResortBookingPage() {
                     >
                       {isBooking ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="material-symbols-outlined w-5 h-5 animate-spin">sync</span>
                           Processing Booking...
                         </>
                       ) : (
                         <>
                           Reserve Stay
-                          <ChevronRight className="w-4 h-4" />
+                          <span className="material-symbols-outlined w-4 h-4">chevron_right</span>
                         </>
                       )}
                     </button>
@@ -361,7 +358,7 @@ export default function ResortBookingPage() {
                 
                 {/* Ticket Stamp */}
                 <div className="w-24 h-24 bg-[#4CD964]/10 rounded-[35px] border border-[#4CD964]/25 flex items-center justify-center mx-auto text-[#4CD964] mb-4">
-                  <PartyPopper className="w-12 h-12 animate-bounce" />
+                  <span className="material-symbols-outlined w-12 h-12 animate-bounce">celebration</span>
                 </div>
 
                 <div className="space-y-2">
@@ -425,7 +422,7 @@ export default function ResortBookingPage() {
                       playSound(SOUNDS.CLICK);
                       navigate('/food');
                     }}
-                    className="flex-1 h-14 rounded-2xl bg-white text-matte-black font-black text-xs uppercase tracking-[2px] hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg"
+                    className="flex-1 h-14 rounded-2xl bg-white text-surface font-black text-xs uppercase tracking-[2px] hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg"
                   >
                     Browse Food Menu
                   </button>

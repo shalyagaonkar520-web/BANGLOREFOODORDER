@@ -22,6 +22,7 @@ export interface AdminUser {
 export interface Product {
   id?: string;
   hotelId?: string;
+  restaurantId?: string;
   name: string;
   price: number;
   gettingPrice?: number;
@@ -68,6 +69,7 @@ export interface Coupon {
 export interface Order {
   id?: string;
   hotelId: string;
+  restaurantId?: string;
   userName: string;
   userPhone: string;
   address: string;

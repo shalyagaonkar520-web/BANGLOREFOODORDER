@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "riderLocations": {
+      "$riderId": {
+        ".read": "auth != null && (auth.uid == $riderId || auth.token.role == 'admin')",
+        ".write": "auth != null && auth.uid == $riderId"
+      }
+    },
+    "riderPresence": {
+      "$riderId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $riderId"
+      }
+    }
+  }
+}

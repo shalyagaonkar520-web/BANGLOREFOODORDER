@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Burger House | HungerMoment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Montserrat:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#c2c5de",
+                      "on-primary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "background": "#faf8ff",
+                      "secondary-fixed": "#dee1fa",
+                      "surface-container-high": "#e6e7f5",
+                      "on-primary-container": "#fffbff",
+                      "surface-tint": "#ac3500",
+                      "primary-fixed": "#ffdbd0",
+                      "primary-fixed-dim": "#ffb59d",
+                      "on-tertiary-container": "#f8ffef",
+                      "on-secondary-fixed": "#161b2d",
+                      "surface-container": "#ecedfb",
+                      "outline-variant": "#e5beb2",
+                      "tertiary": "#196b00",
+                      "inverse-on-surface": "#eff0fd",
+                      "surface-container-highest": "#e1e2ef",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#115300",
+                      "on-secondary-fixed-variant": "#42465a",
+                      "secondary-container": "#dbdef8",
+                      "on-error": "#ffffff",
+                      "tertiary-container": "#35851d",
+                      "on-tertiary-fixed": "#032100",
+                      "surface-dim": "#d8d9e7",
+                      "tertiary-fixed-dim": "#86db69",
+                      "surface-variant": "#e1e2ef",
+                      "tertiary-fixed": "#a1f882",
+                      "error": "#ba1a1a",
+                      "surface": "#faf8ff",
+                      "on-surface": "#191b25",
+                      "on-secondary-container": "#5e6177",
+                      "outline": "#907065",
+                      "inverse-surface": "#2d303a",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#390c00",
+                      "on-surface-variant": "#5c4037",
+                      "surface-container-low": "#f2f3ff",
+                      "on-primary-fixed-variant": "#832600",
+                      "primary-container": "#d24200",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#ffb59d",
+                      "secondary": "#5a5d73",
+                      "primary": "#a83300",
+                      "on-background": "#191b25",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#faf8ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "0.5rem",
+                      "stack-md": "1rem",
+                      "stack-xs": "0.25rem",
+                      "margin-desktop": "2rem",
+                      "gutter": "1.5rem",
+                      "stack-lg": "2rem",
+                      "margin-mobile": "1rem",
+                      "container-max": "1200px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Montserrat"],
+                      "headline-xl": ["Montserrat"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-lg-mobile": ["Montserrat"],
+                      "headline-md": ["Montserrat"],
+                      "body-sm": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .custom-shadow { box-shadow: 0px 4px 20px rgba(40, 44, 63, 0.08); }
+        .sticky-sidebar { position: sticky; top: 100px; height: calc(100vh - 120px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .transition-all-200 { transition: all 0.2s ease; }
+        .veg-icon { border: 2px solid #196b00; padding: 2px; }
+        .non-veg-icon { border: 2px solid #ba1a1a; padding: 2px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Bar -->
+<header class="bg-surface dark:bg-surface-container-low shadow-[0px_4px_20px_rgba(40,44,63,0.08)] docked full-width top-0 sticky z-[60]">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto">
+<div class="text-headline-lg font-headline-lg text-primary dark:text-inverse-primary tracking-tight cursor-pointer">
+                HungerMoment
+            </div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Offers</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Help</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors text-label-md font-label-md" href="#">Sign In</a>
+<div class="flex items-center gap-2 text-primary font-bold border-b-2 border-primary pb-1 cursor-pointer">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="text-label-md font-label-md">Cart</span>
+</div>
+</nav>
+<div class="md:hidden flex gap-4">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</div>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg">
+<!-- Restaurant Info Header -->
+<section class="mb-stack-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between border-b border-outline-variant pb-8 gap-stack-md">
+<div>
+<h1 class="text-headline-xl font-headline-xl text-on-surface mb-2">The Burger House</h1>
+<p class="text-body-md font-body-md text-on-surface-variant">American, Fast Food, Beverages</p>
+<p class="text-body-sm font-body-sm text-secondary">Downtown Plaza, Block B, 4th Street</p>
+</div>
+<div class="flex flex-wrap gap-4 items-center">
+<div class="flex flex-col items-center bg-surface-container-high px-4 py-2 rounded-xl">
+<div class="flex items-center gap-1 text-tertiary font-bold">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.5</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary">500+ Ratings</span>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant hidden md:block"></div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md font-bold">25 MINS</span>
+<span class="text-label-sm font-label-sm text-secondary">Delivery Time</span>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant hidden md:block"></div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md font-bold">2.4 KM</span>
+<span class="text-label-sm font-label-sm text-secondary">Distance</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Menu Layout -->
+<div class="flex flex-col md:flex-row gap-gutter">
+<!-- Left Sidebar: Categories -->
+<aside class="hidden md:block w-64 flex-shrink-0">
+<div class="sticky-sidebar overflow-y-auto hide-scrollbar pr-4">
+<nav class="flex flex-col gap-2">
+<a class="px-4 py-3 rounded-lg text-primary bg-primary-fixed font-bold transition-all-200" href="#recommended">Recommended</a>
+<a class="px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all-200" href="#smash-burgers">Smash Burgers</a>
+<a class="px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all-200" href="#sides">Sides</a>
+<a class="px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all-200" href="#beverages">Beverages</a>
+<a class="px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all-200" href="#desserts">Desserts</a>
+</nav>
+</div>
+</aside>
+<!-- Main Menu List -->
+<div class="flex-grow">
+<div class="flex items-center gap-stack-sm mb-stack-md overflow-x-auto pb-2 hide-scrollbar md:hidden">
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-primary bg-primary-fixed text-primary text-label-md font-bold">Recommended</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md">Smash Burgers</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md">Sides</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant text-label-md">Beverages</button>
+</div>
+<!-- Section: Recommended -->
+<section class="mb-stack-lg" id="recommended">
+<h2 class="text-headline-md font-headline-md mb-stack-md flex items-center gap-2">
+                        Recommended
+                        <span class="text-body-sm text-secondary">(8)</span>
+</h2>
+<div class="grid grid-cols-1 gap-6">
+<!-- Menu Item 1 -->
+<div class="group flex justify-between gap-6 pb-8 border-b border-outline-variant last:border-0">
+<div class="flex-grow space-y-2">
+<div class="flex items-center gap-2">
+<div class="non-veg-icon w-4 h-4 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+</div>
+<span class="text-tertiary-container text-label-sm font-bold bg-tertiary-fixed px-2 py-0.5 rounded">Bestseller</span>
+</div>
+<h3 class="text-body-lg font-bold text-on-surface">Double Truffle Smash Burger</h3>
+<p class="text-body-md font-bold text-primary">₹349</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-xl">Double 100% Angus beef patties, smashed thin and crispy, topped with black truffle aioli, melted swiss cheese, and caramelized onions on a toasted brioche bun.</p>
+</div>
+<div class="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-xl custom-shadow" data-alt="A gourmet smash burger with double beef patties, melted swiss cheese dripping down the sides, glistening black truffle aioli, and golden caramelized onions on a shiny toasted brioche bun. The lighting is warm and dramatic, highlighting the crispy edges of the meat. High-resolution food photography in a professional studio setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKcU6JpUwdsg0teTTWsQr0RXNBLv_vOi4Ume7CfJ9fVYRqUJyOErSzQX9s3Pj7-1G8To5hQFwDiyChfT8UWIaLoDdBIhPoDmepcF_b79C08kly82dFvHhR-1l5VnmAVqeaJtNUAH4CRKcpfvbBzA_9ZPbQgdsJi0ukG6POKHBxKsjr7N_MfPZ1LXifpEcrCoU8ujYqH5JJwLq7GP_ATpP5cN9JjJKAktgJMgUM5VVt_L4Ve1Cz-RdRAOBvwuiFjWTW6A0ae_xk6JmQ"/>
+<button class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-surface border border-outline-variant text-primary font-bold px-8 py-2 rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all-200" onclick="addToCart('Double Truffle Smash Burger', 349)">
+                                    ADD
+                                </button>
+</div>
+</div>
+<!-- Menu Item 2 -->
+<div class="group flex justify-between gap-6 pb-8 border-b border-outline-variant last:border-0">
+<div class="flex-grow space-y-2">
+<div class="flex items-center gap-2">
+<div class="veg-icon w-4 h-4 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+</div>
+</div>
+<h3 class="text-body-lg font-bold text-on-surface">Crispy Portobello Melt</h3>
+<p class="text-body-md font-bold text-primary">₹289</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-xl">A giant panko-crusted portobello mushroom stuffed with Muenster cheese, topped with lettuce, tomato, and our secret 'Moment' sauce.</p>
+</div>
+<div class="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-xl custom-shadow" data-alt="A delicious vegetarian burger featuring a large, crispy panko-crusted portobello mushroom. The mushroom is split slightly to reveal melted cheese inside. Fresh green lettuce and vibrant red tomatoes are layered beneath a fluffy bun. The background is clean and bright, emphasizing the fresh ingredients and golden-brown texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-GT_j7gx9BXs1FXz88MFw09xs1DnmD7SKIZY_Ts--pr1tcMuvUmxau9JhhI8HvFaLoH53gIlGepm9lyOipNeNdRIsRKKAsq_VGV0edcVmSmjFHK0Sc0Of-zsVzBIETzRkgJJiHcOYDpJO8jOZ7yusb8QMnicuSOt69Gh_Tbv3VN2gHaqN_mJxR-Xl9YlFhjfswpaJYEtKFqqebsWboOulvUnE7riilnVWDtSF7L1HhZidmmn2k_CyaDeJ2m5zYvvDUqNNhgSgFALm"/>
+<button class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-surface border border-outline-variant text-primary font-bold px-8 py-2 rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all-200" onclick="addToCart('Crispy Portobello Melt', 289)">
+                                    ADD
+                                </button>
+</div>
+</div>
+<!-- Menu Item 3 -->
+<div class="group flex justify-between gap-6 pb-8 border-b border-outline-variant last:border-0">
+<div class="flex-grow space-y-2">
+<div class="flex items-center gap-2">
+<div class="non-veg-icon w-4 h-4 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+</div>
+</div>
+<h3 class="text-body-lg font-bold text-on-surface">Spicy BBQ Bacon King</h3>
+<p class="text-body-md font-bold text-primary">₹399</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-xl">Three beef patties, thick-cut smoked bacon, spicy jalapeños, and smoky BBQ sauce. A massive burger for the ultimate hunger moment.</p>
+</div>
+<div class="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-xl custom-shadow" data-alt="An impressive tall burger with three stacked beef patties, multiple strips of crispy smoked bacon, and bright green jalapeño slices. Dark, glossy BBQ sauce is seen oozing out. The burger sits on a rustic wooden surface with warm, moody lighting that highlights the textures of the meat and crispy bacon. Top-tier food commercial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTrsZ7lBVJ9zGktkbbS5cLmHk0UtZQQvlqeL6QGM9T5qNxeWcL48iDWMIYiU0d0aMbEP8HgrCu7L64oNYQe9Fm6uXIVWFCIpjHn78ztDNiYVmIiBUf8sFeTgeIE24yG3dkn0gLMYZa8Xm_J3HKzTy1sXXugX3lGufrbRDKkU8142XV-5L7lwd7DZEMbSS5Jt24PEnzCeA1Tk0O5poke_PbTKpVBp_wSmPOvfuOo1CO84IjBDKqr6MqHAjp50G5rchkq_S7D3e68FYF"/>
+<button class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-surface border border-outline-variant text-primary font-bold px-8 py-2 rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all-200" onclick="addToCart('Spicy BBQ Bacon King', 399)">
+                                    ADD
+                                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Sides -->
+<section class="mb-stack-lg" id="sides">
+<h2 class="text-headline-md font-headline-md mb-stack-md">Sides</h2>
+<div class="grid grid-cols-1 gap-6">
+<div class="group flex justify-between gap-6 pb-8 border-b border-outline-variant last:border-0">
+<div class="flex-grow space-y-2">
+<div class="flex items-center gap-2">
+<div class="veg-icon w-4 h-4 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+</div>
+</div>
+<h3 class="text-body-lg font-bold text-on-surface">Parmesan Garlic Fries</h3>
+<p class="text-body-md font-bold text-primary">₹149</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Skin-on fries tossed in fresh garlic, parsley, and aged parmesan cheese. Served with a side of ranch.</p>
+</div>
+<div class="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-xl custom-shadow" data-alt="A heap of golden-brown, skin-on French fries generously dusted with white grated parmesan cheese and sprinkles of fresh green parsley. Small bits of minced garlic are visible. The fries are presented in a modern charcoal-colored bowl on a clean white table. Soft natural light creates a light-mode, airy aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZZXLzifgK_GceIkFMfUT7tN45eNfBFJLtvdzj5j1s7JKQQPP7gkYug6bs2vpXrt9l58UXgk_qthYM34j04hWHiS5SmqvlABP7ys7Utahek1e8bOR2YCudQvl9nLlhstKBoYdQmY_BCjhLSuobcJlR0xRBJ1iWdIxJlie0fYKcX-5Ddce4dqD9DGbSzx6WCRWgwJJAIX1vGVrnA9Xz0NCOO3RLHyuwGcXQa_qhuFSr8nx-80fXZD7PMyfEGqi1on-92LiilNT6UOI_"/>
+<button class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-surface border border-outline-variant text-primary font-bold px-8 py-2 rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all-200" onclick="addToCart('Parmesan Garlic Fries', 149)">
+                                    ADD
+                                </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Sidebar: Cart -->
+<aside class="hidden lg:block w-80 flex-shrink-0">
+<div class="sticky-sidebar">
+<div class="bg-surface border border-outline-variant rounded-xl p-6 flex flex-col h-full shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-headline-md font-headline-md">Cart</h2>
+<span class="text-body-sm text-secondary" id="cart-item-count">0 ITEMS</span>
+</div>
+<div class="flex-grow overflow-y-auto hide-scrollbar space-y-4 mb-6" id="cart-items">
+<!-- Empty State -->
+<div class="flex flex-col items-center justify-center h-full text-center py-8" id="empty-cart-msg">
+<img class="w-32 h-32 opacity-20 mb-4" data-alt="A minimalist, high-quality digital illustration of an empty shopping bag with a sad face, styled in soft pastel oranges and grays. The design is clean and centered in a white void, representing a 'cart empty' state for a food delivery application. Modern corporate minimalist style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvuUmdsmeWMYDhHUFbl5mly7xX9mxiKtYf_ZFgpgbXoMeCcnlmPhT3e9t0XdtnUjIfDYPaLIrxC2EJ6O9Vp4pmiISjEA_MUYp7phuNIADlgxkE5t5WEq0gRgEFUEyWdJYab86zpY9T9SWP2eiUWQn6f4B42gyUR2m46VpppzWDVlghPKIRLH86cYXkjn_ks2qsF3jC1SkSxswjOjJH75G4X8Rw7O-hKH6XsEJJuogXd1iNgjsQzcatynENCC3Yx2MsN_2-BCpfQr1G"/>
+<p class="text-on-surface-variant font-medium">Your cart is empty</p>
+<p class="text-label-sm text-secondary">Add some tasty burgers!</p>
+</div>
+</div>
+<div class="border-t border-outline-variant pt-6 space-y-3">
+<div class="flex justify-between text-body-md font-bold">
+<span>Subtotal</span>
+<span id="cart-subtotal">₹0</span>
+</div>
+<p class="text-label-sm text-secondary">Extra charges may apply</p>
+<button class="w-full bg-primary text-on-primary font-bold py-4 rounded-xl shadow-lg hover:brightness-110 active:scale-[0.98] transition-all-200">
+                                CHECKOUT
+                            </button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Mobile Sticky Cart Summary -->
+<div class="lg:hidden fixed bottom-16 left-4 right-4 bg-primary text-on-primary p-4 rounded-xl flex justify-between items-center shadow-xl z-50 transform translate-y-24 transition-transform duration-300" id="mobile-cart-strip">
+<div>
+<p class="text-label-md font-bold"><span id="mobile-count">0</span> Item | ₹<span id="mobile-total">0</span></p>
+<p class="text-label-sm opacity-80">Extra charges may apply</p>
+</div>
+<button class="flex items-center gap-1 font-bold">
+            VIEW CART
+            <span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Bottom Navigation (Mobile Only) -->
+<footer class="md:hidden">
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline z-50">
+<div class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-label-sm font-label-sm">Explore</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant">
+<span class="material-symbols-outlined">search</span>
+<span class="text-label-sm font-label-sm">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-label-sm font-label-sm">Orders</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</div>
+</nav>
+</footer>
+<!-- Full Width Footer -->
+<footer class="w-full py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-start gap-stack-lg max-w-container-max mx-auto bg-inverse-surface text-on-primary mt-stack-lg">
+<div class="max-w-xs">
+<div class="text-headline-md font-headline-md text-surface-bright mb-4">HungerMoment</div>
+<p class="text-body-sm text-surface-variant">Satisfying your cravings since 2024. The best flavors delivered to your doorstep.</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-6">
+<div class="flex flex-col gap-2">
+<span class="text-label-md font-bold text-surface-bright mb-2">Company</span>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">About Us</a>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Careers</a>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Team</a>
+</div>
+<div class="flex flex-col gap-2">
+<span class="text-label-md font-bold text-surface-bright mb-2">Legal</span>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Terms &amp; Conditions</a>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Privacy Policy</a>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Cookie Policy</a>
+</div>
+<div class="flex flex-col gap-2">
+<span class="text-label-md font-bold text-surface-bright mb-2">Help</span>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Contact Us</a>
+<a class="text-body-sm text-surface-variant hover:text-surface-bright" href="#">Partner with Us</a>
+</div>
+</div>
+<div class="w-full pt-8 mt-8 border-t border-surface-variant/20">
+<p class="text-body-sm text-surface-variant">© 2024 HungerMoment Technologies Pvt. Ltd</p>
+</div>
+</footer>
+<script>
+        let cart = [];
+
+        function addToCart(name, price) {
+            const existingItem = cart.find(item => item.name === name);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ name, price, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(name) {
+            const itemIndex = cart.findIndex(item => item.name === name);
+            if (itemIndex > -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const emptyMsg = document.getElementById('empty-cart-msg');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const countEl = document.getElementById('cart-item-count');
+            
+            const mobileStrip = document.getElementById('mobile-cart-strip');
+            const mobileTotal = document.getElementById('mobile-total');
+            const mobileCount = document.getElementById('mobile-count');
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '';
+                cartItemsContainer.appendChild(emptyMsg);
+                subtotalEl.innerText = '₹0';
+                countEl.innerText = '0 ITEMS';
+                mobileStrip.classList.add('translate-y-24');
+            } else {
+                emptyMsg.remove();
+                cartItemsContainer.innerHTML = '';
+                let total = 0;
+                let totalQty = 0;
+
+                cart.forEach(item => {
+                    total += item.price * item.quantity;
+                    totalQty += item.quantity;
+                    
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'flex justify-between items-center animate-in fade-in slide-in-from-bottom-2 duration-300';
+                    itemRow.innerHTML = `
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-body-sm font-bold text-on-surface">${item.name}</span>
+                            <span class="text-label-sm text-primary">₹${item.price * item.quantity}</span>
+                        </div>
+                        <div class="flex items-center border border-outline-variant rounded-lg px-2 py-1 bg-surface-container">
+                            <button onclick="removeFromCart('${item.name}')" class="text-primary material-symbols-outlined text-sm font-bold">remove</button>
+                            <span class="px-3 text-body-sm font-bold">${item.quantity}</span>
+                            <button onclick="addToCart('${item.name}', ${item.price})" class="text-tertiary material-symbols-outlined text-sm font-bold">add</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(itemRow);
+                });
+
+                subtotalEl.innerText = `₹${total}`;
+                countEl.innerText = `${totalQty} ITEM${totalQty > 1 ? 'S' : ''}`;
+                
+                // Mobile strip update
+                mobileTotal.innerText = total;
+                mobileCount.innerText = totalQty;
+                mobileStrip.classList.remove('translate-y-24');
+            }
+        }
+    </script>
+</body></html>

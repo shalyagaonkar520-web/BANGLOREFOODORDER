@@ -1,7 +1,6 @@
 import React from 'react';
 import { useCityStore, CITIES } from '../store/cityStore';
 import { motion } from 'framer-motion';
-import { MapPin, Navigation2, X, Sparkles, Locate, Lock } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import toast from 'react-hot-toast';
 
@@ -29,12 +28,12 @@ export default function CityGateway({ children }: { children: React.ReactNode })
 
   if (!selectedCity) {
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col items-center p-6 sm:p-10 min-h-screen bg-[radial-gradient(circle_at_top,#1e1e1e_0%,#000000_100%)] text-white overflow-y-auto">
+      <div className="fixed inset-0 z-[200] flex flex-col items-center p-6 sm:p-10 min-h-screen bg-background text-on-background overflow-y-auto">
         <header className="w-full max-w-md text-center mb-10 mt-4">
-          <h1 className="text-5xl font-[900] italic tracking-tighter text-[#FFD700] drop-shadow-[0px_4px_10px_rgba(0,0,0,0.5)] uppercase mb-2 font-sans">
+          <h1 className="text-5xl font-headline-lg tracking-tighter text-primary uppercase mb-2">
             SELECTION
           </h1>
-          <p className="text-[10px] tracking-[0.3em] font-bold text-gray-400 uppercase">
+          <p className="text-[10px] tracking-[0.3em] font-bold text-secondary uppercase">
             Select Your Delivery City
           </p>
         </header>
@@ -42,13 +41,10 @@ export default function CityGateway({ children }: { children: React.ReactNode })
         <main className="w-full max-w-md space-y-4">
           <button 
             onClick={handleAutoDetect}
-            className="w-full flex items-center justify-center gap-4 py-5 px-6 rounded-[40px] border border-[rgba(255,215,0,0.4)] bg-transparent hover:bg-[rgba(255,215,0,0.1)] transition-all duration-300"
+            className="w-full flex items-center justify-center gap-4 py-5 px-6 rounded-[40px] border border-primary bg-transparent hover:bg-primary/10 transition-all duration-300"
           >
-            <svg className="w-6 h-6 text-[#FFD700]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V5m0 14v-3m0-11a9 9 0 110 18 9 9 0 010-18z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-              <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
-            </svg>
-            <span className="text-[12px] font-black tracking-[0.2em] uppercase text-white">
+            <span className="material-symbols-outlined text-[24px] text-primary">my_location</span>
+            <span className="text-[12px] font-bold tracking-[0.2em] uppercase text-on-background">
               Auto Detect My Location
             </span>
           </button>
@@ -58,44 +54,33 @@ export default function CityGateway({ children }: { children: React.ReactNode })
           {CITIES.map((city) => (
             <button
               key={city.id}
-              onClick={() => {
-                if (city.isActive) {
-                  setCity(city);
-                } else {
-                  toast.error(`Mom's Magic is currently only operating in Yellapur!`, { id: 'city-lock' });
-                }
-              }}
+              onClick={() => setCity(city)}
               className={`w-full flex items-center py-6 px-8 rounded-[40px] transition-colors ${
                 city.isActive 
-                  ? 'justify-between border-2 border-[#FFD700] bg-[#1A1A1A] shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
-                  : 'border border-white/5 bg-white/5 hover:bg-white/10 opacity-40'
+                  ? 'justify-between border-2 border-primary bg-surface shadow-md' 
+                  : 'border border-outline-variant/30 bg-surface-container-low hover:bg-surface-container opacity-40'
               }`}
             >
               <div className="flex items-center gap-5">
-                <svg className={`w-7 h-7 ${city.isActive ? 'text-[#FFD700]' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                  <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-                </svg>
-                <span className={`text-2xl font-black italic ${city.isActive ? 'text-white' : 'text-white/60'}`}>
+                <span className={`material-symbols-outlined text-[28px] ${city.isActive ? 'text-primary' : 'text-on-background'}`}>location_city</span>
+                <span className={`text-2xl font-headline-lg ${city.isActive ? 'text-on-surface' : 'text-secondary'}`}>
                   {city.name}
                 </span>
               </div>
               {city.isActive && (
-                <svg className="w-6 h-6 text-[#FFD700] opacity-80" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2l1.5 4.5H18l-3.5 3 1.5 5-4-3-4 3 1.5-5-3.5-3h4.5z"></path>
-                </svg>
+                <span className="material-symbols-outlined text-[24px] text-primary opacity-80">arrow_forward</span>
               )}
             </button>
           ))}
         </main>
 
         <footer className="mt-auto w-full max-w-md pt-8 opacity-20 pointer-events-none">
-          <div className="flex justify-around border-t border-white/10 py-4">
-            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
-            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
-            <div className="w-12 h-12 bg-white/50 rounded-full -mt-4"></div>
-            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
-            <div className="w-6 h-6 bg-white/50 rounded-full"></div>
+          <div className="flex justify-around border-t border-outline-variant/30 py-4">
+            <div className="w-6 h-6 bg-outline-variant/50 rounded-full"></div>
+            <div className="w-6 h-6 bg-outline-variant/50 rounded-full"></div>
+            <div className="w-12 h-12 bg-outline-variant/50 rounded-full -mt-4"></div>
+            <div className="w-6 h-6 bg-outline-variant/50 rounded-full"></div>
+            <div className="w-6 h-6 bg-outline-variant/50 rounded-full"></div>
           </div>
         </footer>
       </div>
@@ -104,30 +89,30 @@ export default function CityGateway({ children }: { children: React.ReactNode })
 
   if (!selectedCity.isActive) {
     return (
-      <div className="fixed inset-0 z-[200] bg-matte-black flex items-center justify-center p-6">
+      <div className="fixed inset-0 z-[200] bg-scrim flex items-center justify-center p-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-lg luxury-card p-12 md:p-16 rounded-[50px] relative z-10 text-center"
+          className="w-full max-w-lg bg-surface p-12 md:p-16 rounded-[50px] relative z-10 text-center shadow-2xl border border-outline-variant/30"
         >
-          <button onClick={resetCity} className="absolute top-8 right-8 p-3 text-text-muted hover:text-white transition-colors">
-            <X className="w-7 h-7" />
+          <button onClick={resetCity} className="absolute top-8 right-8 p-3 text-secondary hover:text-on-surface transition-colors">
+            <span className="material-symbols-outlined text-[28px]">close</span>
           </button>
 
-          <div className="w-32 h-32 bg-white/5 rounded-[40px] flex items-center justify-center mx-auto text-gold/20 border border-white/5 mb-10">
-            <MapPin className="w-16 h-16" />
+          <div className="w-32 h-32 bg-primary/5 rounded-[40px] flex items-center justify-center mx-auto text-primary/20 border border-primary/10 mb-10">
+            <span className="material-symbols-outlined text-[64px]">location_on</span>
           </div>
           
-          <h2 className="text-4xl font-black italic tracking-tighter mb-6 text-white uppercase leading-none">
-            Coming to <br /><span className="text-luxury-gold">{selectedCity.name}</span>
+          <h2 className="text-4xl font-headline-lg tracking-tighter mb-6 text-on-surface uppercase leading-none">
+            Coming to <br /><span className="text-primary">{selectedCity.name}</span>
           </h2>
-          <p className="text-text-muted font-bold text-sm leading-relaxed mb-12 max-w-xs mx-auto uppercase tracking-widest opacity-60">
+          <p className="text-secondary font-bold text-sm leading-relaxed mb-12 max-w-xs mx-auto uppercase tracking-widest opacity-80">
             We are curating an elite delivery network for your city.
           </p>
 
           <button 
             onClick={resetCity}
-            className="w-full btn-luxury-red py-6"
+            className="w-full bg-primary text-on-primary py-6 rounded-[24px] font-bold text-sm uppercase tracking-widest hover:bg-primary/90 transition-colors shadow-md"
           >
             Switch City
           </button>

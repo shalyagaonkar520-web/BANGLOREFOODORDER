@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Sparkles, ShoppingBag } from 'lucide-react';
+
 import { Product } from '../types';
 import { RecommendationResult, recordComboClick } from '../utils/recommendationEngine';
 import { useCartStore } from '../store/cartStore';
@@ -55,7 +55,7 @@ export default function RecommendationPopup({ result, triggerId, onClose }: Prop
               <span className="text-base leading-none">{result.emoji}</span>
               <div>
                 <div className="flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5 text-gold" />
+                  <span className="material-symbols-outlined w-2.5 h-2.5 text-gold">auto_awesome</span>
                   <span className="text-[8px] font-black uppercase tracking-[2px] text-gold">AI Pick</span>
                 </div>
                 <p className="text-[10px] font-black text-white leading-tight">{result.title}</p>
@@ -65,14 +65,14 @@ export default function RecommendationPopup({ result, triggerId, onClose }: Prop
               onClick={onClose}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors shrink-0"
             >
-              <X className="w-3 h-3 text-white/60" />
+              <span className="material-symbols-outlined w-3 h-3 text-white/60">close</span>
             </button>
           </div>
 
           {/* Trigger message */}
           {result.triggerMessage && (
-            <div className="px-3 py-1.5 bg-brand/10 border-b border-brand/20">
-              <p className="text-[9px] font-black text-brand">{result.triggerMessage}</p>
+            <div className="px-3 py-1.5 bg-primary/10 border-b border-primary/20">
+              <p className="text-[9px] font-black text-primary">{result.triggerMessage}</p>
             </div>
           )}
 
@@ -85,7 +85,7 @@ export default function RecommendationPopup({ result, triggerId, onClose }: Prop
                   key={item.id}
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleAdd(item)}
-                  className="flex items-center gap-2 shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand/40 rounded-xl px-2.5 py-1.5 transition-all group"
+                  className="flex items-center gap-2 shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/40 rounded-xl px-2.5 py-1.5 transition-all group"
                 >
                   {/* Small image */}
                   <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-black/40">
@@ -106,11 +106,11 @@ export default function RecommendationPopup({ result, triggerId, onClose }: Prop
 
                   {/* Add / in-cart icon */}
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                    inCart ? 'bg-emerald-500' : 'bg-brand'
+                    inCart ? 'bg-emerald-500' : 'bg-primary'
                   }`}>
                     {inCart
-                      ? <ShoppingBag className="w-2.5 h-2.5 text-white" />
-                      : <Plus className="w-2.5 h-2.5 text-white" />
+                      ? <span className="material-symbols-outlined w-2.5 h-2.5 text-white">shopping_bag</span>
+                      : <span className="material-symbols-outlined w-2.5 h-2.5 text-white">add</span>
                     }
                   </div>
                 </motion.button>
@@ -121,7 +121,7 @@ export default function RecommendationPopup({ result, triggerId, onClose }: Prop
           {/* Footer */}
           <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/5">
             <p className="text-[8px] text-white/25 font-bold uppercase tracking-widest">🤖 Moms Magic AI</p>
-            <button onClick={onClose} className="text-[9px] font-black text-brand/70 hover:text-brand uppercase tracking-widest">
+            <button onClick={onClose} className="text-[9px] font-black text-primary/70 hover:text-primary uppercase tracking-widest">
               Dismiss
             </button>
           </div>

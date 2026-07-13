@@ -3,14 +3,14 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 import fs from 'fs';
-import {defineConfig, loadEnv} from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig(({mode}) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     base: './',
     plugins: [
-      react(), 
+      react(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -163,6 +163,221 @@ export default defineConfig(({mode}) => {
                   failureCount: 0,
                   message: 'Local dev mock: Broadcasted push alert to 3 active PWA installations.'
                 }));
+              });
+              return;
+            }
+
+            // Handle POST Create Staff Account (LOCAL DEV BACKEND MOCK)
+            if (req.url && req.url.includes('/api/create-staff-account') && req.method === 'POST') {
+              let body = '';
+              req.on('data', chunk => { body += chunk.toString(); });
+              req.on('end', async () => {
+                try {
+                  const data = JSON.parse(body);
+                  const { email, password, name, role, restaurantId, vehicleType } = data;
+
+                  // Dynamic import firebase-admin
+                  const { default: admin } = (await import('firebase-admin')) as any;
+                  if (!admin.apps.length) {
+                    admin.initializeApp({
+                      projectId: 'momsmagic-d131a'
+                    });
+                  }
+
+                  const auth = admin.auth();
+                  const db = admin.firestore();
+
+                  // Create user
+                  let userRecord;
+                  try {
+                    userRecord = await auth.getUserByEmail(email);
+                    console.log('User already exists in emulator:', email);
+                  } catch (e) {
+                    userRecord = await auth.createUser({
+                      email,
+                      password,
+                      displayName: name
+                    });
+                  }
+
+                  // Set claims
+                  const claims: any = { role };
+                  if (role === 'kitchen_staff') {
+                    claims.restaurantId = restaurantId;
+                  }
+                  await auth.setCustomUserClaims(userRecord.uid, claims);
+
+                  // Sync to Firestore
+                  const userDoc: any = {
+                    name,
+                    email,
+                    phone: role === 'delivery_partner' ? '9876543210' : '9999999999',
+                    role,
+                    createdAt: new Date().toISOString(),
+                    fcmTokens: []
+                  };
+                  if (role === 'kitchen_staff') {
+                    userDoc.restaurantId = restaurantId;
+                  }
+                  await db.collection('users').doc(userRecord.uid).set(userDoc, { merge: true });
+
+                  if (role === 'delivery_partner') {
+                    await db.collection('deliveryPartners').doc(userRecord.uid).set({
+                      vehicleType: vehicleType || 'Motorcycle',
+                      licenseDocUrl: '/partner.jpg',
+                      verificationStatus: 'approved',
+                      rating: 5.0
+                    }, { merge: true });
+                  }
+
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({
+                    success: true,
+                    uid: userRecord.uid,
+                    message: `Local backend: Created ${role} account for ${email}`
+                  }));
+                } catch (err: any) {
+                  console.error('Local dev staff creation failed:', err);
+                  res.writeHead(500, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ success: false, error: err.message }));
+                }
+              });
+              return;
+            }
+
+            // Handle POST Create Razorpay Order (LOCAL DEV BACKEND MOCK)
+            if (req.url && req.url.includes('/api/create-razorpay-order') && req.method === 'POST') {
+              let body = '';
+              req.on('data', chunk => { body += chunk.toString(); });
+              req.on('end', async () => {
+                try {
+                  const { amount } = JSON.parse(body);
+                  const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_live_StCGrX25cCk27O';
+                  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'dXNiyM3czTHNM9H5MUDIl5uR';
+
+                  // Try to call real Razorpay if configured, else fallback to mock order id
+                  try {
+                    const authString = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
+                    const response = await fetch('https://api.razorpay.com/v1/orders', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${authString}`
+                      },
+                      body: JSON.stringify({
+                        amount: Math.round(amount * 100),
+                        currency: 'INR',
+                        receipt: `receipt_order_${Date.now()}`
+                      })
+                    });
+                    const resData = await response.json();
+                    if (response.ok) {
+                      res.writeHead(200, { 'Content-Type': 'application/json' });
+                      res.end(JSON.stringify({ id: resData.id, amount: resData.amount, currency: resData.currency }));
+                      return;
+                    }
+                  } catch (e) {
+                    console.warn('Real Razorpay call failed in local dev, falling back to mock order:', e);
+                  }
+
+                  // Mock order fallback
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({
+                    id: `order_mock_${Date.now()}`,
+                    amount: amount * 100,
+                    currency: 'INR'
+                  }));
+                } catch (err: any) {
+                  res.writeHead(500, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: err.message }));
+                }
+              });
+              return;
+            }
+
+            // Handle POST Verify Razorpay Payment (LOCAL DEV BACKEND MOCK)
+            if (req.url && req.url.includes('/api/verify-razorpay-payment') && req.method === 'POST') {
+              let body = '';
+              req.on('data', chunk => { body += chunk.toString(); });
+              req.on('end', async () => {
+                try {
+                  const { razorpay_payment_id, razorpay_order_id, razorpay_signature, order } = JSON.parse(body);
+                  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'dXNiyM3czTHNM9H5MUDIl5uR';
+
+                  const isMock = razorpay_order_id.startsWith('order_mock');
+                  if (!isMock) {
+                    // Real verification
+                    const crypto = await import('crypto');
+                    const hmac = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET);
+                    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+                    const generatedSignature = hmac.digest('hex');
+                    if (generatedSignature !== razorpay_signature) {
+                      res.writeHead(400, { 'Content-Type': 'application/json' });
+                      res.end(JSON.stringify({ error: 'Signature verification failed' }));
+                      return;
+                    }
+                  }
+
+                  // Initialize firebase-admin
+                  const { default: admin } = (await import('firebase-admin')) as any;
+                  if (!admin.apps.length) {
+                    admin.initializeApp({
+                      projectId: 'momsmagic-d131a'
+                    });
+                  }
+
+                  const db = admin.firestore();
+                  const orderId = order.id || Date.now().toString();
+
+                  const orderDoc = {
+                    ...order,
+                    id: orderId,
+                    status: 'pending',
+                    paymentStatus: 'paid',
+                    paymentMethod: 'online',
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    updatedAt: new Date().toISOString()
+                  };
+
+                  const batch = db.batch();
+                  batch.set(db.collection('orders').doc(orderId), orderDoc);
+                  batch.set(db.collection('payments').doc(razorpay_payment_id), {
+                    id: razorpay_payment_id,
+                    orderId: orderId,
+                    userId: order.userId || null,
+                    userName: order.userName || 'Guest',
+                    amount: order.payableAmount || order.grandTotal,
+                    currency: 'INR',
+                    paymentMethod: 'online',
+                    status: 'paid',
+                    createdAt: new Date().toISOString()
+                  });
+
+                  if (order.userId && order.walletAmountUsed > 0) {
+                    batch.update(db.collection('users').doc(order.userId), {
+                      walletBalance: admin.firestore.FieldValue.increment(-order.walletAmountUsed),
+                      updatedAt: new Date().toISOString()
+                    });
+                    batch.set(db.collection('walletLogs').doc(), {
+                      userId: order.userId,
+                      orderId: orderId,
+                      amount: -order.walletAmountUsed,
+                      type: 'purchase',
+                      description: `Paid for order #${orderId}`,
+                      createdAt: new Date().toISOString()
+                    });
+                  }
+
+                  await batch.commit();
+
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ success: true, orderId }));
+                } catch (err: any) {
+                  console.error('Local verify failed:', err);
+                  res.writeHead(500, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ error: err.message }));
+                }
               });
               return;
             }

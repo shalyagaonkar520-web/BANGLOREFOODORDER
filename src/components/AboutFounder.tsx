@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Quote, Heart, Sparkles, MessageCircle } from 'lucide-react';
+
 import { useSEO } from '../utils/seo';
 
 export default function AboutFounder() {
@@ -11,7 +11,7 @@ export default function AboutFounder() {
     <div className="relative min-h-screen bg-[#050505] text-white pb-20 overflow-hidden">
       {/* Cinematic Background Elements */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-brand/10 rounded-full blur-[150px]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gold/10 rounded-full blur-[150px]" />
       </div>
 
@@ -22,10 +22,10 @@ export default function AboutFounder() {
             onClick={() => navigate(-1)} 
             className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors backdrop-blur-md"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <span className="material-symbols-outlined w-6 h-6">chevron_left</span>
           </button>
           <div className="flex items-center gap-3 bg-white/5 px-6 py-3 rounded-full border border-white/10 backdrop-blur-md">
-            <Sparkles className="w-4 h-4 text-gold" />
+            <span className="material-symbols-outlined w-4 h-4 text-gold">auto_awesome</span>
             <span className="font-black uppercase tracking-[4px] text-[10px]">The Team</span>
           </div>
           <div className="w-12" /> {/* Spacer */}
@@ -48,7 +48,7 @@ export default function AboutFounder() {
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
             </div>
             {/* Decorative Elements */}
-            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-brand/20 blur-3xl rounded-full z-0" />
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/20 blur-3xl rounded-full z-0" />
             <div className="absolute -top-6 -left-6 w-32 h-32 bg-gold/20 blur-3xl rounded-full z-0" />
           </motion.div>
 
@@ -63,11 +63,11 @@ export default function AboutFounder() {
                 Shalya <br />
                 <span className="text-luxury-gold drop-shadow-[0_0_20px_rgba(244,180,0,0.3)]">Gaonkar</span>
               </h1>
-              <p className="text-brand font-black uppercase tracking-[6px] text-xs">Founder, Moms Magic</p>
+              <p className="text-primary font-black uppercase tracking-[6px] text-xs">Founder, Moms Magic</p>
             </div>
 
             <div className="relative">
-              <Quote className="absolute -top-6 -left-6 w-12 h-12 text-white/5" />
+              <span className="material-symbols-outlined absolute -top-6 -left-6 w-12 h-12 text-white/5">format_quote</span>
               <p className="text-white/70 text-lg leading-relaxed font-medium italic relative z-10">
                 "I believe food is not just about eating; it’s about comfort, memories, and bringing people together."
               </p>
@@ -133,11 +133,11 @@ export default function AboutFounder() {
                 JIS <br />
                 <span className="text-luxury-gold drop-shadow-[0_0_20px_rgba(244,180,0,0.3)]">Partner</span>
               </h1>
-              <p className="text-brand font-black uppercase tracking-[6px] text-xs text-right md:text-left">Partner, Moms Magic</p>
+              <p className="text-primary font-black uppercase tracking-[6px] text-xs text-right md:text-left">Partner, Moms Magic</p>
             </div>
 
             <div className="relative text-right md:text-left">
-              <Quote className="absolute -top-6 -right-6 md:-left-6 w-12 h-12 text-white/5 rotate-180 md:rotate-0" />
+              <span className="material-symbols-outlined absolute -top-6 -right-6 md:-left-6 w-12 h-12 text-white/5 rotate-180 md:rotate-0">format_quote</span>
               <p className="text-white/70 text-lg leading-relaxed font-medium italic relative z-10">
                 A strong support behind Moms Magic, helping in growing the brand, managing operations, and ensuring customers receive the best service and experience.
               </p>
@@ -154,7 +154,7 @@ export default function AboutFounder() {
           <p className="text-text-muted font-bold uppercase tracking-[8px] text-[10px]">Connect with us</p>
           <div className="flex justify-center gap-6">
             <a href="#" className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all hover:scale-110">
-              <MessageCircle className="w-6 h-6 text-green-500" />
+              <span className="material-symbols-outlined w-6 h-6 text-green-500">chat_bubble</span>
             </a>
             <a href="#" className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all hover:scale-110">
               <span className="font-black text-gold">IG</span>

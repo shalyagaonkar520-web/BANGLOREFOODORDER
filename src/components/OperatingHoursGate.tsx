@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Moon, Sun, AlertCircle, ShoppingBag, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useSystemStore } from '../store/systemStore';
 
 export default function OperatingHoursGate({ children }: { children: React.ReactNode }) {
+  // Operating hours restriction removed — app is always accessible
+  return <>{children}</>;
+
+  // eslint-disable-next-line no-unreachable
   const settings = useSystemStore(state => state.settings);
   const [isOpen, setIsOpen] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -115,10 +118,10 @@ export default function OperatingHoursGate({ children }: { children: React.React
   const closeTimeFormatted = formatTime12h(settings.closeTime);
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
       {/* Animated background blobs */}
-      <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand/10 rounded-full blur-[200px] animate-pulse pointer-events-none" />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-orange-600/10 rounded-full blur-[200px] animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[200px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-error/10 rounded-full blur-[200px] animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -131,14 +134,14 @@ export default function OperatingHoursGate({ children }: { children: React.React
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-          className="mx-auto w-28 h-28 rounded-[40px] bg-brand/10 border border-brand/20 flex items-center justify-center relative rotate-12"
+          className="mx-auto w-28 h-28 rounded-[40px] bg-primary/10 border border-primary/20 flex items-center justify-center relative rotate-12"
         >
           {isLateNight ? (
-            <Moon className="w-14 h-14 text-brand" />
+            <span className="material-symbols-outlined text-[56px] text-primary">dark_mode</span>
           ) : (
-            <Sun className="w-14 h-14 text-brand" />
+            <span className="material-symbols-outlined text-[56px] text-primary">light_mode</span>
           )}
-          <div className="absolute inset-0 bg-brand/10 blur-3xl rounded-full animate-pulse" />
+          <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full animate-pulse" />
         </motion.div>
 
         {/* Title */}
@@ -147,16 +150,16 @@ export default function OperatingHoursGate({ children }: { children: React.React
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-4xl md:text-5xl font-black italic tracking-tighter text-white uppercase leading-none"
+            className="text-4xl md:text-5xl font-headline-lg tracking-tighter text-on-background uppercase leading-none"
           >
-            <>🔴 Mom's Magic is <br /><span className="text-brand">Currently Closed</span></>
+            <>🔴 Mom's Magic is <br /><span className="text-primary">Currently Closed</span></>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="text-white/60 text-sm md:text-base font-bold italic max-w-sm mx-auto leading-relaxed"
+            className="text-secondary text-sm md:text-base font-bold max-w-sm mx-auto leading-relaxed"
           >
             Orders are accepted only between {openTimeFormatted.time} {openTimeFormatted.ampm} and {closeTimeFormatted.time} {closeTimeFormatted.ampm}. Please visit again during business hours.
           </motion.p>
@@ -167,13 +170,13 @@ export default function OperatingHoursGate({ children }: { children: React.React
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="bg-white/5 rounded-[28px] p-6 border border-white/10 space-y-3 backdrop-blur-md"
+          className="bg-surface rounded-[28px] p-6 border border-outline-variant/30 space-y-3 shadow-md"
         >
           <div className="flex items-center justify-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand animate-ping" />
-            <span className="text-white/40 font-black uppercase tracking-[4px] text-[10px]">Next Opening In</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+            <span className="text-secondary font-bold uppercase tracking-widest text-[10px]">Next Opening In</span>
           </div>
-          <div className="text-4xl md:text-5xl font-mono font-black tracking-widest text-[#4CD964] drop-shadow-[0_0_15px_rgba(76,217,100,0.3)]">
+          <div className="text-4xl md:text-5xl font-mono font-black tracking-widest text-primary drop-shadow-sm">
             {timeLeft}
           </div>
         </motion.div>
@@ -183,40 +186,27 @@ export default function OperatingHoursGate({ children }: { children: React.React
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          className="bg-brand/5 rounded-[28px] p-6 border border-brand/10 space-y-4"
+          className="bg-primary/5 rounded-[28px] p-6 border border-primary/10 space-y-4"
         >
           <div className="flex items-center justify-center gap-3">
-            <AlertCircle className="w-5 h-5 text-brand" />
-            <span className="text-brand font-black uppercase tracking-[4px] text-[10px]">Operating Hours</span>
+            <span className="material-symbols-outlined text-[20px] text-primary">info</span>
+            <span className="text-primary font-bold uppercase tracking-widest text-[10px]">Operating Hours</span>
           </div>
           <div className="flex items-center justify-center gap-4">
             <div className="text-center">
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-1">Opens</p>
-              <p className="text-2xl font-black italic text-white">
-                {openTimeFormatted.time} <span className="text-brand text-sm">{openTimeFormatted.ampm}</span>
+              <p className="text-secondary text-[10px] font-bold uppercase tracking-widest mb-1">Opens</p>
+              <p className="text-2xl font-headline-lg text-on-background">
+                {openTimeFormatted.time} <span className="text-primary text-sm">{openTimeFormatted.ampm}</span>
               </p>
             </div>
-            <div className="w-12 h-[2px] bg-brand/30" />
+            <div className="w-12 h-[2px] bg-primary/30" />
             <div className="text-center">
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-1">Closes</p>
-              <p className="text-2xl font-black italic text-white">
-                {closeTimeFormatted.time} <span className="text-brand text-sm">{closeTimeFormatted.ampm}</span>
+              <p className="text-secondary text-[10px] font-bold uppercase tracking-widest mb-1">Closes</p>
+              <p className="text-2xl font-headline-lg text-on-background">
+                {closeTimeFormatted.time} <span className="text-primary text-sm">{closeTimeFormatted.ampm}</span>
               </p>
             </div>
           </div>
-        </motion.div>
-
-        {/* Brand */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="flex items-center justify-center gap-3 pt-4"
-        >
-          <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full border border-brand/20" />
-          <span className="text-xl font-black italic tracking-tighter text-white/60">
-            Moms <span className="text-brand">Magic</span>
-          </span>
         </motion.div>
       </motion.div>
     </div>

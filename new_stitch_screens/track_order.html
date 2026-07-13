@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Order Tracking | HungerMoment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Montserrat:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#c2c5de",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#faf8ff",
+                    "secondary-fixed": "#dee1fa",
+                    "surface-container-high": "#e6e7f5",
+                    "on-primary-container": "#fffbff",
+                    "surface-tint": "#ac3500",
+                    "primary-fixed": "#ffdbd0",
+                    "primary-fixed-dim": "#ffb59d",
+                    "on-tertiary-container": "#f8ffef",
+                    "on-secondary-fixed": "#161b2d",
+                    "surface-container": "#ecedfb",
+                    "outline-variant": "#e5beb2",
+                    "tertiary": "#196b00",
+                    "inverse-on-surface": "#eff0fd",
+                    "surface-container-highest": "#e1e2ef",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#115300",
+                    "on-secondary-fixed-variant": "#42465a",
+                    "secondary-container": "#dbdef8",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#35851d",
+                    "on-tertiary-fixed": "#032100",
+                    "surface-dim": "#d8d9e7",
+                    "tertiary-fixed-dim": "#86db69",
+                    "surface-variant": "#e1e2ef",
+                    "tertiary-fixed": "#a1f882",
+                    "error": "#ba1a1a",
+                    "surface": "#faf8ff",
+                    "on-surface": "#191b25",
+                    "on-secondary-container": "#5e6177",
+                    "outline": "#907065",
+                    "inverse-surface": "#2d303a",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#390c00",
+                    "on-surface-variant": "#5c4037",
+                    "surface-container-low": "#f2f3ff",
+                    "on-primary-fixed-variant": "#832600",
+                    "primary-container": "#d24200",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#ffb59d",
+                    "secondary": "#5a5d73",
+                    "primary": "#a83300",
+                    "on-background": "#191b25",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#faf8ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "0.5rem",
+                    "stack-md": "1rem",
+                    "stack-xs": "0.25rem",
+                    "margin-desktop": "2rem",
+                    "gutter": "1.5rem",
+                    "stack-lg": "2rem",
+                    "margin-mobile": "1rem",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Montserrat"],
+                    "headline-xl": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "body-sm": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active .step-line { background-color: #a83300; }
+        .step-active .step-circle { background-color: #a83300; color: white; }
+        .pulse-orange {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-container-low docked full-width top-0 sticky z-50 shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto">
+<div class="text-headline-lg font-headline-lg text-primary dark:text-inverse-primary tracking-tight">HungerMoment</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors hover:underline decoration-primary underline-offset-8" href="#">Offers</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors hover:underline decoration-primary underline-offset-8" href="#">Help</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary transition-colors hover:underline decoration-primary underline-offset-8" href="#">Sign In</a>
+<div class="flex items-center gap-4 ml-4">
+<button class="active:scale-95 transition-transform text-secondary hover:text-primary">
+<span class="material-symbols-outlined">shopping_cart</span>
+</button>
+<button class="active:scale-95 transition-transform text-secondary hover:text-primary">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</nav>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg min-h-screen">
+<!-- Page Title & Status Overview -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-stack-lg gap-4">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-2">Track Your Craving</h1>
+<p class="text-body-lg text-secondary">Order #HM-982341 • Est. Delivery: <span class="text-primary font-bold">12:45 PM</span></p>
+</div>
+<div class="flex gap-stack-sm">
+<button class="flex items-center gap-2 px-6 py-3 bg-white border border-outline rounded-xl font-label-md text-on-surface hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">call</span> Call Partner
+                </button>
+<button class="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary-container transition-colors active:scale-95">
+<span class="material-symbols-outlined">chat</span> Chat Support
+                </button>
+</div>
+</div>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg">
+<!-- Left Column: Status & Map -->
+<div class="lg:col-span-8 flex flex-col gap-stack-lg">
+<!-- Live Status Tracker (Modern Timeline) -->
+<section class="bg-white p-6 md:p-8 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<h2 class="font-headline-md text-headline-md mb-stack-lg">Order Status</h2>
+<div class="relative flex flex-col md:flex-row justify-between items-start gap-8 md:gap-0">
+<!-- Connecting Line (Desktop) -->
+<div class="hidden md:block absolute top-6 left-0 w-full h-[2px] bg-outline-variant z-0">
+<div class="h-full bg-primary transition-all duration-1000" style="width: 66%;"></div>
+</div>
+<!-- Step 1: Placed -->
+<div class="relative z-10 flex flex-col md:items-center text-left md:text-center w-full md:w-1/4 group">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mb-3 shadow-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="font-label-md text-primary">Order Placed</p>
+<p class="text-label-sm text-secondary">12:10 PM</p>
+</div>
+<!-- Step 2: Preparing -->
+<div class="relative z-10 flex flex-col md:items-center text-left md:text-center w-full md:w-1/4 group">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mb-3 shadow-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<p class="font-label-md text-primary">Preparing</p>
+<p class="text-label-sm text-secondary">12:15 PM</p>
+</div>
+<!-- Step 3: Out for Delivery -->
+<div class="relative z-10 flex flex-col md:items-center text-left md:text-center w-full md:w-1/4 group">
+<div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mb-3 shadow-md pulse-orange">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">delivery_dining</span>
+</div>
+<p class="font-label-md text-primary">Out for Delivery</p>
+<p class="text-label-sm text-secondary">In Transit</p>
+</div>
+<!-- Step 4: Delivered -->
+<div class="relative z-10 flex flex-col md:items-center text-left md:text-center w-full md:w-1/4 group opacity-40">
+<div class="w-12 h-12 rounded-full bg-surface-container-high text-secondary flex items-center justify-center mb-3">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="font-label-md text-on-surface">Delivered</p>
+<p class="text-label-sm text-secondary">Expected 12:45 PM</p>
+</div>
+</div>
+</section>
+<!-- Map Section -->
+<section class="relative rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(40,44,63,0.08)] h-[400px] md:h-[500px]">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse flex items-center justify-center" id="map-placeholder">
+<div class="text-center">
+<span class="material-symbols-outlined text-primary text-6xl mb-4">map</span>
+<p class="text-secondary font-medium">Initializing Real-time GPS...</p>
+</div>
+</div>
+<!-- Map Content -->
+<div class="w-full h-full bg-cover bg-center" data-alt="A stylized minimalist map of a modern city like New York, featuring soft muted tones, subtle street grids, and a prominent bright orange path showing a delivery route. A delivery rider icon is placed halfway along the path, and a house icon marks the destination. The aesthetic is clean, professional, and corporate minimalist." data-location="New York City" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDLoYnc_TlES8IsHx1iE8pczHH8TWUrnyG3qilvnuYIG5pbLSejtYdpiYf-ID6yCIhQGmL_ne_x589Y1Flh-XGMihgcCDwmyXm9d-K1XOPdlAnqFSTqsC7mrDtSMPn2cEiQbltliG-AymfDecSErMx36EDQof8QiWUuX6K2sv2KmwDHIa4-NWxwP2jef3Mj_FzHPsjYcnhROdW-R0rs8cu02aarpO3rRXpphZKEQZVikVR-m-VUzqcIt2DZODUpwfbCLvQx4g2Wcoy3')">
+<!-- Animated Delivery Marker -->
+<div class="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 z-20">
+<div class="relative">
+<div class="absolute inset-0 bg-primary opacity-20 rounded-full animate-ping scale-150"></div>
+<div class="bg-primary text-white p-2 rounded-full shadow-lg border-2 border-white">
+<span class="material-symbols-outlined">delivery_dining</span>
+</div>
+<div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-md whitespace-nowrap">
+<p class="text-label-sm font-bold text-primary">Rohan (4.9★)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Controls Overlay -->
+<div class="absolute bottom-6 right-6 flex flex-col gap-2">
+<button class="bg-white p-2 rounded-lg shadow-md text-on-surface hover:bg-surface-container-low active:scale-95">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="bg-white p-2 rounded-lg shadow-md text-on-surface hover:bg-surface-container-low active:scale-95">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="bg-white p-2 rounded-lg shadow-md text-primary hover:bg-surface-container-low active:scale-95 mt-2">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Right Column: Order Details -->
+<aside class="lg:col-span-4 flex flex-col gap-stack-lg">
+<!-- Restaurant Brief -->
+<div class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)] flex items-center gap-4">
+<img class="w-16 h-16 rounded-xl object-cover" data-alt="A macro close-up of a high-quality gourmet burger with melted cheddar cheese and fresh ingredients, shot in a professional food studio with warm lighting and a soft bokeh background. The image represents premium quality and appetite appeal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4dRq2WMYUURK696TBpHgHDcFO4MUFyTYmYde2x5vu7kHUfUOIllvCaJAPjdAW4FXFsWFYfB5C4LmtZJ81yY92fSeckjNu3A5R8y43hzUrkrmpgjJc-WV5C8OsCEeOFiudg7pPaAD0mcYqyP4EN5h7e8zjzaa1OL0Dj-rjy1vO64iO0XO0OdSVDKkyvvLEbCZtM4oJPg7SjhBjufYT0HxtG4yMi7CNqj9BycWda_hkjXvG-04hERXHZCwaOwOF1ZpiFgxtZtP5DkO9"/>
+<div>
+<h3 class="font-headline-md text-headline-md">The Burger House</h3>
+<p class="text-body-sm text-secondary">Manhattan, Midtown</p>
+</div>
+</div>
+<!-- Order Summary -->
+<section class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<h3 class="font-label-md text-primary uppercase tracking-wider mb-4 border-b border-outline-variant pb-2">Your Order</h3>
+<div class="space-y-4">
+<div class="flex justify-between">
+<div class="flex gap-3">
+<span class="w-5 h-5 border border-tertiary-container flex items-center justify-center p-[2px] rounded-sm mt-1">
+<span class="w-full h-full bg-tertiary rounded-full"></span>
+</span>
+<div>
+<p class="font-body-md text-on-surface">Double Truffle Burger x 1</p>
+<p class="text-label-sm text-secondary">Extra Cheese, No Onions</p>
+</div>
+</div>
+<span class="text-on-surface font-medium">$12.99</span>
+</div>
+<div class="flex justify-between">
+<div class="flex gap-3">
+<span class="w-5 h-5 border border-tertiary-container flex items-center justify-center p-[2px] rounded-sm mt-1">
+<span class="w-full h-full bg-tertiary rounded-full"></span>
+</span>
+<p class="font-body-md text-on-surface">Peri Peri Fries x 1</p>
+</div>
+<span class="text-on-surface font-medium">$4.50</span>
+</div>
+<div class="flex justify-between">
+<div class="flex gap-3">
+<span class="w-5 h-5 border border-error flex items-center justify-center p-[2px] rounded-sm mt-1">
+<span class="w-full h-full bg-error rounded-full"></span>
+</span>
+<p class="font-body-md text-on-surface">Chilli Chicken Wings x 6</p>
+</div>
+<span class="text-on-surface font-medium">$8.99</span>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-dashed border-outline-variant space-y-2">
+<div class="flex justify-between text-secondary">
+<span>Item Total</span>
+<span>$26.48</span>
+</div>
+<div class="flex justify-between text-secondary">
+<span>Delivery Fee</span>
+<span class="text-tertiary font-bold">FREE</span>
+</div>
+<div class="flex justify-between text-secondary">
+<span>Taxes &amp; Charges</span>
+<span>$2.50</span>
+</div>
+<div class="flex justify-between font-bold text-on-surface pt-2 text-lg">
+<span>Total Amount</span>
+<span>$28.98</span>
+</div>
+</div>
+</section>
+<!-- Delivery Address -->
+<section class="bg-white p-6 rounded-xl shadow-[0px_4px_20px_rgba(40,44,63,0.08)]">
+<h3 class="font-label-md text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">location_on</span> Delivery Address
+                    </h3>
+<p class="font-bold text-on-surface">Home (Apartment 4B)</p>
+<p class="text-body-sm text-secondary mt-1">242 West 36th Street, New York, NY 10018</p>
+<p class="text-label-sm text-secondary mt-3 italic">Note: "Leave at the door, please ring the bell."</p>
+</section>
+<!-- Quick Help -->
+<div class="p-6 bg-primary-fixed rounded-xl border border-primary-fixed-dim">
+<h4 class="font-label-md text-on-primary-fixed mb-2">Need help with this order?</h4>
+<p class="text-label-sm text-on-primary-fixed-variant mb-4">Our support team is available 24/7 to assist you with any issues.</p>
+<button class="w-full py-2 bg-white text-primary rounded-lg font-label-md hover:bg-surface-container-low transition-all active:scale-95 border border-primary">
+                        Contact Support
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-inverse-surface dark:bg-surface-container-lowest full-width mt-stack-lg">
+<div class="w-full py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-start gap-stack-lg max-w-container-max mx-auto">
+<div class="max-w-xs">
+<div class="text-headline-md font-headline-md text-surface-bright mb-4">HungerMoment</div>
+<p class="text-surface-variant font-body-sm">Delivering joy one plate at a time. The ultimate destination for your food cravings.</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-8">
+<div class="flex flex-col gap-3">
+<span class="text-surface-bright font-bold text-label-md">Company</span>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">About Us</a>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">Terms &amp; Conditions</a>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">Privacy Policy</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="text-surface-bright font-bold text-label-md">Support</span>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">Contact Us</a>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">Partner with Us</a>
+<a class="text-surface-variant hover:text-surface-bright transition-colors hover:underline" href="#">Help Center</a>
+</div>
+<div class="flex flex-col gap-3 col-span-2 md:col-span-1">
+<span class="text-surface-bright font-bold text-label-md">Follow Us</span>
+<div class="flex gap-4">
+<button class="text-surface-variant hover:text-surface-bright transition-transform hover:scale-110">
+<span class="material-symbols-outlined">public</span>
+</button>
+<button class="text-surface-variant hover:text-surface-bright transition-transform hover:scale-110">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-6 border-t border-on-surface-variant/20">
+<p class="text-surface-variant text-label-sm">© 2024 HungerMoment Technologies Pvt. Ltd</p>
+</div>
+</footer>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline z-50 md:hidden rounded-t-xl shadow-lg">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-label-sm font-label-sm mt-1">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">search</span>
+<span class="text-label-sm font-label-sm mt-1">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-1">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for tracking updates
+        document.addEventListener('DOMContentLoaded', () => {
+            const steps = document.querySelectorAll('.step-active');
+            
+            // Simulation of moving map marker
+            const marker = document.querySelector('[data-location="New York City"] .z-20');
+            if (marker) {
+                let pos = 33;
+                setInterval(() => {
+                    pos += 0.05;
+                    if (pos > 75) pos = 33;
+                    marker.style.left = `${pos}%`;
+                    marker.style.top = `${50 + Math.sin(pos/10) * 5}%`;
+                }, 100);
+            }
+
+            // Click handling for buttons
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const originalContent = btn.innerHTML;
+                    if(btn.textContent.includes('Chat') || btn.textContent.includes('Support')) {
+                        console.log('Support triggered');
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

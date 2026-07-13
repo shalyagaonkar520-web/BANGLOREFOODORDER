@@ -12,7 +12,6 @@ interface MenuState {
   listenToMenu: () => () => void;
   seedMenuIfEmpty: () => Promise<boolean>;
   addMenuItem: (item: Product) => Promise<boolean>;
-  addMenuItem: (item: Product) => Promise<boolean>;
   updateMenuItem: (id: string, updates: Partial<Product>) => Promise<boolean>;
   deleteMenuItem: (id: string) => Promise<boolean>;
 }
@@ -23,7 +22,7 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   error: null,
 
   listenToMenu: () => {
-    const colRef = collection(db, 'menu');
+    const colRef = collection(db, 'menuItems');
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       if (!snapshot.empty) {
         const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
@@ -51,10 +50,10 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   seedMenuIfEmpty: async () => {
     try {
-      const colRef = collection(db, 'menu');
+      const colRef = collection(db, 'menuItems');
       console.log("Seeding menu to Firestore...");
       for (const item of FALLBACK_MENU) {
-        const docRef = doc(db, 'menu', item.id);
+        const docRef = doc(db, 'menuItems', item.id);
         await setDoc(docRef, item, { merge: true });
       }
       console.log("Menu seeded successfully.");
@@ -67,7 +66,7 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   addMenuItem: async (item: Product) => {
     try {
-      const docRef = doc(db, 'menu', item.id);
+      const docRef = doc(db, 'menuItems', item.id);
       await setDoc(docRef, item);
       return true;
     } catch (error) {
@@ -78,7 +77,7 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   updateMenuItem: async (id: string, updates: Partial<Product>) => {
     try {
-      const docRef = doc(db, 'menu', id);
+      const docRef = doc(db, 'menuItems', id);
       await setDoc(docRef, updates, { merge: true });
       return true;
     } catch (error) {
@@ -89,7 +88,7 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
   deleteMenuItem: async (id: string) => {
     try {
-      const docRef = doc(db, 'menu', id);
+      const docRef = doc(db, 'menuItems', id);
       await deleteDoc(docRef);
       return true;
     } catch (error) {

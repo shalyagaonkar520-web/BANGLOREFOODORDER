@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Plus, Search, Edit, Trash2, X, Sparkles, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, Trash2, Save, X, Search, Loader2, Sparkles } from 'lucide-react';
+
 import { useMenuStore } from '../store/menuStore';
 import { Product } from '../types';
 import toast from 'react-hot-toast';
+import { db } from '../firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 export default function AdminMenuManager() {
   const { menuItems, isLoading, seedMenuIfEmpty, addMenuItem, updateMenuItem, deleteMenuItem } = useMenuStore();
@@ -11,6 +14,18 @@ export default function AdminMenuManager() {
   const [editingItem, setEditingItem] = useState<Partial<Product> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'restaurants'), (snapshot) => {
+      const list: any[] = [];
+      snapshot.forEach(docSnap => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setRestaurants(list);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const categories = ['All', ...Array.from(new Set(menuItems.map(i => i.category)))];
 
@@ -98,8 +113,8 @@ export default function AdminMenuManager() {
           </button>
           
           <button
-            onClick={() => setEditingItem({ name: '', price: 0, category: 'Main Course', isVeg: true, image: '' })}
-            className="px-6 h-12 rounded-2xl bg-[#FFB700] hover:bg-[#FFD700] text-matte-black font-black text-xs uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            onClick={() => setEditingItem({ name: '', price: 0, category: 'Main Course', isVeg: true, image: '', restaurantId: '' })}
+            className="px-6 h-12 rounded-2xl bg-[#FFB700] hover:bg-primary text-surface font-black text-xs uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Add New Item
           </button>
@@ -109,7 +124,7 @@ export default function AdminMenuManager() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"
             placeholder="Search menu items..."
@@ -172,7 +187,7 @@ export default function AdminMenuManager() {
                   onClick={() => setEditingItem(item)}
                   className="flex-1 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                 >
-                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                  <Edit className="w-5 h-5 w-3.5 h-3.5" /> Edit
                 </button>
                 <button
                   onClick={() => handleDelete(item.id!)}
@@ -204,6 +219,20 @@ export default function AdminMenuManager() {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest pl-1">Assign to Restaurant</label>
+                  <select
+                    value={editingItem.restaurantId || ''}
+                    onChange={e => setEditingItem({ ...editingItem, restaurantId: e.target.value })}
+                    className="w-full h-12 px-4 bg-black/30 border border-white/10 rounded-2xl text-white outline-none focus:border-[#FFB700]/50 font-semibold"
+                  >
+                    <option value="">Choose Restaurant...</option>
+                    {restaurants.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest pl-1">Item Name</label>
                   <input
@@ -273,7 +302,7 @@ export default function AdminMenuManager() {
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="w-full h-14 bg-[#FFB700] hover:bg-[#FFD700] text-matte-black font-black text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2"
+                  className="w-full h-14 bg-[#FFB700] hover:bg-primary text-surface font-black text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                   Save Menu Item

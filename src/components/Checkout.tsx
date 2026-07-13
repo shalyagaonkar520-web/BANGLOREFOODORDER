@@ -4,7 +4,6 @@ import { useCartStore } from '../store/cartStore';
 import { useBulkOrderStore } from '../store/bulkOrderStore';
 import { useLocationStore } from '../store/locationStore';
 import { motion } from 'framer-motion';
-import { Send, MapPin, Ticket, Calendar, ShieldCheck, Truck, ChevronLeft, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCityStore } from '../store/cityStore';
 import { calculateDeliveryCharge } from '../types';
@@ -15,6 +14,7 @@ import { useAuthStore } from '../store/authStore';
 import { db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
+import { MapPin, ChevronLeft, Calendar, ShieldCheck, Send, Truck, Ticket, Wallet } from 'lucide-react';
 import DeliveryAnimation from './DeliveryAnimation';
 
 const TELEGRAM_BOT_TOKEN = '8828362126:AAGbOzb8Q9Jhi29Bp6sQ_Q6hRo4Xj2SGfQg';
@@ -159,11 +159,7 @@ export default function Checkout() {
     }
   }, [settings, navigate]);
 
-  // Force COD when within 5 km, force online when beyond
-  React.useEffect(() => {
-    const dist = deliveryLocation?.distance ?? 0;
-    setPaymentMethod(dist > 5 ? 'online' : 'cod');
-  }, [deliveryLocation]);
+
 
   const distanceKm      = deliveryLocation?.distance ?? 0;
   const baseDeliveryCharge = calculateDeliveryCharge(distanceKm);
@@ -189,7 +185,9 @@ export default function Checkout() {
     }
   }
 
-  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee - couponDiscount);
+  const gstTaxRate = settings.taxRate ?? 5;
+  const gstTaxAmount = Math.round(Math.max(0, subtotal - couponDiscount) * gstTaxRate / 100);
+  const grandTotal      = Math.max(0, subtotal + deliveryCharge + rainySeasonFee + gstTaxAmount - couponDiscount);
 
   const maxWalletDeduction = user && profile ? Math.min(profile.walletBalance, grandTotal) : 0;
   
@@ -241,8 +239,7 @@ export default function Checkout() {
     if (!formData.phone.trim() || formData.phone.length < 10) { toast.error('Please enter a valid phone number'); return; }
     if (!deliveryLocation)                          { toast.error('Please select a delivery location'); openLocationPicker(); return; }
     if (deliveryLocation.distance > 12)             { toast.error('Sorry, not deliverable (location is >12km)'); return; }
-    if (distanceKm > 5 && paymentMethod === 'cod')  { toast.error('COD not available beyond 5km. Please pay online.'); return; }
-    if (distanceKm <= 5 && paymentMethod === 'online') { toast.error('Online payment is only for deliveries above 5km.'); return; }
+
 
     localStorage.setItem('moms_magic_user_name',  formData.name.trim());
     localStorage.setItem('moms_magic_user_phone', formData.phone.trim());
@@ -359,11 +356,11 @@ export default function Checkout() {
       ].filter((l) => l !== '').join('\n');
     };
 
-    const completeOrder = async (paymentId?: string) => {
-      const orderId = Date.now().toString();
+    const completeOrder = async (paymentId?: string, isOnline?: boolean, verifiedOrderId?: string) => {
+      const orderId = verifiedOrderId || Date.now().toString();
       
-      // Deduct from wallet if logged in and using wallet
-      if (user && walletDeduction > 0) {
+      // Deduct from wallet if logged in and using wallet AND not online (since backend handles online wallet deduction)
+      if (user && walletDeduction > 0 && !isOnline) {
         await deductWalletBalance(walletDeduction, orderId);
       }
 
@@ -372,41 +369,49 @@ export default function Checkout() {
       const waNumber = isBulkOrder ? WHATSAPP_BULK_NUMBER : WHATSAPP_FOOD_NUMBER;
       const waUrl    = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
 
-      // Save order locally and in Firestore
+      // Save order locally and in Firestore (only for COD/Wallet since backend did it for online)
+      const order = {
+        id: orderId,
+        userId: user?.uid || null,
+        userName: formData.name.trim(),
+        userPhone: formData.phone.trim(),
+        orderType: isBulkOrder ? 'bulk' : 'regular',
+        items: activeItems,
+        subtotal,
+        rainySeasonFee,
+        deliveryCharge,
+        grandTotal,
+        gstTaxAmount,
+        walletAmountUsed: walletDeduction,
+        payableAmount,
+        paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
+        paymentId: paymentId || null,
+        deliveryLocation,
+        status: 'pending',
+        restaurantId: activeItems[0]?.restaurantId || 'res_1',
+        createdAt: new Date().toISOString(),
+        instructions: formData.additionalMessage.trim(),
+      };
+
+      if (!isOnline) {
+        try {
+          // Save to Firestore (max wait 1.5s so it doesn't block redirection on slow internet)
+          await Promise.race([
+            setDoc(doc(db, 'orders', orderId), order),
+            new Promise(resolve => setTimeout(resolve, 1500))
+          ]);
+        } catch (err) {
+          console.error('Failed to save order client-side:', err);
+        }
+      }
+
       try {
-        const order = {
-          id: orderId,
-          userId: user?.uid || null,
-          userName: formData.name.trim(),
-          userPhone: formData.phone.trim(),
-          orderType: isBulkOrder ? 'bulk' : 'regular',
-          items: activeItems,
-          subtotal,
-          rainySeasonFee,
-          deliveryCharge,
-          grandTotal,
-          walletAmountUsed: walletDeduction,
-          payableAmount,
-          paymentMethod: payableAmount === 0 ? 'wallet' : paymentMethod,
-          paymentId: paymentId || null,
-          deliveryLocation,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          instructions: formData.additionalMessage.trim(),
-        };
-
-        // Save to Firestore (max wait 1.5s so it doesn't block redirection on slow internet)
-        await Promise.race([
-          setDoc(doc(db, 'orders', orderId), order),
-          new Promise(resolve => setTimeout(resolve, 1500))
-        ]);
-
         // Save locally
         const existing = JSON.parse(localStorage.getItem('moms_magic_orders') || '[]');
         existing.push(order);
         localStorage.setItem('moms_magic_orders', JSON.stringify(existing));
       } catch (err) {
-        console.error('Failed to save order:', err);
+        console.error('Failed to save local storage history:', err);
       }
 
       // Send Telegram (fire and don't block redirect)
@@ -436,9 +441,16 @@ export default function Checkout() {
       setTimeout(() => {
         window.location.href = waUrl;
       }, 500);
+
+      // Navigate to tracking page
+      setTimeout(() => {
+        navigate(`/track/${orderId}`);
+      }, 1000);
     };
 
     if (payableAmount > 0 && paymentMethod === 'online') {
+      setIsSubmitting(true);
+
       // Load Razorpay
       const loadRazorpay = () =>
         new Promise<boolean>((resolve) => {
@@ -449,7 +461,6 @@ export default function Checkout() {
           document.body.appendChild(script);
         });
 
-      setIsSubmitting(true);
       const loaded = await loadRazorpay();
       if (!loaded) {
         toast.error('Failed to load Razorpay. Check your connection.');
@@ -457,34 +468,109 @@ export default function Checkout() {
         return;
       }
 
-      const options = {
-        key: 'rzp_live_T1Y1yu09Jbjo6b',
-        amount: Math.round(payableAmount * 100),
-        currency: 'INR',
-        name: 'Moms Magic',
-        description: 'Elite Food Order',
-        handler: async (response: any) => {
-          await completeOrder(response.razorpay_payment_id);
-          setIsSubmitting(false);
-        },
-        prefill: { name: formData.name, contact: formData.phone },
-        theme: { color: '#4CD964' },
-        modal: { ondismiss: () => setIsSubmitting(false) },
-      };
+      try {
+        // 1. Create Razorpay order on backend
+        const orderRes = await fetch('/api/create-razorpay-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: payableAmount })
+        });
+        
+        if (!orderRes.ok) {
+          const errData = await orderRes.json();
+          throw new Error(errData.error || 'Failed to initialize payment gateway order');
+        }
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', (r: any) => {
-        toast.error('Payment Failed: ' + r.error.description);
+        const rzpOrder = await orderRes.json();
+
+        // 2. Open Razorpay Checkout with returned order_id
+        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_StCGrX25cCk27O';
+        const clientOrderId = Date.now().toString();
+
+        const options = {
+          key: razorpayKey,
+          amount: rzpOrder.amount,
+          currency: rzpOrder.currency,
+          name: 'FreshTrack',
+          description: 'Elite Food Order',
+          order_id: rzpOrder.id,
+          handler: async (response: any) => {
+            try {
+              toast.loading('Verifying payment securely...', { id: 'payment-verify' });
+              
+              // Prepare order structure to send to backend for secure recording
+              const orderPayload = {
+                id: clientOrderId,
+                userId: user?.uid || null,
+                userName: formData.name.trim(),
+                userPhone: formData.phone.trim(),
+                orderType: isBulkOrder ? 'bulk' : 'regular',
+                items: activeItems,
+                subtotal,
+                rainySeasonFee,
+                deliveryCharge,
+                grandTotal,
+                walletAmountUsed: walletDeduction,
+                payableAmount,
+                paymentMethod: 'online',
+                deliveryLocation,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                instructions: formData.additionalMessage.trim(),
+              };
+
+              // 3. Verify on backend
+              const verifyRes = await fetch('/api/verify-razorpay-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  order: orderPayload
+                })
+              });
+
+              const verifyData = await verifyRes.json();
+              toast.dismiss('payment-verify');
+
+              if (!verifyRes.ok) {
+                throw new Error(verifyData.error || 'Payment verification failed on backend');
+              }
+
+              // Complete client checkout steps
+              await completeOrder(response.razorpay_payment_id, true, clientOrderId);
+            } catch (err: any) {
+              console.error('Payment verification failed:', err);
+              toast.error(err.message || 'Verification failed. Contact support.');
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+          prefill: { name: formData.name, contact: formData.phone },
+          theme: { color: '#FF5A1F' },
+          modal: { ondismiss: () => setIsSubmitting(false) },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', (r: any) => {
+          toast.error('Payment Failed: ' + r.error.description);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.message || 'Payment initialization failed.');
         setIsSubmitting(false);
-      });
-      rzp.open();
+      }
     } else {
       setIsSubmitting(true);
       try {
-        await completeOrder(undefined);
+        await completeOrder(undefined, false);
       } catch (err) {
         console.error(err);
         toast.error('Failed to place order. Please try again.');
+      } finally {
         setIsSubmitting(false);
       }
     }
@@ -496,44 +582,45 @@ export default function Checkout() {
       <div className="space-y-3">
         <motion.button
           whileHover={{ x: -4 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/food')}
-          className="flex items-center gap-2 text-white/40 font-black uppercase tracking-[3px] text-[10px] hover:text-gold transition-colors"
+          className="flex items-center gap-2 text-secondary font-bold uppercase tracking-widest text-[10px] hover:text-primary transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" /> Back to Menu
+          <ChevronLeft className="w-4 h-4 text-secondary" /> Back to Menu
         </motion.button>
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter italic uppercase leading-none">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-headline-lg text-on-surface tracking-tighter leading-none">
           {isBulkOrder ? 'Grand ' : 'Final '}
-          <span className="text-luxury-gold drop-shadow-xl">{isBulkOrder ? 'Booking' : 'Details'}</span>
+          <span className="text-primary drop-shadow-sm">{isBulkOrder ? 'Booking' : 'Details'}</span>
         </h1>
-        <p className="text-white/30 font-bold uppercase tracking-[4px] text-[9px]">
-          {isBulkOrder ? 'Confirm your exclusive event logistics' : 'Finalize your elite culinary delivery'}
+        <p className="text-secondary font-body-sm tracking-wide">
+          {isBulkOrder ? 'Confirm your exclusive event logistics' : 'Finalize your delivery details'}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* ── User Info ── */}
-        <div className="luxury-card p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6">
-          <h2 className="text-sm font-black text-white/50 uppercase tracking-[4px]">Your Details</h2>
+        <div className="bg-surface p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6 shadow-sm border border-outline-variant/30">
+          <h2 className="text-sm font-headline-sm text-secondary uppercase tracking-widest">Your Details</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Name</label>
+              <label className="text-label-sm text-primary uppercase">Name</label>
               <input
                 required
                 type="text"
-                className="w-full px-4 py-3 bg-black/40 rounded-xl border border-white/10 focus:border-gold/40 outline-none font-bold text-white text-sm transition-all placeholder:text-white/20"
+                className="w-full px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold text-on-surface text-sm transition-all placeholder:text-outline shadow-inner"
                 placeholder="Your Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">WhatsApp No.</label>
+              <label className="text-label-sm text-primary uppercase">WhatsApp No.</label>
               <input
                 required
                 type="tel"
                 inputMode="numeric"
-                className="w-full px-4 py-3 bg-black/40 rounded-xl border border-white/10 focus:border-gold/40 outline-none font-bold text-white text-sm transition-all placeholder:text-white/20"
+                className="w-full px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold text-on-surface text-sm transition-all placeholder:text-outline shadow-inner"
                 placeholder="+91 XXXXXXXXXX"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -543,47 +630,49 @@ export default function Checkout() {
 
           {/* Delivery Location */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Delivery Location</label>
+            <label className="text-label-sm text-primary uppercase">Delivery Location</label>
             {deliveryLocation ? (
-              <div className="bg-black/40 rounded-xl border border-white/10 p-4 space-y-4">
+              <div className="bg-surface-container-low rounded-xl border border-outline-variant/50 p-4 space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gold shrink-0 mt-0.5" />
-                  <p className="text-white font-bold text-sm leading-relaxed">{deliveryLocation.address}</p>
+                  <MapPin className="text-primary w-5 h-5 shrink-0 mt-0.5" />
+                  <p className="text-on-surface font-bold text-sm leading-relaxed">{deliveryLocation.address}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <div className="px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-black uppercase text-white/40 border border-white/5">
+                  <div className="px-3 py-1.5 bg-surface-container-high rounded-lg text-label-sm text-secondary border border-outline-variant">
                     {distanceKm} KM
                   </div>
-                  <div className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border bg-gold/10 text-gold border-gold/20">
+                  <div className="px-3 py-1.5 rounded-lg text-label-sm border bg-primary-fixed text-primary border-primary/20">
                     ₹{deliveryCharge} Delivery
                   </div>
                 </div>
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={openLocationPicker}
-                  className="w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gold/10 hover:text-gold transition-all flex items-center justify-center gap-2 text-white/40"
+                  className="w-full py-3 bg-surface rounded-xl text-label-sm uppercase tracking-widest hover:bg-surface-container-low transition-all flex items-center justify-center gap-2 text-secondary border border-outline-variant/50 shadow-sm"
                 >
-                  <MapPin className="w-3.5 h-3.5" /> Change Location
-                </button>
+                  <MapPin className="w-4 h-4" /> Change Location
+                </motion.button>
               </div>
             ) : (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={openLocationPicker}
-                className="w-full py-10 bg-black/40 rounded-xl border-2 border-dashed border-gold/20 hover:border-gold/50 transition-all flex flex-col items-center gap-3"
+                className="w-full py-10 bg-surface-container-low rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all flex flex-col items-center gap-3"
               >
-                <MapPin className="w-8 h-8 text-gold" />
-                <span className="text-[10px] font-black uppercase tracking-[3px] text-gold">Choose Delivery Location</span>
-              </button>
+                <MapPin className="text-primary w-8 h-8" />
+                <span className="text-label-sm text-primary uppercase">Choose Delivery Location</span>
+              </motion.button>
             )}
           </div>
 
           {/* Instructions */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Special Instructions</label>
+            <label className="text-label-sm text-primary uppercase">Special Instructions</label>
             <textarea
               rows={2}
-              className="w-full px-4 py-3 bg-black/40 rounded-xl border border-white/10 focus:border-gold/40 outline-none font-bold text-white text-sm transition-all placeholder:text-white/20 resize-none"
+              className="w-full px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold text-on-surface text-sm transition-all placeholder:text-outline resize-none shadow-inner"
               placeholder="E.g., Extra hot, gate code, ring the bell..."
               value={formData.additionalMessage}
               onChange={(e) => setFormData({ ...formData, additionalMessage: e.target.value })}
@@ -592,13 +681,13 @@ export default function Checkout() {
         </div>
 
         {/* ── Order Items ── */}
-        <div className="luxury-card p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6">
+        <div className="bg-surface p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6 shadow-sm border border-outline-variant/30">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-white/50 uppercase tracking-[4px] flex items-center gap-2">
-              <Ticket className="w-4 h-4 text-gold" /> {isBulkOrder ? 'Event' : 'Order'} Items
+            <h2 className="text-sm font-headline-sm text-secondary uppercase tracking-widest flex items-center gap-2">
+              <Ticket className="w-4 h-4 text-primary" /> {isBulkOrder ? 'Event' : 'Order'} Items
             </h2>
             {isBulkOrder && (
-              <div className="px-3 py-1.5 bg-gold/10 rounded-full text-[10px] font-black uppercase text-gold border border-gold/20 flex items-center gap-1.5">
+              <div className="px-3 py-1.5 bg-primary-fixed rounded-full text-label-sm text-primary border border-primary/20 flex items-center gap-1.5">
                 <Calendar className="w-3 h-3" /> Bulk
               </div>
             )}
@@ -608,35 +697,35 @@ export default function Checkout() {
             {activeItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-3 p-4 bg-black/30 rounded-xl border border-white/5"
+                className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/30 shadow-sm"
               >
                 {item.image && (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-white/5 shrink-0">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-outline-variant/50 shrink-0">
                     <img
                       src={item.image}
-                      className="w-full h-full object-cover opacity-80"
+                      className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                       alt={item.name}
                     />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-black text-sm text-white italic uppercase tracking-tight truncate">{item.name}</h4>
-                  <p className="text-[10px] font-bold text-white/30 uppercase">
+                  <h4 className="font-headline-sm text-sm text-on-surface uppercase tracking-tight truncate">{item.name}</h4>
+                  <p className="text-label-sm text-secondary uppercase">
                     {isBulkOrder ? (item as any).finalQuantity : (item as any).quantity} Unit(s)
                   </p>
                   {item.items?.length > 0 && (
                     <ul className="mt-1 space-y-0.5">
                       {item.items.map((sub: string, i: number) => (
-                        <li key={i} className="text-white/30 text-[10px] flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-gold shrink-0" />
+                        <li key={i} className="text-secondary text-[10px] flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
                           {sub}
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <p className="text-base sm:text-lg font-black text-gold italic shrink-0">
+                <p className="text-base sm:text-lg font-headline-md text-primary shrink-0">
                   ₹{item.price * (isBulkOrder ? (item as any).finalQuantity : (item as any).quantity)}
                 </p>
               </div>
@@ -645,70 +734,71 @@ export default function Checkout() {
         </div>
 
         {/* ── Summary, Coupon, Payment ── */}
-        <div className="luxury-card p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6">
+        <div className="bg-surface p-5 sm:p-8 rounded-2xl sm:rounded-[30px] space-y-6 shadow-sm border border-outline-variant/30">
           {/* Free Delivery Before 2 PM Banner */}
           {isTillJuly1st ? (
-            <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+            <div className="flex items-center gap-3 px-4 py-3 bg-tertiary-container border border-tertiary-container rounded-xl">
               <span className="text-xl">🎉</span>
               <div>
-                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest">Free Delivery Active!</p>
-                <p className="text-emerald-300/70 text-[11px] font-medium">Free delivery is on us till July 1st!</p>
+                <p className="text-on-tertiary-container font-headline-sm text-xs uppercase tracking-widest">Free Delivery Active!</p>
+                <p className="text-on-tertiary-container/80 text-[11px] font-medium">Free delivery is on us till July 1st!</p>
               </div>
             </div>
           ) : isBeforeTwo ? (
-            <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+            <div className="flex items-center gap-3 px-4 py-3 bg-tertiary-container border border-tertiary-container rounded-xl">
               <span className="text-xl">🎉</span>
               <div>
-                <p className="text-emerald-400 font-black text-xs uppercase tracking-widest">Free Delivery Active!</p>
-                <p className="text-emerald-300/70 text-[11px] font-medium">Orders before 2:00 PM get free delivery today</p>
+                <p className="text-on-tertiary-container font-headline-sm text-xs uppercase tracking-widest">Free Delivery Active!</p>
+                <p className="text-on-tertiary-container/80 text-[11px] font-medium">Orders before 2:00 PM get free delivery today</p>
               </div>
             </div>
           ) : null}
           {/* Promo Code */}
-          <div className="space-y-3 pb-6 border-b border-white/5">
-            <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Promo Code</h3>
+          <div className="space-y-3 pb-6 border-b border-outline-variant/30">
+            <h3 className="text-label-sm text-outline uppercase">Promo Code</h3>
             <div className="flex gap-2">
               <input
                 type="text"
-                className="flex-1 px-4 py-3 bg-black/40 rounded-xl border border-white/10 focus:border-gold/40 outline-none font-bold text-white uppercase text-sm transition-all placeholder:text-white/20 min-w-0"
+                className="flex-1 px-4 py-3 bg-surface-container-low rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold text-on-surface uppercase text-sm transition-all placeholder:text-outline min-w-0 shadow-inner"
                 placeholder="ENTER CODE"
                 value={couponInput}
                 onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
               />
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={handleApplyCoupon}
-                className="px-5 py-3 bg-gold/10 text-gold rounded-xl border border-gold/20 font-black uppercase tracking-widest text-[11px] hover:bg-gold/20 transition-all shrink-0"
+                className="px-5 py-3 bg-primary-fixed text-primary rounded-xl border border-primary/20 font-bold uppercase tracking-widest text-[11px] hover:bg-primary-fixed/80 transition-all shrink-0 shadow-sm"
               >
                 Apply
-              </button>
+              </motion.button>
             </div>
             {isFreeDelivery && (
-              <p className="text-emerald-400 text-xs font-bold">✅ Free Delivery — {freeDeliveryReason}</p>
+              <p className="text-tertiary text-xs font-bold">✅ Free Delivery — {freeDeliveryReason}</p>
             )}
           </div>
 
           {/* Wallet Balance Integration */}
           {user && profile && profile.walletBalance > 0 && (
-            <div className="space-y-4 pb-6 border-b border-white/5 text-left">
-              <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Wallet Balance</h3>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+            <div className="space-y-4 pb-6 border-b border-outline-variant/30 text-left">
+              <h3 className="text-label-sm text-primary uppercase">Wallet Balance</h3>
+              <div className="bg-surface-container-low border border-outline-variant/50 rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
                 <div className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     id="use-wallet-cb"
                     checked={useWallet}
                     onChange={(e) => handleUseWalletToggle(e.target.checked)}
-                    className="w-4.5 h-4.5 accent-[#4CD964] cursor-pointer"
+                    className="w-4.5 h-4.5 accent-primary cursor-pointer"
                   />
-                  <label htmlFor="use-wallet-cb" className="text-xs font-black uppercase text-white select-none cursor-pointer tracking-wider">
-                    Use Wallet Cash (Available: <span className="text-[#4CD964]">₹{profile.walletBalance}</span>)
+                  <label htmlFor="use-wallet-cb" className="text-xs font-bold uppercase text-on-surface select-none cursor-pointer tracking-wider">
+                    Use Wallet Cash (Available: <span className="text-primary">₹{profile.walletBalance}</span>)
                   </label>
                 </div>
 
                 {useWallet && (
                   <div className="space-y-2 mt-1">
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Amount to Deduct (₹)</p>
+                    <p className="text-label-sm text-secondary uppercase tracking-widest">Amount to Deduct (₹)</p>
                     <input
                       type="number"
                       max={maxWalletDeduction}
@@ -716,10 +806,10 @@ export default function Checkout() {
                       value={customWalletAmount}
                       onChange={(e) => setCustomWalletAmount(e.target.value)}
                       placeholder={`Max deduction: ₹${maxWalletDeduction}`}
-                      className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50"
+                      className="w-full bg-surface border border-outline-variant/50 rounded-xl px-4 py-2.5 text-xs text-on-surface font-bold outline-none focus:border-primary/50 shadow-inner"
                     />
                     {walletDeduction > 0 && (
-                      <p className="text-[#4CD964] text-[9px] font-black uppercase tracking-wider">
+                      <p className="text-primary text-label-sm uppercase tracking-wider">
                         Applied Wallet Deduction: -₹{walletDeduction}
                       </p>
                     )}
@@ -730,56 +820,60 @@ export default function Checkout() {
           )}
 
           {/* Price Breakdown */}
-          <div className="space-y-3 pb-6 border-b border-white/5">
-            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+          <div className="space-y-3 pb-6 border-b border-outline-variant/30">
+            <div className="flex justify-between items-center text-secondary font-bold text-xs uppercase tracking-widest">
               <span>Subtotal</span>
-              <span className="text-white text-lg font-black">₹{subtotal}</span>
+              <span className="text-on-surface text-lg font-headline-lg">₹{subtotal}</span>
             </div>
-            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+            <div className="flex justify-between items-center text-secondary font-bold text-xs uppercase tracking-widest">
               <span>Rainy Season Fee</span>
-              <span className="text-white text-lg font-black">₹{rainySeasonFee}</span>
+              <span className="text-on-surface text-lg font-headline-lg">₹{rainySeasonFee}</span>
             </div>
-            <div className="flex justify-between items-center text-white/40 font-bold text-xs uppercase tracking-[3px]">
+            <div className="flex justify-between items-center text-secondary font-bold text-xs uppercase tracking-widest">
+              <span>GST Tax ({gstTaxRate}%)</span>
+              <span className="text-on-surface text-lg font-headline-lg">₹{gstTaxAmount}</span>
+            </div>
+            <div className="flex justify-between items-center text-secondary font-bold text-xs uppercase tracking-widest">
               <div className="flex items-center gap-2">
-                <Truck className="w-3.5 h-3.5 text-gold" />
+                <Truck className="w-4 h-4 text-primary" />
                 <span>Delivery</span>
               </div>
-              <span className="text-lg font-black text-white">
+              <span className="text-lg font-headline-lg text-on-surface">
                 {isFreeDelivery ? (
                   <div className="text-right">
                     <div>
-                      <span className="line-through text-white/30 mr-2 text-sm">₹{baseDeliveryCharge}</span>
-                      <span className="text-emerald-400">FREE</span>
+                      <span className="line-through text-outline mr-2 text-sm">₹{baseDeliveryCharge}</span>
+                      <span className="text-tertiary">FREE</span>
                     </div>
-                    <p className="text-emerald-400/60 text-[10px] font-bold">{freeDeliveryReason}</p>
+                    <p className="text-tertiary text-[10px] font-bold">{freeDeliveryReason}</p>
                   </div>
                 ) : `₹${deliveryCharge}`}
               </span>
             </div>
             {couponDiscount > 0 && (
-              <div className="flex justify-between items-center text-emerald-400 font-bold text-xs uppercase tracking-[3px]">
+              <div className="flex justify-between items-center text-tertiary font-bold text-xs uppercase tracking-widest">
                 <span>Coupon Discount</span>
-                <span className="text-lg font-black">-₹{couponDiscount}</span>
+                <span className="text-lg font-headline-lg">-₹{couponDiscount}</span>
               </div>
             )}
             {walletDeduction > 0 && (
-              <div className="flex justify-between items-center text-[#4CD964] font-bold text-xs uppercase tracking-[3px]">
+              <div className="flex justify-between items-center text-primary font-bold text-xs uppercase tracking-widest">
                 <span>Wallet Discount</span>
-                <span className="text-lg font-black">-₹{walletDeduction}</span>
+                <span className="text-lg font-headline-lg">-₹{walletDeduction}</span>
               </div>
             )}
           </div>
 
           <div className="flex justify-between items-end pb-2">
             <div>
-              <p className="text-gold/40 text-[10px] font-black uppercase tracking-[4px] mb-1">
+              <p className="text-secondary text-label-sm uppercase tracking-widest mb-1">
                 {walletDeduction > 0 ? 'Payable Amount' : 'Grand Total'}
               </p>
-              <p className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter text-white">
+              <p className="text-4xl sm:text-5xl md:text-6xl font-headline-lg tracking-tighter text-on-surface">
                 ₹{payableAmount}
               </p>
               {walletDeduction > 0 && (
-                <p className="text-[9px] text-white/30 font-black uppercase tracking-wider mt-1 text-left">
+                <p className="text-label-sm text-outline uppercase tracking-wider mt-1 text-left">
                   (Grand Total: ₹{grandTotal})
                 </p>
               )}
@@ -789,57 +883,50 @@ export default function Checkout() {
           {/* Payment Method */}
           {payableAmount > 0 ? (
             <div className="space-y-3">
-              <h3 className="text-[10px] font-black text-gold/50 uppercase tracking-[3px]">Payment Method</h3>
+              <h3 className="text-label-sm text-outline uppercase tracking-widest">Payment Method</h3>
               <div className="grid grid-cols-2 gap-3">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   type="button"
-                  onClick={() => {
-                    if (distanceKm <= 5) { toast.error('Online payment is only for deliveries above 5km.'); return; }
-                    setPaymentMethod('online');
-                  }}
-                  className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all cursor-pointer ${
-                    distanceKm <= 5
-                      ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
-                      : paymentMethod === 'online'
-                      ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
-                      : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
+                  onClick={() => setPaymentMethod('online')}
+                  className={`py-4 rounded-xl border font-bold uppercase tracking-widest text-[11px] transition-all cursor-pointer shadow-sm ${
+                    paymentMethod === 'online'
+                      ? 'bg-primary-fixed border-primary text-primary shadow-[0_4px_15px_rgba(var(--color-primary-rgb),0.2)]'
+                      : 'bg-surface border-outline-variant/50 text-secondary hover:border-outline-variant'
                   }`}
                 >
-                  Pay Online
-                </button>
-                <button
+                  UPI / Pay Online
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   type="button"
-                  onClick={() => {
-                    if (distanceKm > 5) { toast.error('COD not available beyond 5km.'); return; }
-                    setPaymentMethod('cod');
-                  }}
-                  className={`py-4 rounded-xl border font-black uppercase tracking-widest text-[11px] transition-all cursor-pointer ${
-                    distanceKm > 5
-                      ? 'opacity-30 cursor-not-allowed bg-black/40 border-white/5 text-white/20'
-                      : paymentMethod === 'cod'
-                      ? 'bg-gold/10 border-gold text-gold shadow-[0_0_20px_rgba(76,217,100,0.2)]'
-                      : 'bg-black/40 border-white/10 text-white/40 hover:border-white/30'
+                  onClick={() => setPaymentMethod('cod')}
+                  className={`py-4 rounded-xl border font-bold uppercase tracking-widest text-[11px] transition-all cursor-pointer shadow-sm ${
+                    paymentMethod === 'cod'
+                      ? 'bg-primary-fixed border-primary text-primary shadow-[0_4px_15px_rgba(var(--color-primary-rgb),0.2)]'
+                      : 'bg-surface border-outline-variant/50 text-secondary hover:border-outline-variant'
                   }`}
                 >
                   Cash on Delivery
-                </button>
+                </motion.button>
               </div>
             </div>
           ) : (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-3.5 rounded-2xl text-[#4CD964] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            <div className="bg-tertiary-container border border-tertiary-container px-4 py-3.5 rounded-2xl text-on-tertiary-container text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm">
               🎉 100% Covered By Wallet cash
             </div>
           )}
 
           {/* Submit */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isSubmitting}
-            className="w-full btn-luxury-gold h-16 sm:h-20 rounded-2xl text-base sm:text-xl tracking-[4px] sm:tracking-[6px] flex items-center justify-center gap-3 group disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-primary text-on-primary h-16 sm:h-20 rounded-2xl text-base sm:text-xl font-bold tracking-widest flex items-center justify-center gap-3 group disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:bg-primary/90 transition-colors"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
                 <span>Processing...</span>
               </>
             ) : (
@@ -848,10 +935,10 @@ export default function Checkout() {
                 <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </>
             )}
-          </button>
+          </motion.button>
 
-          <div className="flex items-center justify-center gap-2 mt-4 text-white/20 font-black uppercase tracking-[3px] text-[9px]">
-            <ShieldCheck className="w-3.5 h-3.5 text-gold" />
+          <div className="flex items-center justify-center gap-2 text-secondary font-bold uppercase tracking-widest text-[9px]">
+            <ShieldCheck className="w-4 h-4 text-primary" />
             Secure End-to-End Encrypted
           </div>
         </div>

@@ -1,0 +1,357 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>My Cart | FoodExpress</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fff8f6",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#ffb59d",
+                    "on-primary-fixed": "#390c00",
+                    "outline": "#907065",
+                    "on-secondary-fixed-variant": "#005235",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#001c39",
+                    "tertiary-container": "#0076d3",
+                    "secondary": "#006c48",
+                    "on-tertiary-fixed-variant": "#004884",
+                    "tertiary": "#005da8",
+                    "surface-tint": "#ac3500",
+                    "on-primary-fixed-variant": "#832600",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#5c4037",
+                    "inverse-surface": "#3f2c26",
+                    "on-secondary-fixed": "#002113",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#fffbff",
+                    "primary-fixed": "#ffdbd0",
+                    "surface-bright": "#fff8f6",
+                    "inverse-primary": "#ffb59d",
+                    "inverse-on-surface": "#ffede8",
+                    "primary-container": "#d24200",
+                    "secondary-fixed-dim": "#62dca4",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#e5beb2",
+                    "on-surface": "#281812",
+                    "surface-container-highest": "#fbdcd3",
+                    "surface": "#fff8f6",
+                    "on-tertiary-container": "#fdfcff",
+                    "surface-container-high": "#ffe2d9",
+                    "secondary-container": "#7cf7bc",
+                    "tertiary-fixed-dim": "#a4c9ff",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-background": "#281812",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#00714b",
+                    "surface-container-low": "#fff1ed",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#f2d3ca",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#ffe9e3",
+                    "secondary-fixed": "#7ff9be",
+                    "primary": "#a83300",
+                    "surface-variant": "#fbdcd3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "sm": "8px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "margin-desktop": "48px"
+            },
+            "fontFamily": {
+                    "h1": ["Plus Jakarta Sans"],
+                    "h2": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h3": ["Plus Jakarta Sans"],
+                    "body-sm": ["Inter"],
+                    "caption": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "h1": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "h2": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+                    "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen font-body-md">
+<!-- Top Navigation Bar -->
+<header class="bg-surface shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-4 md:px-margin-desktop h-16">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<h1 class="font-h2 text-h2 text-on-surface leading-tight">My Cart</h1>
+<span class="font-body-sm text-on-surface-variant">The Gourmet Kitchen • 4 items</span>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<span class="font-label-md text-primary font-bold border-b-2 border-primary cursor-pointer">Cart</span>
+<span class="font-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Orders</span>
+<span class="material-symbols-outlined text-on-surface cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface cursor-pointer">person</span>
+</div>
+</header>
+<main class="max-w-2xl mx-auto px-margin-mobile py-lg pb-32">
+<!-- Delivery Address Card -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-[0_2px_8px_rgba(0,0,0,0.08)] mb-lg border border-outline-variant/30" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out;">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<h3 class="font-h3 text-h3">Delivery Address</h3>
+</div>
+<button class="text-primary font-label-md hover:underline">Change</button>
+</div>
+<div class="pl-7">
+<p class="font-body-md text-on-surface font-semibold">Home</p>
+<p class="font-body-sm text-on-surface-variant leading-relaxed">Flat 402, Sunset Boulevard, Green Valley Estate, Mumbai - 400053</p>
+</div>
+</section>
+<!-- Cart Items List -->
+<section class="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden border border-outline-variant/30 mb-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out;">
+<div class="p-md border-b border-outline-variant/20">
+<h3 class="font-h3 text-h3 text-on-surface">Items in your cart</h3>
+</div>
+<div class="divide-y divide-outline-variant/20">
+<!-- Item 1 -->
+<div class="p-md flex items-center gap-4">
+<div class="w-[60px] h-[60px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio photograph of a gourmet truffle burger on a dark slate background. The burger has melted cheese, crispy onions, and a brioche bun. Warm directional lighting highlights the textures of the meat and fresh greens, consistent with a high-end FoodExpress corporate modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKnuCGxqffamyqjTzDwE9xUIctX1Mmia2CTJjfdG95Ldfb1IvILYRqpmqj8NtAJSdpTlaJ0v-bVNLKxx3UcL4SZ_DvJ0w7fL8kKXdlJcZ-Lcif10IzEryTDf9TJv39FpBC9JLRwWPY22oA80vbyWTmuacrL6Ssu4FjXt6xei2QtkiGhNB5PCPdVgGivgfdp7vrt6Xo18uSo5YcFlT905y9x0Tc4Cs9wl0_MgXWtrZoWGWNt_izpMfwwbajsJRGXhlE6EEXNWiuMvF_">
+</div>
+<div class="flex-grow min-w-0">
+<div class="flex items-center gap-1 mb-0.5">
+<span class="w-3 h-3 border border-[#ba1a1a] flex items-center justify-center rounded-sm">
+<span class="w-1.5 h-1.5 bg-[#ba1a1a] rounded-full"></span>
+</span>
+<h4 class="font-body-md font-semibold text-on-surface truncate">Truffle Umami Burger</h4>
+</div>
+<p class="font-body-sm text-on-surface-variant">₹450</p>
+</div>
+<div class="flex items-center bg-background border border-outline-variant rounded-lg px-2 py-1 shadow-sm">
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, -1)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="px-3 font-label-md text-on-surface quantity-val">1</span>
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, 1)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-md flex items-center gap-4">
+<div class="w-[60px] h-[60px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A top-down shot of a crisp Caesar salad in a white ceramic bowl. The salad features vibrant green romaine lettuce, golden croutons, and shavings of parmesan cheese. The lighting is bright and airy, reflecting a healthy and appetizing food photography style for a vibrant delivery app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0dpnkJU_CJRktozQ9QiPT-MsQHYYgGecf8O8WFel6LNrq5Dgce-IWPpGasdS1Ogx59ZwjBKv3-pQI7yGyFV-eUajvuNkDAugnNnXMh4974VM7ffaG5gKRtv0z10zosqm7ZwIusgczJhRpNiSKtXHybrY9jbVH_9r4BsO1xuYRLxKI8FpEb6oh4k_QqOMf9a5UGHoI2B8mxVTe_ooOYhGria7wLy-t9a_etYZ5qTx_s-c8ciA6lJrWMhgzWSy4505ua1RN1dF80BPG">
+</div>
+<div class="flex-grow min-w-0">
+<div class="flex items-center gap-1 mb-0.5">
+<span class="w-3 h-3 border border-secondary flex items-center justify-center rounded-sm">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+</span>
+<h4 class="font-body-md font-semibold text-on-surface truncate">Classic Caesar Salad</h4>
+</div>
+<p class="font-body-sm text-on-surface-variant">₹280</p>
+</div>
+<div class="flex items-center bg-background border border-outline-variant rounded-lg px-2 py-1 shadow-sm">
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, -1)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="px-3 font-label-md text-on-surface quantity-val">2</span>
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, 1)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-md flex items-center gap-4">
+<div class="w-[60px] h-[60px] rounded-lg overflow-hidden flex-shrink-0 bg-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A close-up of a refreshing iced hibiscus tea in a tall glass with condensation. The deep red liquid is garnished with a fresh mint leaf and a slice of lime. The background is a clean, neutral white marble surface with soft, natural lighting, creating a cool and inviting beverage image." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKU3EVeQnuu8ByyT1m09CX7EDsUFVMC_XQI6tE-zQbqdNTrsz-RuKXZk9bOnP5EJKdC21NAW6vYKv2SjVUU5dRVcNq7QxC1dvxvmHGPDH-4jT2kBka98Ty0In1M8-GbfkIwn7b8qi0sqk4q8qy9EDlJyJY5OtciIpSCWZWQZzVL3yGIQSdh57lM6XXdYX4c1f7_ppkbCcKZjS_FJUsdajh1ne9784lG2xOEjlam3elQOuMUmIlANivVsRn0CyreDsfut_-yADUI-Y7">
+</div>
+<div class="flex-grow min-w-0">
+<div class="flex items-center gap-1 mb-0.5">
+<span class="w-3 h-3 border border-secondary flex items-center justify-center rounded-sm">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+</span>
+<h4 class="font-body-md font-semibold text-on-surface truncate">Iced Hibiscus Tea</h4>
+</div>
+<p class="font-body-sm text-on-surface-variant">₹120</p>
+</div>
+<div class="flex items-center bg-background border border-outline-variant rounded-lg px-2 py-1 shadow-sm">
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, -1)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="px-3 font-label-md text-on-surface quantity-val">1</span>
+<button class="p-1 text-primary hover:bg-surface-container-high rounded-sm transition-colors" onclick="updateQty(this, 1)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-md bg-surface-container">
+<button class="flex items-center gap-2 text-on-surface-variant font-body-md hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="">Add more items</span>
+</button>
+</div>
+</section>
+<!-- Bill Details Card -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-outline-variant/30" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out;">
+<h3 class="font-h3 text-h3 text-on-surface mb-4">Bill Details</h3>
+<div class="space-y-3 mb-4">
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span class="">Item total</span>
+<span class="text-on-surface">₹1,130</span>
+</div>
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span class="">Delivery fee</span>
+<span class="text-secondary font-semibold">FREE</span>
+</div>
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span class="flex items-center gap-1">
+                        Platform fee
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+</span>
+<span class="text-on-surface">₹5</span>
+</div>
+
+</div>
+<div class="pt-4 border-t border-outline-variant/20 flex justify-between items-center">
+<span class="font-h2 text-h2 text-on-surface">To Pay</span>
+<span class="font-h2 text-h2 text-on-surface">₹1,197</span>
+</div>
+</section>
+<!-- Delivery Preference (Micro-interaction example) -->
+<section class="mt-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out;">
+<div class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-all">
+<div class="flex items-center gap-3">
+<div class="bg-secondary-container text-on-secondary-container p-2 rounded-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">no_accounts</span>
+</div>
+<div>
+<p class="font-body-md font-semibold text-on-surface">No-contact Delivery</p>
+<p class="font-body-sm text-on-surface-variant">Rider will leave the order at your doorstep</p>
+</div>
+</div>
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox">
+</div>
+</section><section class="mt-lg"><h3 class="font-h3 text-h3 text-on-surface mb-4">Payment Method</h3><div class="space-y-3"><label class="flex items-center justify-between p-md bg-surface-container-lowest border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">payments</span><span class="font-body-md font-semibold text-on-surface">Cash on Delivery</span></div><input type="radio" name="payment" class="w-5 h-5 text-primary focus:ring-primary" checked=""></label><label class="flex items-center justify-between p-md bg-surface-container-lowest border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">account_balance_wallet</span><span class="font-body-md font-semibold text-on-surface">Pay Online</span></div><input type="radio" name="payment" class="w-5 h-5 text-primary focus:ring-primary"></label></div></section>
+</main>
+<!-- Sticky Bottom Bar -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-surface shadow-[0_-4px_12px_rgba(0,0,0,0.12)] p-4 flex justify-center items-center rounded-t-xl md:px-margin-desktop">
+<div class="w-full max-w-2xl flex items-center justify-between gap-4">
+<div class="hidden sm:flex flex-col">
+<span class="font-h2 text-h2 text-on-surface">₹1,197</span>
+<span class="font-body-sm text-primary font-semibold">VIEW DETAILED BILL</span>
+</div>
+<button class="flex-grow md:flex-grow-0 md:min-w-[320px] bg-primary text-on-primary h-12 rounded-lg font-h2 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"><span class="">Place Order</span><span class="sm:hidden">₹1,197</span></button>
+</div>
+</div>
+<!-- Mobile Navigation (Suppressed as per "Destination Rule" for Transactional Screens, 
+         but technically provided in JSON as a Shell. Including as a hidden reference 
+         but keeping the Checkout journey focused on the "Proceed" action) -->
+<nav class="md:hidden fixed bottom-0 w-full z-40 bg-surface flex justify-around items-center px-4 py-2 pb-safe shadow-lg translate-y-full opacity-0 pointer-events-none">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">home</span>
+<span class="font-body-sm text-body-sm">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+<span class="font-body-sm text-body-sm">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-semibold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-body-sm text-body-sm">Orders</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-body-sm text-body-sm">Cart</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body-sm text-body-sm">Profile</span>
+</div>
+</nav>
+<script>
+        function updateQty(btn, change) {
+            const container = btn.closest('.flex');
+            const valSpan = container.querySelector('.quantity-val');
+            let current = parseInt(valSpan.innerText);
+            current = Math.max(0, current + change);
+            
+            if (current === 0) {
+                // In a real app, this might trigger a removal confirmation
+                if(confirm("Remove this item from cart?")) {
+                    btn.closest('.p-md').remove();
+                }
+            } else {
+                valSpan.innerText = current;
+                // Animation effect
+                valSpan.classList.add('scale-125', 'text-primary');
+                setTimeout(() => {
+                    valSpan.classList.remove('scale-125', 'text-primary');
+                }, 150);
+            }
+        }
+
+        // Simple entry animation for cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('section');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease-out';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+
+
+
+
+</body></html>

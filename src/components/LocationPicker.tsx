@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Check, X, Loader2, AlertTriangle, Store, Locate, ChevronDown } from 'lucide-react';
 import { useLocationStore, NearbyRestaurant } from '../store/locationStore';
 
 import { haversineDistance, reverseGeocode } from '../lib/location';
@@ -310,6 +309,11 @@ export default function LocationPicker() {
   // ───────────────────────────────────────────────────────────
   const handleConfirmLocation = () => {
     if (selectedLat !== null && selectedLng !== null) {
+      if (!address.toLowerCase().includes('yellapur')) {
+        alert("We didn't implement delivery in your city till now. Currently, we only deliver in Yellapur.");
+        return;
+      }
+
       setDeliveryLocation({
         lat: selectedLat,
         lng: selectedLng,
@@ -334,17 +338,19 @@ export default function LocationPicker() {
         {/* ─── TOP BAR ─── */}
         <div className="relative z-50 flex items-center justify-between px-4 md:px-6 h-16 bg-[#0B0E14]/95 backdrop-blur-xl border-b border-white/5">
           <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-brand" />
+            <span className="material-symbols-outlined text-[20px] text-primary">location_on</span>
             <span className="font-black text-sm uppercase tracking-widest text-white/80">
               Select Delivery Location
             </span>
           </div>
-          <button
-            onClick={closeLocationPicker}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {deliveryLocation && (
+            <button
+              onClick={closeLocationPicker}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          )}
         </div>
 
         {/* ─── MAP AREA ─── */}
@@ -358,12 +364,12 @@ export default function LocationPicker() {
             transition={{ delay: 0.5, type: 'spring' }}
             onClick={handleUseMyLocation}
             disabled={isGeolocating}
-            className="absolute top-4 right-4 z-[1000] flex items-center gap-2 px-4 py-3 bg-[#161A22]/95 backdrop-blur-xl border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest shadow-2xl hover:border-brand/40 transition-all disabled:opacity-50"
+            className="absolute top-4 right-4 z-[1000] flex items-center gap-2 px-4 py-3 bg-[#161A22]/95 backdrop-blur-xl border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest shadow-2xl hover:border-primary/40 transition-all disabled:opacity-50"
           >
             {isGeolocating ? (
-              <Loader2 className="w-4 h-4 animate-spin text-brand" />
+              <span className="material-symbols-outlined text-[16px] animate-spin text-primary">sync</span>
             ) : (
-              <Locate className="w-4 h-4 text-brand" />
+              <span className="material-symbols-outlined text-[16px] text-primary">my_location</span>
             )}
             <span className="hidden sm:inline">{isGeolocating ? 'Locating...' : 'My Location'}</span>
           </motion.button>
@@ -375,7 +381,7 @@ export default function LocationPicker() {
               animate={{ opacity: 1, y: 0 }}
               className="absolute top-4 left-4 right-20 z-[1000] flex items-center gap-3 px-4 py-3 bg-brand/90 backdrop-blur-xl rounded-2xl text-white shadow-2xl"
             >
-              <Navigation className="w-5 h-5 shrink-0 animate-pulse" />
+              <span className="material-symbols-outlined text-[20px] shrink-0 animate-pulse">navigation</span>
               <p className="font-bold text-xs">
                 Tap anywhere on the map to set your delivery location, or use "My Location" button
               </p>
@@ -396,8 +402,8 @@ export default function LocationPicker() {
             {selectedLat !== null ? (
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <MapPin className="w-5 h-5 text-brand" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="material-symbols-outlined text-[20px] text-primary">location_on</span>
                   </div>
                   <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-4 mb-2">
@@ -430,7 +436,7 @@ export default function LocationPicker() {
                       />
                     ) : isLoading ? (
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-brand" />
+                        <span className="material-symbols-outlined text-[16px] animate-spin text-primary">sync</span>
                         <span className="text-white/40 text-sm font-medium">Fetching address...</span>
                       </div>
                     ) : (
@@ -467,12 +473,12 @@ export default function LocationPicker() {
                       }`}>
                         {isDeliverable ? (
                           <>
-                            <Check className="w-3.5 h-3.5" />
+                            <span className="material-symbols-outlined text-[14px]">check</span>
                             Deliverable
                           </>
                         ) : (
                           <>
-                            <AlertTriangle className="w-3.5 h-3.5" />
+                            <span className="material-symbols-outlined text-[14px]">warning</span>
                             Out of Range
                           </>
                         )}
@@ -484,7 +490,7 @@ export default function LocationPicker() {
                 {/* Nearby Restaurants Count */}
                 {(nearbyRestaurants.length > 0 || loadingNearby) && (
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-white/5 rounded-xl border border-white/5">
-                    <Store className="w-4 h-4 text-brand" />
+                    <span className="material-symbols-outlined text-[16px] text-primary">storefront</span>
                     {loadingNearby ? (
                       <span className="text-white/40 text-xs font-bold">Finding nearby restaurants...</span>
                     ) : (
@@ -497,7 +503,7 @@ export default function LocationPicker() {
               </div>
             ) : (
               <div className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-white/5">
-                <ChevronDown className="w-5 h-5 text-brand animate-bounce" />
+                <span className="material-symbols-outlined text-[20px] text-primary animate-bounce">keyboard_arrow_down</span>
                 <p className="text-white/40 font-bold text-sm">
                   No location selected yet
                 </p>
@@ -519,9 +525,9 @@ export default function LocationPicker() {
               }`}
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
               ) : (
-                <Check className="w-5 h-5" />
+                <span className="material-symbols-outlined text-[20px]">check</span>
               )}
               {selectedLat === null
                 ? 'Select a location first'

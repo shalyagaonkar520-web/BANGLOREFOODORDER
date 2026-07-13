@@ -1,28 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Wallet, 
-  MapPin, 
-  Gift, 
-  Bell, 
-  LogOut, 
-  ChevronRight, 
-  Trash2, 
-  Plus, 
-  History, 
-  Clock, 
-  Map, 
-  Compass,
-  CheckCircle2,
-  PackageSearch
-} from 'lucide-react';
+
 import { useAuthStore } from '../store/authStore';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
+import { User, Wallet, Gift, Package, MapPin, Settings, CheckCircle2, History, Plus, Trash2, LogOut, Loader2 } from 'lucide-react';
 
 interface WalletTransaction {
   id: string;
@@ -157,9 +142,9 @@ export default function ProfilePage() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
-        <span className="w-10 h-10 border-4 border-[#4CD964] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[#4CD964] mt-4 font-black uppercase tracking-widest text-xs">Loading Profile...</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-primary mt-4 font-bold uppercase tracking-widest text-label-sm">Loading Profile...</p>
       </div>
     );
   }
@@ -168,12 +153,12 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-xl font-black uppercase text-red-400 mb-4">Profile Sync Error</h2>
-        <p className="text-sm text-white/50 mb-8 max-w-sm">We couldn't load your profile data. Please check your connection and try again.</p>
+      <div className="min-h-screen bg-background text-on-surface flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-headline-md font-bold text-error mb-4">Profile Sync Error</h2>
+        <p className="text-body-md text-secondary mb-8 max-w-sm">We couldn't load your profile data. Please check your connection and try again.</p>
         <button
           onClick={handleLogout}
-          className="bg-red-600/10 border border-red-600/30 text-red-400 px-6 py-3 rounded-xl font-black uppercase text-xs hover:bg-red-600/20 transition-all cursor-pointer"
+          className="bg-error/10 border border-error/30 text-error px-6 py-3 rounded-xl font-bold uppercase text-label-sm hover:bg-error/20 transition-all cursor-pointer"
         >
           Force Logout
         </button>
@@ -182,67 +167,61 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-white pt-24 pb-48 px-4 md:px-6">
-      {/* Background decoration */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#4CD964]/5 rounded-full blur-[150px]" />
-      </div>
-
+    <div className="relative min-h-screen bg-background text-on-surface pt-24 pb-48 px-4 md:px-6">
       <div className="max-w-4xl mx-auto space-y-12 relative z-10">
         
         {/* User Card */}
-        <div className="luxury-card rounded-[35px] p-6 sm:p-10 border-[#4CD964]/10 bg-gradient-to-r from-white/5 to-[#4CD964]/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <User className="w-32 h-32 text-[#4CD964]" />
+        <div className="bg-white rounded-[32px] p-6 sm:p-10 border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <User className="w-[120px] h-[120px] text-primary" />
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-            <div className="w-20 h-20 rounded-full bg-[#4CD964]/10 border-2 border-[#4CD964]/30 flex items-center justify-center text-3xl text-[#4CD964] font-black uppercase shadow-lg shadow-[#4CD964]/20">
+          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left relative z-10">
+            <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-headline-lg text-primary font-bold uppercase shadow-sm">
               {profile.name.charAt(0)}
             </div>
             
             <div className="space-y-1">
-              <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">
+              <h1 className="font-headline-lg text-on-surface">
                 {profile.name}
               </h1>
-              <p className="text-xs text-white/50 font-medium">{profile.email}</p>
-              {profile.phone && <p className="text-xs text-[#4CD964] font-bold">{profile.phone}</p>}
+              <p className="text-label-sm text-secondary font-medium">{profile.email}</p>
+              {profile.phone && <p className="text-label-sm text-primary font-bold">{profile.phone}</p>}
             </div>
 
             <div className="sm:ml-auto flex items-center gap-6">
-              <div className="bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-center">
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Wallet</p>
-                <p className="text-2xl font-black italic text-[#4CD964] mt-1">₹{profile.walletBalance}</p>
+              <div className="bg-surface-container-low border border-outline-variant px-6 py-4 rounded-2xl text-center">
+                <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Wallet</p>
+                <p className="text-headline-md font-bold text-primary mt-1">₹{profile.walletBalance}</p>
               </div>
-              <div className="bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-center">
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Rewards</p>
-                <p className="text-2xl font-black italic text-gold mt-1">{profile.rewardPoints} pts</p>
+              <div className="bg-surface-container-low border border-outline-variant px-6 py-4 rounded-2xl text-center">
+                <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Rewards</p>
+                <p className="text-headline-md font-bold text-tertiary mt-1">{profile.rewardPoints} pts</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
-          {[
-            { id: 'orders', label: 'My Orders', icon: PackageSearch },
-            { id: 'wallet', label: 'Wallet', icon: Wallet },
-            { id: 'addresses', label: 'Addresses', icon: MapPin },
-            { id: 'rewards', label: 'Rewards', icon: Gift },
-            { id: 'notifications', label: 'Settings', icon: Bell }
+        <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-surface-container rounded-2xl border border-outline-variant/50">
+          {[ 
+            { id: 'orders', label: 'My Orders', icon: <Package className="w-5 h-5" /> },
+            { id: 'wallet', label: 'Wallet', icon: <Wallet className="w-5 h-5" /> },
+            { id: 'addresses', label: 'Addresses', icon: <MapPin className="w-5 h-5" /> },
+            { id: 'rewards', label: 'Rewards', icon: <Gift className="w-5 h-5" /> },
+            { id: 'notifications', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
           ].map((tab) => {
-            const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-6 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-[16px] font-bold text-[13px] uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                   activeTab === tab.id 
-                    ? 'bg-[#4CD964] text-black shadow-lg shadow-[#4CD964]/20' 
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white shadow-[0_4px_12px_rgba(255,107,53,0.3)]' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {tab.icon}
                 {tab.label}
               </button>
             );
@@ -264,44 +243,49 @@ export default function ProfilePage() {
               {activeTab === 'orders' && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">Order History</h3>
-                    <span className="text-[#4CD964] text-[10px] font-black uppercase tracking-widest">{orders.length} orders found</span>
+                    <h3 className="font-headline-lg text-on-surface">Order History</h3>
+                    <span className="text-primary text-label-sm font-bold uppercase tracking-widest">{orders.length} orders found</span>
                   </div>
 
                   {orders.length === 0 ? (
-                    <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-white/5">
-                      <PackageSearch className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                      <p className="text-white/40 text-xs font-bold uppercase tracking-widest">No order history found</p>
-                      <button onClick={() => navigate('/food')} className="mt-4 btn-luxury-gold px-8 text-[9px]">
+                    <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-secondary text-label-md font-bold uppercase tracking-widest">No order history found</p>
+                      <button onClick={() => navigate('/food')} className="mt-4 px-6 py-2.5 bg-primary text-on-primary font-bold uppercase tracking-widest text-label-sm rounded-xl hover:bg-primary/90 transition-all shadow-sm">
                         Order Food
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {orders.map((order) => (
-                        <div key={order.id} className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 hover:border-[#4CD964]/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div key={order.id} className="bg-surface border border-outline-variant/50 rounded-3xl p-6 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                              <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">Order ID: #{order.id.slice(0, 8)}</p>
-                              <span className="bg-white/5 text-white/60 text-[8px] font-black uppercase px-2 py-0.5 rounded border border-white/10">
+                              <p className="text-secondary text-label-sm font-bold uppercase tracking-widest">Order ID: #{order.id.slice(0, 8)}</p>
+                              <span className="bg-surface-container text-on-surface text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-outline-variant">
                                 {order.orderType || 'regular'}
                               </span>
                             </div>
-                            <h4 className="text-sm font-bold text-white max-w-md truncate">
+                            <h4 className="text-body-lg font-bold text-on-surface max-w-md truncate">
                               {order.items.map((i: any) => `${i.quantity || 1}x ${i.name}`).join(', ')}
                             </h4>
-                            <p className="text-white/40 text-[10px] font-medium">
+                            <p className="text-secondary text-label-md font-medium mt-1">
                               {new Date(order.createdAt).toLocaleString()}
                             </p>
+                            {order.deliveryLocation?.address && (
+                              <p className="text-secondary text-label-md font-medium mt-1.5 border-l-2 border-primary/30 pl-2 max-w-sm truncate" title={order.deliveryLocation.address}>
+                                📍 {order.deliveryLocation.address}
+                              </p>
+                            )}
                           </div>
 
-                          <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
+                          <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-outline-variant/50 pt-4 md:pt-0">
                             <div className="text-left md:text-right">
-                              <p className="text-[#4CD964] font-black italic text-xl">₹{order.grandTotal}</p>
-                              <span className={`inline-block text-[8px] font-black uppercase tracking-widest mt-1 border px-2 py-0.5 rounded-full ${
-                                order.status === 'delivered' || order.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                order.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                'bg-orange-500/10 text-orange-400 border-orange-500/20 animate-pulse'
+                              <p className="text-on-surface font-headline-lg text-xl">₹{order.grandTotal}</p>
+                              <span className={`inline-block text-[10px] font-bold uppercase tracking-widest mt-1 border px-2 py-0.5 rounded-full ${
+                                order.status === 'delivered' || order.status === 'completed' ? 'bg-tertiary/10 text-tertiary border-tertiary/20' :
+                                order.status === 'cancelled' ? 'bg-error-container text-on-error-container border-error/20' :
+                                'bg-primary/10 text-primary border-primary/20 animate-pulse'
                               }`}>
                                 {order.status}
                               </span>
@@ -309,9 +293,9 @@ export default function ProfilePage() {
 
                             <button
                               onClick={() => navigate(`/track/${order.id}`)}
-                              className="bg-white/5 border border-white/10 hover:border-[#4CD964] text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-[#4CD964] flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
+                              className="bg-surface-container border border-outline-variant hover:border-primary text-on-surface px-5 py-3 rounded-xl text-label-sm font-bold uppercase tracking-widest transition-all hover:text-primary flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
                             >
-                              📍 Track Live
+                              <MapPin className="w-4 h-4" /> Track Live
                             </button>
                           </div>
                         </div>
@@ -325,51 +309,51 @@ export default function ProfilePage() {
               {activeTab === 'wallet' && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gradient-to-br from-white/5 to-[#4CD964]/5 border border-[#4CD964]/20 rounded-3xl p-8 relative overflow-hidden">
+                    <div className="bg-surface border border-outline-variant/50 rounded-3xl p-8 relative overflow-hidden shadow-sm">
                       <div className="absolute bottom-0 right-0 p-6 opacity-5 pointer-events-none">
-                        <Wallet className="w-40 h-40 text-[#4CD964]" />
+                        <Wallet className="w-[120px] h-[120px] text-primary" />
                       </div>
-                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Available Balance</p>
-                      <h3 className="text-5xl font-black italic text-[#4CD964] mt-2 tracking-tighter">₹{profile.walletBalance}</h3>
-                      <p className="text-xs text-white/60 mt-4 leading-relaxed font-medium">
+                      <p className="text-label-sm font-bold text-secondary uppercase tracking-widest">Available Balance</p>
+                      <h3 className="text-headline-lg font-bold text-primary mt-2">₹{profile.walletBalance}</h3>
+                      <p className="text-body-sm text-secondary mt-4 leading-relaxed font-medium">
                         Use this balance during checkout to get instant discounts on any order.
                       </p>
                     </div>
 
-                    <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex flex-col justify-center space-y-4">
-                      <h4 className="font-black italic uppercase tracking-tighter text-lg text-white">Promotions & Offers</h4>
-                      <p className="text-xs text-white/40 leading-relaxed font-medium">
+                    <div className="bg-surface border border-outline-variant/50 rounded-3xl p-8 flex flex-col justify-center space-y-4 shadow-sm">
+                      <h4 className="font-headline-sm text-on-surface">Promotions & Offers</h4>
+                      <p className="text-body-sm text-secondary leading-relaxed font-medium">
                         Register today to receive our automatic ₹50 welcome gift! Refer friends or complete ordering benchmarks to earn credits.
                       </p>
-                      <div className="flex items-center gap-2 text-[#4CD964] font-black text-[10px] uppercase tracking-widest">
-                        <CheckCircle2 className="w-4 h-4 fill-current text-[#4CD964] stroke-[#050505]" /> Welcome Bonus Claimed
+                      <div className="flex items-center gap-2 text-primary font-bold text-label-sm uppercase tracking-widest">
+                        <CheckCircle2 className="w-5 h-5 text-primary" /> Welcome Bonus Claimed
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <h4 className="text-lg font-black italic uppercase tracking-tighter text-white flex items-center gap-2">
-                      <History className="w-5 h-5 text-[#4CD964]" /> Transaction History
+                    <h4 className="font-headline-sm text-on-surface flex items-center gap-2">
+                      <History className="w-5 h-5 text-primary" /> Transaction History
                     </h4>
 
                     {loadingTransactions ? (
                       <div className="text-center py-12">
-                        <span className="w-8 h-8 border-2 border-[#4CD964] border-t-transparent rounded-full animate-spin inline-block" />
+                        <span className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin inline-block" />
                       </div>
                     ) : transactions.length === 0 ? (
-                      <div className="text-center py-12 bg-white/[0.02] rounded-3xl border border-white/5">
-                        <p className="text-white/30 text-xs font-bold uppercase tracking-widest">No wallet transactions yet</p>
+                      <div className="text-center py-12 bg-surface rounded-3xl border border-outline-variant/50 shadow-sm">
+                        <p className="text-secondary text-label-sm font-bold uppercase tracking-widest">No wallet transactions yet</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {transactions.map((t) => (
-                          <div key={t.id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
+                          <div key={t.id} className="bg-surface border border-outline-variant/50 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
                             <div>
-                              <p className="text-xs font-bold text-white">{t.description}</p>
-                              <p className="text-[9px] text-white/40 uppercase tracking-wider mt-1">{new Date(t.createdAt).toLocaleString()}</p>
+                              <p className="text-body-md font-bold text-on-surface">{t.description}</p>
+                              <p className="text-label-sm text-secondary uppercase tracking-wider mt-1">{new Date(t.createdAt).toLocaleString()}</p>
                             </div>
                             <div className="text-right">
-                              <span className={`text-lg font-black italic ${t.amount >= 0 ? 'text-[#4CD964]' : 'text-red-500'}`}>
+                              <span className={`text-headline-md font-bold ${t.amount >= 0 ? 'text-primary' : 'text-error'}`}>
                                 {t.amount >= 0 ? `+₹${t.amount}` : `-₹${Math.abs(t.amount)}`}
                               </span>
                             </div>
@@ -385,12 +369,12 @@ export default function ProfilePage() {
               {activeTab === 'addresses' && (
                 <div className="space-y-8">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">Saved Addresses</h3>
+                    <h3 className="font-headline-lg text-on-surface">Saved Addresses</h3>
                     <button 
                       onClick={() => setShowAddressForm(!showAddressForm)}
-                      className="bg-[#4CD964] text-black px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:brightness-105 active:scale-95 transition-all cursor-pointer shadow-md shadow-[#4CD964]/10"
+                      className="bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-sm font-bold uppercase tracking-widest flex items-center gap-1.5 hover:brightness-105 active:scale-95 transition-all cursor-pointer shadow-sm"
                     >
-                      <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add Address
+                      <Plus className="w-5 h-5" /> Add Address
                     </button>
                   </div>
 
@@ -400,17 +384,17 @@ export default function ProfilePage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       onSubmit={handleAddAddress}
-                      className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 overflow-hidden"
+                      className="bg-surface-container border border-outline-variant rounded-3xl p-6 space-y-4 overflow-hidden"
                     >
-                      <h4 className="text-xs font-black uppercase tracking-widest text-[#4CD964]">New Saved Address</h4>
+                      <h4 className="text-label-sm font-bold uppercase tracking-widest text-primary">New Saved Address</h4>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1.5 text-left">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Label</label>
+                          <label className="text-label-sm font-bold uppercase tracking-widest text-secondary">Label</label>
                           <select
                             value={addressLabel}
                             onChange={(e) => setAddressLabel(e.target.value)}
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50"
+                            className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-body-sm text-on-surface font-bold outline-none focus:border-primary"
                           >
                             <option value="Home">📍 Home</option>
                             <option value="Work">💼 Work</option>
@@ -420,53 +404,53 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="space-y-1.5 text-left">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Latitude</label>
+                          <label className="text-label-sm font-bold uppercase tracking-widest text-secondary">Latitude</label>
                           <input
                             type="text"
                             value={addressLat}
                             onChange={(e) => setAddressLat(e.target.value)}
                             placeholder="e.g. 14.9667"
                             required
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50"
+                            className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-body-sm text-on-surface font-bold outline-none focus:border-primary"
                           />
                         </div>
 
                         <div className="space-y-1.5 text-left">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Longitude</label>
+                          <label className="text-label-sm font-bold uppercase tracking-widest text-secondary">Longitude</label>
                           <input
                             type="text"
                             value={addressLng}
                             onChange={(e) => setAddressLng(e.target.value)}
                             placeholder="e.g. 74.7167"
                             required
-                            className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50"
+                            className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-body-sm text-on-surface font-bold outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1.5 text-left">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Address Details</label>
+                        <label className="text-label-sm font-bold uppercase tracking-widest text-secondary">Address Details</label>
                         <input
                           type="text"
                           value={addressText}
                           onChange={(e) => setAddressText(e.target.value)}
                           placeholder="ENTER FULL DELIVERABLE ADDRESS"
                           required
-                          className="w-full bg-[#111] border border-white/10 rounded-xl px-4 py-3.5 text-xs text-white font-bold outline-none focus:border-[#4CD964]/50 uppercase tracking-[1px] placeholder:text-white/20"
+                          className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3.5 text-body-sm text-on-surface font-bold outline-none focus:border-primary uppercase tracking-[1px] placeholder:text-outline-variant"
                         />
                       </div>
 
                       <div className="flex gap-3 pt-2">
                         <button
                           type="submit"
-                          className="bg-gradient-to-r from-[#4CD964] to-[#3AC152] hover:brightness-105 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-md shadow-[#4CD964]/20 cursor-pointer"
+                          className="bg-primary hover:brightness-105 active:scale-95 text-on-primary font-bold text-label-sm uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm cursor-pointer"
                         >
                           Save Location
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowAddressForm(false)}
-                          className="bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                          className="bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface font-bold text-label-sm uppercase tracking-widest px-6 py-3.5 rounded-xl transition-all cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -476,29 +460,29 @@ export default function ProfilePage() {
 
                   {/* List Addresses */}
                   {profile.addresses.length === 0 ? (
-                    <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-white/5">
-                      <MapPin className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                      <p className="text-white/40 text-xs font-bold uppercase tracking-widest">No saved addresses yet</p>
+                    <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                      <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-secondary text-label-sm font-bold uppercase tracking-widest">No saved addresses yet</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {profile.addresses.map((a) => (
-                        <div key={a.id} className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 flex flex-col justify-between gap-4 hover:border-white/15 transition-all">
+                        <div key={a.id} className="bg-surface border border-outline-variant/50 rounded-3xl p-6 flex flex-col justify-between gap-4 hover:border-outline-variant transition-all shadow-sm">
                           <div className="space-y-1 text-left">
-                            <span className="bg-[#4CD964]/10 text-[#4CD964] text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded border border-[#4CD964]/20">
+                            <span className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded border border-primary/20">
                               {a.label}
                             </span>
-                            <p className="text-xs font-extrabold text-white mt-2 leading-relaxed uppercase tracking-[0.5px]">
+                            <p className="text-body-md font-bold text-on-surface mt-2 leading-relaxed uppercase tracking-[0.5px]">
                               {a.address}
                             </p>
-                            <p className="text-[9px] text-white/30 font-medium">
+                            <p className="text-label-sm text-secondary font-medium">
                               Coords: {a.lat.toFixed(4)}, {a.lng.toFixed(4)}
                             </p>
                           </div>
 
                           <button
                             onClick={() => handleDeleteAddress(a.id)}
-                            className="text-white/40 hover:text-red-500 font-black text-[9px] uppercase tracking-widest flex items-center gap-1.5 transition-colors self-end cursor-pointer"
+                            className="text-secondary hover:text-error font-bold text-label-sm uppercase tracking-widest flex items-center gap-1.5 transition-colors self-end cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" /> Delete
                           </button>
@@ -512,27 +496,27 @@ export default function ProfilePage() {
               {/* REWARDS TAB */}
               {activeTab === 'rewards' && (
                 <div className="space-y-8 text-center max-w-md mx-auto py-8">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gold/30 to-yellow-500/10 rounded-[30px] flex items-center justify-center border border-gold/30 shadow-[0_0_40px_rgba(244,180,0,0.2)] mx-auto relative">
-                    <Gift className="w-12 h-12 text-gold" />
+                  <div className="w-24 h-24 bg-orange-50 rounded-[30px] flex items-center justify-center border border-orange-100 mx-auto relative shadow-sm">
+                    <Gift className="w-12 h-12 text-primary" />
                   </div>
                   
                   <div className="space-y-2">
-                    <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white">Reward points</h3>
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Moms Magic Premium Loyalty Club</p>
+                    <h3 className="font-headline-lg text-on-surface">Reward points</h3>
+                    <p className="text-secondary text-label-sm font-bold uppercase tracking-widest">Moms Magic Premium Loyalty Club</p>
                   </div>
 
-                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                    <p className="text-sm font-bold text-white">Current Balance</p>
-                    <h4 className="text-4xl font-black italic text-gold mt-2">{profile.rewardPoints} points</h4>
-                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden mt-6">
-                      <div className="h-full bg-gold rounded-full" style={{ width: `${Math.min(100, (profile.rewardPoints / 500) * 100)}%` }} />
+                  <div className="bg-surface-container border border-outline-variant/50 rounded-3xl p-6 shadow-sm">
+                    <p className="text-body-md font-bold text-on-surface">Current Balance</p>
+                    <h4 className="font-headline-lg text-tertiary mt-2">{profile.rewardPoints} points</h4>
+                    <div className="h-2 w-full bg-outline-variant/30 rounded-full overflow-hidden mt-6">
+                      <div className="h-full bg-tertiary rounded-full" style={{ width: `${Math.min(100, (profile.rewardPoints / 500) * 100)}%` }} />
                     </div>
-                    <p className="text-[9px] text-white/30 font-black uppercase tracking-wider mt-2.5">
+                    <p className="text-label-sm text-secondary font-bold uppercase tracking-wider mt-2.5">
                       Earn 500 points to unlock ₹50 wallet cash back!
                     </p>
                   </div>
 
-                  <p className="text-xs text-white/50 leading-relaxed font-medium">
+                  <p className="text-body-sm text-secondary leading-relaxed font-medium">
                     Every ₹100 spent on Moms Magic earns you 10 reward points automatically. Loyalty points are synced directly to your account.
                   </p>
                 </div>
@@ -541,48 +525,48 @@ export default function ProfilePage() {
               {/* SETTINGS / NOTIFICATIONS TAB */}
               {activeTab === 'notifications' && (
                 <div className="space-y-8">
-                  <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">System Settings</h3>
+                  <h3 className="font-headline-lg text-on-surface">System Settings</h3>
 
-                  <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-6">
+                  <div className="bg-surface border border-outline-variant/50 rounded-3xl p-6 space-y-6 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1 text-left">
-                        <h4 className="text-sm font-black uppercase tracking-wide text-white">Order Status Alerts</h4>
-                        <p className="text-xs text-white/40 font-medium">Receive real-time push alerts on order confirming and rider assignment.</p>
+                        <h4 className="text-body-md font-bold uppercase tracking-wide text-on-surface">Order Status Alerts</h4>
+                        <p className="text-label-sm text-secondary font-medium">Receive real-time push alerts on order confirming and rider assignment.</p>
                       </div>
                       <input
                         type="checkbox"
                         checked={notifOrderUpdates}
                         onChange={(e) => setNotifOrderUpdates(e.target.checked)}
-                        className="w-5 h-5 accent-[#4CD964] cursor-pointer"
+                        className="w-5 h-5 accent-primary cursor-pointer"
                       />
                     </div>
 
-                    <div className="h-px bg-white/5" />
+                    <div className="h-px bg-outline-variant/30" />
 
                     <div className="flex items-center justify-between">
                       <div className="space-y-1 text-left">
-                        <h4 className="text-sm font-black uppercase tracking-wide text-white">Promotional Alerts</h4>
-                        <p className="text-xs text-white/40 font-medium">Receive daily notifications on exclusive combos and magic deals.</p>
+                        <h4 className="text-body-md font-bold uppercase tracking-wide text-on-surface">Promotional Alerts</h4>
+                        <p className="text-label-sm text-secondary font-medium">Receive daily notifications on exclusive combos and magic deals.</p>
                       </div>
                       <input
                         type="checkbox"
                         checked={notifPromos}
                         onChange={(e) => setNotifPromos(e.target.checked)}
-                        className="w-5 h-5 accent-[#4CD964] cursor-pointer"
+                        className="w-5 h-5 accent-primary cursor-pointer"
                       />
                     </div>
                   </div>
 
                   {/* Account De-Auth */}
-                  <div className="bg-red-500/5 border border-red-500/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="bg-error-container/30 border border-error/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                     <div className="text-left space-y-1">
-                      <h4 className="text-sm font-black uppercase tracking-wide text-white">End Session</h4>
-                      <p className="text-xs text-white/40 font-medium">Safely sign out from your account and delete browser cache storage.</p>
+                      <h4 className="text-body-md font-bold uppercase tracking-wide text-on-surface">End Session</h4>
+                      <p className="text-label-sm text-secondary font-medium">Safely sign out from your account and delete browser cache storage.</p>
                     </div>
 
                     <button
                       onClick={handleLogout}
-                      className="bg-red-600/10 border border-red-600/30 hover:bg-red-600 hover:text-white text-red-400 px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2"
+                      className="bg-error-container border border-error hover:bg-error hover:text-on-error text-error px-6 py-3.5 rounded-xl text-label-sm font-bold uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 shadow-sm"
                     >
                       <LogOut className="w-4 h-4" /> Logout Session
                     </button>

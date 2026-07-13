@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useSystemStore } from '../store/systemStore';
 import { Coupon } from '../types';
-import { Plus, Trash2 } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';

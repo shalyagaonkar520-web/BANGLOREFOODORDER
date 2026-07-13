@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Send, Sparkles, ChevronLeft as ArrowLeft, ChevronRight as ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
@@ -166,7 +165,7 @@ export default function CelebrationDesign() {
             onClick={() => navigate('/celebration')}
             className="w-11 h-11 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <span className="material-symbols-outlined w-5 h-5">chevron_left</span>
           </button>
           <div className="flex-1 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
@@ -328,7 +327,7 @@ export default function CelebrationDesign() {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <span className="material-symbols-outlined w-5 h-5">auto_awesome</span>
                 </motion.div>
                 Sending...
               </>
@@ -391,13 +390,13 @@ export default function CelebrationDesign() {
               onClick={prevSlide}
               className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center hover:bg-black/80 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <span className="material-symbols-outlined w-4 h-4">arrow_back</span>
             </button>
             <button
               onClick={nextSlide}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/60 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center hover:bg-black/80 transition-colors"
             >
-              <ArrowRight className="w-4 h-4" />
+              <span className="material-symbols-outlined w-4 h-4">arrow_forward</span>
             </button>
           </div>
 

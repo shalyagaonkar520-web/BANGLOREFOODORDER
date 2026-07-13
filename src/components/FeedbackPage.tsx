@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Star, MessageSquare, ChevronLeft, Send } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import { useSEO } from '../utils/seo';
 
@@ -33,11 +33,11 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-matte-black text-white pt-6 pb-24 px-4 md:px-8">
+    <div className="min-h-screen bg-surface text-white pt-6 pb-24 px-4 md:px-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors">
-            <ChevronLeft className="w-6 h-6" />
+            <span className="material-symbols-outlined w-6 h-6">chevron_left</span>
           </button>
           <h1 className="text-xl font-black uppercase tracking-widest text-gold">Feedback</h1>
           <div className="w-12" />
@@ -48,11 +48,11 @@ export default function FeedbackPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#111] border border-white/10 rounded-[40px] p-8 md:p-12 text-center"
         >
-          <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-brand/20">
-            <MessageSquare className="w-10 h-10 text-brand" />
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/20">
+            <span className="material-symbols-outlined w-10 h-10 text-primary">chat</span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4">How was your <span className="text-brand">experience?</span></h2>
+          <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4">How was your <span className="text-primary">experience?</span></h2>
           <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-10">Your feedback helps us serve you better</p>
 
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -66,13 +66,11 @@ export default function FeedbackPage() {
                   onClick={() => setRating(star)}
                   className="transition-transform hover:scale-110 active:scale-95"
                 >
-                  <Star 
-                    className={`w-10 h-10 md:w-12 md:h-12 transition-colors ${
+                  <span className={`material-symbols-outlined w-10 h-10 md:w-12 md:h-12 transition-colors ${
                       star <= (hoveredRating || rating) 
                       ? 'fill-gold text-gold drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]' 
                       : 'text-white/20'
-                    }`} 
-                  />
+                    }`}>star</span>
                 </button>
               ))}
             </div>
@@ -83,7 +81,7 @@ export default function FeedbackPage() {
                 value={feedback}
                 onChange={e => setFeedback(e.target.value)}
                 placeholder="What did you love? What can we improve?"
-                className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 outline-none focus:border-brand/50 transition-colors font-bold resize-none placeholder:text-white/20"
+                className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 outline-none focus:border-primary/50 transition-colors font-bold resize-none placeholder:text-white/20"
               />
             </div>
 
@@ -91,7 +89,7 @@ export default function FeedbackPage() {
               type="submit"
               className="w-full py-5 bg-gradient-to-r from-red-600 to-orange-500 rounded-2xl font-black uppercase tracking-[4px] text-white flex items-center justify-center gap-2 hover:shadow-[0_10px_30px_rgba(255,77,0,0.3)] transition-all active:scale-95"
             >
-              Submit Feedback <Send className="w-5 h-5 ml-2" />
+              Submit Feedback <span className="material-symbols-outlined w-5 h-5 ml-2">send</span>
             </button>
           </form>
         </motion.div>

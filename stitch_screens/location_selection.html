@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FoodExpress - Location Access</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fff8f6",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#ffb59d",
+                    "on-primary-fixed": "#390c00",
+                    "outline": "#907065",
+                    "on-secondary-fixed-variant": "#005235",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#001c39",
+                    "tertiary-container": "#0076d3",
+                    "secondary": "#006c48",
+                    "on-tertiary-fixed-variant": "#004884",
+                    "tertiary": "#005da8",
+                    "surface-tint": "#ac3500",
+                    "on-primary-fixed-variant": "#832600",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#5c4037",
+                    "inverse-surface": "#3f2c26",
+                    "on-secondary-fixed": "#002113",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#fffbff",
+                    "primary-fixed": "#ffdbd0",
+                    "surface-bright": "#fff8f6",
+                    "inverse-primary": "#ffb59d",
+                    "inverse-on-surface": "#ffede8",
+                    "primary-container": "#d24200",
+                    "secondary-fixed-dim": "#62dca4",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#e5beb2",
+                    "on-surface": "#281812",
+                    "surface-container-highest": "#fbdcd3",
+                    "surface": "#fff8f6",
+                    "on-tertiary-container": "#fdfcff",
+                    "surface-container-high": "#ffe2d9",
+                    "secondary-container": "#7cf7bc",
+                    "tertiary-fixed-dim": "#a4c9ff",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-background": "#281812",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#00714b",
+                    "surface-container-low": "#fff1ed",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#f2d3ca",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#ffe9e3",
+                    "secondary-fixed": "#7ff9be",
+                    "primary": "#a83300",
+                    "surface-variant": "#fbdcd3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "sm": "8px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "margin-desktop": "48px"
+            },
+            "fontFamily": {
+                    "h1": ["Plus Jakarta Sans"],
+                    "h2": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h3": ["Plus Jakarta Sans"],
+                    "body-sm": ["Inter"],
+                    "caption": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "h1": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "h2": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+                    "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(to top, rgba(255,248,246,1) 0%, rgba(255,248,246,0) 20%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5beb2;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col items-center justify-center p-4">
+<!-- Permission Container (Task-Focused/Transactional: Navigation suppressed per Shared Components Logic) -->
+<main class="w-full max-w-[480px] bg-surface-container-lowest rounded-xl shadow-lg overflow-hidden flex flex-col animate-in fade-in duration-700">
+<!-- Header Section -->
+<div class="px-lg pt-lg pb-sm">
+<h1 class="font-h1 text-h1 text-primary mb-2">Set delivery location</h1>
+<p class="font-body-md text-on-surface-variant">To see restaurants and delivery estimates near you, please share your location.</p>
+</div>
+<!-- Map Section -->
+<div class="relative w-full h-[320px] md:h-[400px]">
+<!-- Map Placeholder -->
+<div class="w-full h-full bg-cover bg-center bg-no-repeat grayscale-[20%] opacity-90 transition-all hover:grayscale-0" data-location="New York City" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAuSL8j2pDZUBFsboLSk8TTTw6PGzECmTc_L3Q_3vvM6RBRgTiF_yMs8PE7bcc4SiqV-yR3LEyeMQPzqZe5zB0KA28jjltzPLgZ_BwmghGp5WwlDgXNIctuISXPJNxAiza2aN2PWe2bZ9EaLkI8qW6Y1Ahgakji8ichY_lcMGvgBQkdssGXRJ7MECv0oC3jy_P44PetNRVotaNZkQ9IKzPnU7mqY0s9MO6Hyrghz-e-oyQqv_QRRMrVq0QTAu71aouLBopn-WHaOgOy')"></div>
+<!-- Map Overlay UI -->
+<div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
+<!-- Pin Indicator -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="relative flex flex-col items-center animate-bounce">
+<span class="material-symbols-outlined text-primary-container text-[48px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<div class="w-2 h-1 bg-black/20 rounded-full blur-[2px] mt-[-4px]"></div>
+</div>
+</div>
+<!-- Enable Location Primary Button -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-full px-lg">
+<button class="w-full h-12 bg-primary text-on-primary font-h3 rounded-lg shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-primary-container group" onclick="requestLocation()">
+<span class="material-symbols-outlined group-hover:rotate-12 transition-transform">my_location</span>
+                    Enable Location
+                </button>
+</div>
+</div>
+<!-- Search & List Section -->
+<div class="flex-1 flex flex-col px-lg pb-lg gap-lg">
+<!-- Search Input -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-12 pl-12 pr-4 bg-surface-container-low border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-body-md text-on-surface placeholder:text-on-surface-variant/60 transition-all" placeholder="Search for area, street name..." type="text"/>
+</div>
+<!-- Popular Areas List -->
+<div class="flex flex-col gap-sm overflow-y-auto custom-scrollbar max-h-[280px]">
+<h3 class="font-label-md text-on-surface-variant uppercase tracking-wider mb-2">Popular Areas</h3>
+<!-- Area Items -->
+<button class="flex items-center gap-4 p-md rounded-lg hover:bg-surface-container transition-colors group text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:bg-primary-fixed group-hover:text-on-primary-fixed transition-all">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div class="flex flex-col">
+<span class="font-h3 text-on-surface group-hover:text-primary transition-colors">Downtown District</span>
+<span class="font-body-sm text-on-surface-variant">Main Street, Central Square</span>
+</div>
+</button>
+<button class="flex items-center gap-4 p-md rounded-lg hover:bg-surface-container transition-colors group text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:bg-primary-fixed group-hover:text-on-primary-fixed transition-all">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div class="flex flex-col">
+<span class="font-h3 text-on-surface group-hover:text-primary transition-colors">Green Valley Estates</span>
+<span class="font-body-sm text-on-surface-variant">Near The Waterfront Park</span>
+</div>
+</button>
+<button class="flex items-center gap-4 p-md rounded-lg hover:bg-surface-container transition-colors group text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:bg-primary-fixed group-hover:text-on-primary-fixed transition-all">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div class="flex flex-col">
+<span class="font-h3 text-on-surface group-hover:text-primary transition-colors">Westside Heights</span>
+<span class="font-body-sm text-on-surface-variant">7th Avenue, Uptown Corridor</span>
+</div>
+</button>
+<button class="flex items-center gap-4 p-md rounded-lg hover:bg-surface-container transition-colors group text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:bg-primary-fixed group-hover:text-on-primary-fixed transition-all">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div class="flex flex-col">
+<span class="font-h3 text-on-surface group-hover:text-primary transition-colors">Riverside Plaza</span>
+<span class="font-body-sm text-on-surface-variant">Bayside Dr, Terminal Area</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="px-lg py-md bg-surface-container-low flex justify-center border-t border-outline-variant/30">
+<button class="text-primary font-label-md hover:underline active:opacity-70 transition-all">Enter Address Manually</button>
+</div>
+</main>
+<!-- Micro-interactions Script -->
+<script>
+        function requestLocation() {
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            
+            // Visual feedback
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Requesting Access...';
+            btn.classList.add('opacity-80', 'pointer-events-none');
+            
+            // Simulate a browser permission request
+            setTimeout(() => {
+                alert("Location permission requested. In a production app, this would trigger the native browser/OS location prompt.");
+                btn.innerHTML = originalContent;
+                btn.classList.remove('opacity-80', 'pointer-events-none');
+            }, 1500);
+        }
+
+        // Add a subtle parallax effect to the map
+        document.addEventListener('mousemove', (e) => {
+            const map = document.querySelector('[data-location]');
+            if (!map) return;
+            const moveX = (e.clientX - window.innerWidth / 2) / 100;
+            const moveY = (e.clientY - window.innerHeight / 2) / 100;
+            map.style.transform = `scale(1.1) translate(${moveX}px, ${moveY}px)`;
+        });
+    </script>
+</body></html>
